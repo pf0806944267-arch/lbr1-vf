@@ -581,7 +581,7 @@ def api_staff_recent():
     dues = {x["due_id"]: x for x in d.get("dues", [])}
     houses = {h["house_id"]: h["house_no"] for h in d.get("houses", [])}
     pays = []
-    for p in sorted(d.get("payments", []), key=lambda p: p.get("payment_id", ""), reverse=True)[:30]:
+    for p in sorted(d.get("payments", []), key=lambda p: p.get("payment_id", ""), reverse=True)[:100]:
         du = dues.get(p.get("due_id"), {})
         pays.append({
             "payment_id": p.get("payment_id"),
@@ -593,8 +593,9 @@ def api_staff_recent():
             "recorded_by": p.get("recorded_by"),
             "note": p.get("note", "")
         })
-    exps = sorted(d.get("expenses", []), key=lambda e: e.get("expense_id", ""), reverse=True)[:30]
-    return jsonify(payments=pays, expenses=exps)
+    exps = sorted(d.get("expenses", []), key=lambda e: e.get("expense_id", ""), reverse=True)[:100]
+    audit_logs = list(reversed(d.get("audit_log", [])))
+    return jsonify(payments=pays, expenses=exps, audit_logs=audit_logs)
 
 
 @app.post("/api/staff/payments")

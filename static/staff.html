@@ -381,17 +381,32 @@
 
       <!-- ==================== TAB 5: ประวัติการทำรายการ (Image 5) ==================== -->
       <div id="view-history" class="staff-view hidden">
-        <div class="content-section">
-          <div style="margin-bottom: 24px;">
-            <h2 style="font-size: 20px; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">
-              <span>⏱️</span> บันทึกประวัติการทำรายการ (Audit Log)
-            </h2>
-            <p style="font-size: 13px; color: #64748b;">ระบบบันทึกความเคลื่อนไหวทุกขั้นตอนเพื่อความโปร่งใสและตรวจสอบได้</p>
+        <div class="content-section" style="padding: 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #f1f5f9;">
+            <div>
+              <h2 style="font-size: 20px; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                <span>⏱️</span> บันทึกประวัติการทำรายการ (Audit Log)
+              </h2>
+              <p style="font-size: 13px; color: #64748b;">บันทึกความเคลื่อนไหวทุกขั้นตอนเพื่อความโปร่งใสและตรวจสอบได้</p>
+            </div>
+            <div id="audit-total-badge" style="font-size: 12px; font-weight: 600; background: #f1f5f9; color: #475569; padding: 6px 14px; border-radius: 20px;">
+              ทั้งหมด 0 รายการ
+            </div>
           </div>
 
-          <!-- Audit Log Cards Feed (Image 5) -->
+          <!-- Audit Log Feed (No card borders, dashed line separator) -->
           <div id="audit-log-feed">
-            <!-- Filled dynamically -->
+            <!-- Filled dynamically by renderAuditPage() -->
+          </div>
+
+          <!-- Pagination Bar -->
+          <div id="audit-pagination" class="pagination-bar" style="margin-top: 24px; padding-top: 16px; border-top: 1px dashed #cbd5e1; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div id="audit-page-info" style="font-size: 13px; color: #64748b;">
+              กำลังโหลดข้อมูล...
+            </div>
+            <div id="audit-page-btns" style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+              <!-- Page buttons rendered by JS -->
+            </div>
           </div>
         </div>
       </div>
@@ -408,6 +423,9 @@
     let HOUSES = [];
     let DASH_DATA = null;
     let SELECTED_QUARTERS = new Set();
+    let ALL_AUDIT_LOGS = [];
+    let AUDIT_CURRENT_PAGE = 1;
+    const AUDIT_PAGE_SIZE = 10;
 
     function todayStr() {
       const d = new Date(Date.now() + 7 * 3600e3);
@@ -1182,42 +1200,206 @@
         if (!feed) return;
 
         const data = await apiCall('/api/staff/recent');
+        let logs = [];
 
-        let logs = [
-          {
-            title: "นำเข้าข้อมูลจากเอกสารกองทุนพัฒนาหมู่บ้าน ปี 2569 จำนวน 162 หลังคาเรือน",
-            sub: "INITIALIZE_DATABASE - ผู้ดำเนินการ: system",
-            time: "2026-10-26 18:44:06"
-          }
-        ];
+        // Parse official audit logs from server
+        if (data.audit_logs && data.audit_logs.length > 0) {
+          data.audit_logs.forEach(al => {
+            let title = '';
+            let sub = '';
+            let icon = '📝';
+            let iconBg = '#f1f5f9';
+            let iconColor = '#475569';
 
-        data.payments.slice(0, 15).forEach(p => {
-          logs.push({
-            title: `บันทึกรับเงิน บ้าน ${p.house_no} (เดือน ${MONTHS_TH[p.month - 1]}) จำนวน ฿${fmt0(p.amount)} บาท`,
-            sub: `PAYMENT_RECORD - รหัส: ${p.payment_id} | ช่องทาง: ${p.channel === 'transfer' ? 'โอนเงิน' : 'เงินสด'} | บันทึกโดย: ${p.recorded_by || 'staff'}`,
-            time: p.paid_date + " 09:30:00"
+            if (al.action === 'create' && al.table === 'payments') {
+              icon = '💵';
+              iconBg = '#ecfdf5';
+              iconColor = '#059669';
+              let extra = '';
+              try {
+                const val = typeof al.new_value === 'string' ? JSON.parse(al.new_value) : al.new_value;
+                extra = `จำนวน ฿${fmt0(val.amount_paid)} บาท`;
+              } catch (e) {}
+              title = `บันทึกรับเงิน รหัส ${al.record_id} ${extra ? '(' + extra + ')' : ''}`;
+              sub = `ACTION: CREATE_PAYMENT · ตาราง: payments · รหัสรายการ: ${al.record_id} · บันทึกโดย: ${al.user_id}`;
+            } else if (al.action === 'delete' && al.table === 'payments') {
+              icon = '🗑️';
+              iconBg = '#fef2f2';
+              iconColor = '#dc2626';
+              title = `ลบรายการรับเงิน รหัส ${al.record_id}`;
+              sub = `ACTION: DELETE_PAYMENT · ตาราง: payments · รหัสรายการ: ${al.record_id} · ดำเนินการโดย: ${al.user_id} (Admin)`;
+            } else if (al.action === 'create' && al.table === 'expenses') {
+              icon = '🔴';
+              iconBg = '#fee2e2';
+              iconColor = '#b91c1c';
+              let extra = '';
+              try {
+                const val = typeof al.new_value === 'string' ? JSON.parse(al.new_value) : al.new_value;
+                extra = `${val.description || ''} ฿${fmt(val.amount)}`;
+              } catch (e) {}
+              title = `บันทึกรายจ่าย รหัส ${al.record_id} ${extra ? '(' + extra + ')' : ''}`;
+              sub = `ACTION: CREATE_EXPENSE · ตาราง: expenses · รหัสรายการ: ${al.record_id} · บันทึกโดย: ${al.user_id}`;
+            } else if (al.action === 'delete' && al.table === 'expenses') {
+              icon = '🗑️';
+              iconBg = '#fef2f2';
+              iconColor = '#dc2626';
+              title = `ลบรายการรายจ่าย รหัส ${al.record_id}`;
+              sub = `ACTION: DELETE_EXPENSE · ตาราง: expenses · รหัสรายการ: ${al.record_id} · ดำเนินการโดย: ${al.user_id} (Admin)`;
+            } else if (al.action === 'create' && al.table === 'users') {
+              icon = '👤';
+              iconBg = '#eff6ff';
+              iconColor = '#2563eb';
+              title = `สร้างบัญชีผู้ใช้งานใหม่: ${al.new_value}`;
+              sub = `ACTION: CREATE_USER · รหัสผู้ใช้: ${al.record_id} · ดำเนินการโดย: ${al.user_id}`;
+            } else {
+              title = `ทำรายการ ${al.action} บนตาราง ${al.table} รหัส ${al.record_id}`;
+              sub = `ACTION: ${al.action.toUpperCase()} · ตาราง: ${al.table} · ดำเนินการโดย: ${al.user_id}`;
+            }
+
+            logs.push({
+              id: al.log_id || Math.random(),
+              title: title,
+              sub: sub,
+              time: al.timestamp,
+              icon: icon,
+              iconBg: iconBg,
+              iconColor: iconColor
+            });
           });
+        }
+
+        // Also append recent payments not in audit log
+        const seenPayIds = new Set(data.audit_logs?.filter(a => a.table === 'payments').map(a => a.record_id) || []);
+        if (data.payments) {
+          data.payments.forEach(p => {
+            if (!seenPayIds.has(p.payment_id)) {
+              logs.push({
+                id: p.payment_id,
+                title: `บันทึกรับเงิน บ้าน ${p.house_no} (งวดเดือน ${MONTHS_TH[p.month - 1]}) จำนวน ฿${fmt0(p.amount)} บาท`,
+                sub: `PAYMENT_RECORD · รหัส: ${p.payment_id} · ช่องทาง: ${p.channel === 'transfer' ? 'โอนเงิน' : 'เงินสด'} · ผู้บันทึก: ${p.recorded_by || 'เจ้าหน้าที่'}`,
+                time: p.paid_date + " 09:30:00",
+                icon: '💵',
+                iconBg: '#ecfdf5',
+                iconColor: '#059669'
+              });
+            }
+          });
+        }
+
+        // Also append recent expenses not in audit log
+        const seenExpIds = new Set(data.audit_logs?.filter(a => a.table === 'expenses').map(a => a.record_id) || []);
+        if (data.expenses) {
+          data.expenses.forEach(e => {
+            if (!seenExpIds.has(e.expense_id)) {
+              logs.push({
+                id: e.expense_id,
+                title: `บันทึกรายจ่าย เลขที่ ${e.doc_no || '-'}: ${e.description} จำนวน ฿${fmt(e.amount)} บาท`,
+                sub: `EXPENSE_RECORD · แหล่งเงิน: ${e.source === 'bank' ? 'บัญชีธนาคาร' : 'เงินสำรอง'} · ผู้รับเงิน: ${e.payee || '-'}`,
+                time: e.expense_date + " 10:15:00",
+                icon: '🔴',
+                iconBg: '#fee2e2',
+                iconColor: '#b91c1c'
+              });
+            }
+          });
+        }
+
+        // Base database initialization event
+        logs.push({
+          id: 'SYS-INIT',
+          title: 'นำเข้าข้อมูลตั้งต้นจากเอกสารกองทุนพัฒนาหมู่บ้าน ปี 2569 จำนวน 162 หลังคาเรือน',
+          sub: 'INITIALIZE_DATABASE · นำเข้าทะเบียนลูกบ้าน ยอดยกมา และประวัติการจัดเก็บงวด 1-4 · ผู้ดำเนินการ: system',
+          time: '2026-10-26 18:44:06',
+          icon: '🏛️',
+          iconBg: '#f1f5f9',
+          iconColor: '#1e295d'
         });
 
-        data.expenses.slice(0, 10).forEach(e => {
-          logs.push({
-            title: `บันทึกรายจ่าย เลขที่ ${e.doc_no}: ${e.description} จำนวน ฿${fmt(e.amount)} บาท`,
-            sub: `EXPENSE_RECORD - แหล่งเงิน: ${e.source === 'bank' ? 'บัญชีธนาคาร' : 'เงินสำรอง'} | ผู้รับเงิน: ${e.payee || '-'}`,
-            time: e.expense_date + " 10:15:00"
-          });
-        });
-
-        feed.innerHTML = logs.map(l => `
-          <div class="audit-card">
-            <div>
-              <div class="audit-card-title">${l.title}</div>
-              <div class="audit-card-sub">${l.sub}</div>
-            </div>
-            <div class="audit-card-time">${l.time}</div>
-          </div>
-        `).join('');
+        // Sort descending by time
+        logs.sort((a, b) => b.time.localeCompare(a.time));
+        ALL_AUDIT_LOGS = logs;
+        renderAuditPage(1);
       } catch (err) {
         console.error(err);
+      }
+    }
+
+    function renderAuditPage(page) {
+      AUDIT_CURRENT_PAGE = page;
+      const feed = document.getElementById('audit-log-feed');
+      const pageInfo = document.getElementById('audit-page-info');
+      const pageBtns = document.getElementById('audit-page-btns');
+      const totalBadge = document.getElementById('audit-total-badge');
+      if (!feed) return;
+
+      const total = ALL_AUDIT_LOGS.length;
+      if (totalBadge) totalBadge.textContent = `ทั้งหมด ${total} รายการ`;
+
+      if (total === 0) {
+        feed.innerHTML = '<p style="color: #64748b; padding: 24px 0; text-align: center;">ยังไม่มีประวัติการทำรายการ</p>';
+        if (pageInfo) pageInfo.textContent = '';
+        if (pageBtns) pageBtns.innerHTML = '';
+        return;
+      }
+
+      const totalPages = Math.ceil(total / AUDIT_PAGE_SIZE);
+      if (page < 1) page = 1;
+      if (page > totalPages) page = totalPages;
+
+      const startIdx = (page - 1) * AUDIT_PAGE_SIZE;
+      const endIdx = Math.min(startIdx + AUDIT_PAGE_SIZE, total);
+      const items = ALL_AUDIT_LOGS.slice(startIdx, endIdx);
+
+      // Render items with no card border, separated by dashed border bottom
+      feed.innerHTML = items.map(l => `
+        <div class="audit-item">
+          <div class="audit-item-left">
+            <div class="audit-icon-box" style="background: ${l.iconBg}; color: ${l.iconColor};">
+              ${l.icon}
+            </div>
+            <div style="min-width: 0;">
+              <div class="audit-item-title">${l.title}</div>
+              <div class="audit-item-sub">${l.sub}</div>
+            </div>
+          </div>
+          <div class="audit-item-time">${l.time}</div>
+        </div>
+      `).join('');
+
+      // Page information
+      if (pageInfo) {
+        pageInfo.textContent = `แสดงรายการที่ ${startIdx + 1} - ${endIdx} จากทั้งหมด ${total} รายการ (หน้า ${page}/${totalPages})`;
+      }
+
+      // Pagination buttons
+      if (pageBtns) {
+        let btnsHtml = '';
+        btnsHtml += `<button class="pagination-btn" onclick="renderAuditPage(${page - 1})" ${page === 1 ? 'disabled' : ''}>◀ ก่อนหน้า</button>`;
+
+        const maxButtons = 5;
+        let startPage = Math.max(1, page - 2);
+        let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+        if (endPage - startPage + 1 < maxButtons) {
+          startPage = Math.max(1, endPage - maxButtons + 1);
+        }
+
+        if (startPage > 1) {
+          btnsHtml += `<button class="pagination-btn" onclick="renderAuditPage(1)">1</button>`;
+          if (startPage > 2) btnsHtml += `<span style="padding: 0 4px; color: #94a3b8;">...</span>`;
+        }
+
+        for (let p = startPage; p <= endPage; p++) {
+          btnsHtml += `<button class="pagination-btn ${p === page ? 'active' : ''}" onclick="renderAuditPage(${p})">${p}</button>`;
+        }
+
+        if (endPage < totalPages) {
+          if (endPage < totalPages - 1) btnsHtml += `<span style="padding: 0 4px; color: #94a3b8;">...</span>`;
+          btnsHtml += `<button class="pagination-btn" onclick="renderAuditPage(${totalPages})">${totalPages}</button>`;
+        }
+
+        btnsHtml += `<button class="pagination-btn" onclick="renderAuditPage(${page + 1})" ${page === totalPages ? 'disabled' : ''}>ถัดไป ▶</button>`;
+
+        pageBtns.innerHTML = btnsHtml;
       }
     }
 
