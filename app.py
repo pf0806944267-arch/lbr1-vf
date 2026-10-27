@@ -110,7 +110,63 @@ def pull_from_google_sheet(force=False):
         c = conn.cursor()
         updated_count = 0
 
-        if members:
+        # If normalized payments returned from Google Sheets
+        payments = data.get("payments", [])
+        if payments:
+            c.execute("DELETE FROM tb_payments")
+            for p in payments:
+                c.execute("""
+                    INSERT OR REPLACE INTO tb_payments (payment_id, payment_date, house_no, payer_name, quarters_paid, months_paid, amount, channel, recorded_by, remark)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    p.get('payment_id'), p.get('payment_date'), p.get('house_no'), p.get('payer_name'),
+                    p.get('quarters_paid'), str(p.get('months_paid', '[]')), p.get('amount', 0),
+                    p.get('channel', 'ธนาคาร'), p.get('recorded_by', 'เจ้าหน้าที่'), p.get('remark', '')
+                ))
+
+            # Re-evaluate all members payment status from tb_payments
+            c.execute("SELECT * FROM tb_members ORDER BY member_id ASC")
+            all_m = c.fetchall()
+            c.execute("SELECT * FROM tb_payments")
+            all_p = c.fetchall()
+            p_map = {}
+            for p in all_p:
+                h = str(p['house_no']).strip()
+                if h not in p_map: p_map[h] = []
+                p_map[h].append(p)
+
+            for m in all_m:
+                h = str(m['house_no']).strip()
+                h_pays = p_map.get(h, [])
+                rate = m['monthly_rate']
+                annual_target = m['annual_target']
+                paid_months = set()
+                for p in h_pays:
+                    try:
+                        m_list = json.loads(p['months_paid']) if isinstance(p['months_paid'], str) else p['months_paid']
+                        for mon in m_list: paid_months.add(mon)
+                    except: pass
+
+                m_arr = [rate if (i+1) in paid_months else 0.0 for i in range(12)]
+                q1 = sum(m_arr[0:3])
+                q2 = sum(m_arr[3:6])
+                q3 = sum(m_arr[6:9])
+                q4 = sum(m_arr[9:12])
+                yt = sum(m_arr)
+                due = max(0.0, annual_target - yt)
+                stat = "ชำระครบทั้งปี" if yt >= annual_target else ("ชำระบางส่วน" if yt > 0 else "ยังไม่ชำระ")
+
+                c.execute("""
+                    UPDATE members SET
+                        m1=?, m2=?, m3=?, m4=?, m5=?, m6=?,
+                        m7=?, m8=?, m9=?, m10=?, m11=?, m12=?,
+                        q1_total=?, q2_total=?, q3_total=?, q4_total=?,
+                        year_total=?, due_amount=?, status=?
+                    WHERE house_no=? OR id=?
+                """, (*m_arr, q1, q2, q3, q4, yt, due, stat, h, m['member_id']))
+                updated_count += 1
+
+        elif members:
             for m in members:
                 # Update member payment records in SQLite from Google Sheets
                 c.execute("""
@@ -139,8 +195,17 @@ def pull_from_google_sheet(force=False):
                         INSERT INTO expenses (doc_no, date, category, title, amount, payee, status)
                         VALUES (?, ?, ?, ?, ?, ?, ?)
                     """, (
-                        ex.get('doc_no', ''), ex.get('date', ''), ex.get('category', 'ค่าใช้จ่ายทั่วไป'),
+                        ex.get('doc_no', ''), ex.get('expense_date', ex.get('date', '')), ex.get('category', 'ทั่วไป'),
                         ex.get('title', ''), ex.get('amount', 0), ex.get('payee', ''), ex.get('status', 'จ่ายแล้ว')
+                    ))
+                c.execute("SELECT doc_no FROM tb_expenses WHERE doc_no = ?", (ex.get('doc_no'),))
+                if not c.fetchone():
+                    c.execute("""
+                        INSERT INTO tb_expenses (doc_no, expense_date, category, title, amount, payee, paid_from, status)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (
+                        ex.get('doc_no', ''), ex.get('expense_date', ex.get('date', '')), ex.get('category', 'ทั่วไป'),
+                        ex.get('title', ''), ex.get('amount', 0), ex.get('payee', ''), ex.get('paid_from', 'บัญชีธนาคาร'), ex.get('status', 'จ่ายแล้ว')
                     ))
 
         conn.commit()
@@ -522,6 +587,13 @@ class VillageFundHandler(BaseHTTPRequestHandler):
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """, (today_thai, m['house_no'], m['alley'], m['name'], total_paid_in_action, 0.0, curr_bal, time_str))
 
+        # Also insert into normalized tb_payments
+        quarters_str = ", ".join([f"งวด {q}" for q in sorted(list(set([(mon-1)//3 + 1 for mon in months])))])
+        c.execute("""
+            INSERT INTO tb_payments (payment_id, payment_date, house_no, payer_name, quarters_paid, months_paid, amount, channel, recorded_by, remark)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (receipt_no, today_thai, m['house_no'], m['name'], quarters_str, json.dumps(months), total_paid_in_action, channel, actor, note))
+
         # Add Audit log
         c.execute("""
             INSERT INTO audit_logs (actor, action, details)
@@ -533,25 +605,32 @@ class VillageFundHandler(BaseHTTPRequestHandler):
 
         # Sync Payment to Google Sheets (Real-time background sync)
         sync_to_google_sheet("PAYMENT", {
+            "payment_id": receipt_no,
             "receipt_no": receipt_no,
+            "payment_date": today_thai,
             "member_id": member_id,
             "member_name": m['name'],
+            "payer_name": m['name'],
             "house_no": m['house_no'],
             "alley": m['alley'],
             "amount": total_paid_in_action,
             "date": today_thai,
             "time": time_str,
             "months": months,
+            "months_paid": months,
+            "quarters_paid": quarters_str,
             "channel": channel,
             "new_status": status,
             "remaining_due": due,
+            "recorded_by": actor,
             "actor": actor,
             "q1": q1,
             "q2": q2,
             "q3": q3,
             "q4": q4,
             "year_total": year_total,
-            "payments": payments
+            "payments": payments,
+            "remark": note
         })
 
         self.send_json({
@@ -586,6 +665,12 @@ class VillageFundHandler(BaseHTTPRequestHandler):
             VALUES (?, ?, ?, ?, ?, ?, ?)
         """, (doc_no, date_str, category, title, amount, payee, status))
 
+        paid_from = "เงินสดสำรอง" if "สำรอง" in title or amount < 5000 and "รปภ" not in category else "บัญชีธนาคาร"
+        c.execute("""
+            INSERT OR REPLACE INTO tb_expenses (doc_no, expense_date, category, title, amount, payee, paid_from, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (doc_no, date_str, category, title, amount, payee, paid_from, status))
+
         c.execute("""
             INSERT INTO audit_logs (actor, action, details)
             VALUES (?, ?, ?)
@@ -598,10 +683,12 @@ class VillageFundHandler(BaseHTTPRequestHandler):
         sync_to_google_sheet("EXPENSE", {
             "doc_no": doc_no,
             "date": date_str,
+            "expense_date": date_str,
             "category": category,
             "title": title,
             "amount": amount,
             "payee": payee,
+            "paid_from": paid_from,
             "status": status,
             "actor": actor
         })
@@ -609,26 +696,26 @@ class VillageFundHandler(BaseHTTPRequestHandler):
         self.send_json({"success": True, "doc_no": doc_no})
 
     def handle_sync_sheets(self, data):
-        # Triggers full bulk sync to Google Sheets
+        # Triggers full bulk sync of normalized schema to Google Sheets
         conn = get_db()
         c = conn.cursor()
-        c.execute("SELECT * FROM members ORDER BY row_no ASC")
+        c.execute("SELECT * FROM tb_members ORDER BY member_id ASC")
         members = [dict(r) for r in c.fetchall()]
 
-        c.execute("SELECT * FROM expenses ORDER BY id ASC")
-        expenses = [dict(r) for r in c.fetchall()]
+        c.execute("SELECT * FROM tb_payments ORDER BY payment_id ASC")
+        payments = [dict(r) for r in c.fetchall()]
 
-        c.execute("SELECT * FROM bank_transactions ORDER BY id ASC")
-        bank = [dict(r) for r in c.fetchall()]
+        c.execute("SELECT * FROM tb_expenses ORDER BY doc_no ASC")
+        expenses = [dict(r) for r in c.fetchall()]
         conn.close()
 
         if GOOGLE_SHEET_WEBHOOK_URL:
             sync_to_google_sheet("SYNC_ALL", {
                 "members": members,
-                "expenses": expenses,
-                "bank_transactions": bank
+                "payments": payments,
+                "expenses": expenses
             })
-            msg = "ส่งคำสั่งซิงก์ข้อมูลทั้งหมดไปยัง Google Sheets เรียบร้อยแล้ว"
+            msg = "ส่งคำสั่งซิงก์ข้อมูลโครงสร้างใหม่ (4 ตาราง) ไปยัง Google Sheets เรียบร้อยแล้ว"
         else:
             msg = "ยังไม่ได้ตั้งค่า GOOGLE_SHEET_WEBHOOK_URL (ทำงานในโหมดออฟไลน์)"
 
@@ -637,8 +724,8 @@ class VillageFundHandler(BaseHTTPRequestHandler):
             "status": "ready" if GOOGLE_SHEET_WEBHOOK_URL else "configured_local",
             "has_webhook": bool(GOOGLE_SHEET_WEBHOOK_URL),
             "synced_at": datetime.now().strftime('%d/%m/2569 %H:%M:%S'),
-            "sheets_available": ["ทะเบียนสมาชิกและการชำระ", "สรุปรายรับแยกงวด", "รายละเอียดค่าใช้จ่าย", "สมุดบัญชีธนาคาร", "งบดุลสรุปภาพรวม"],
-            "download_url": "/village_fund_2569.xlsx",
+            "sheets_available": ["tb_members", "tb_payments", "tb_expenses", "tb_summary_config"],
+            "download_url": "/village_fund_clean.xlsx",
             "message": msg
         })
 

@@ -1,95 +1,105 @@
 /**
  * =========================================================================================
- * GOOGLE APPS SCRIPT: Village Fund 2569 Cloud Data Sync Webhook
- * ระบบเชื่อมต่อและซิงก์ข้อมูลกองทุนหมู่บ้าน 2569 แบบ Real-time ลง Google Sheets ฟรี 100%
+ * GOOGLE APPS SCRIPT: ระบบฐานข้อมูลกองทุนพัฒนาหมู่บ้าน ปี 2569 (Clean Relational Schema)
+ * รองรับการอ่านและเขียนข้อมูลแบบ Real-time กับ Render.com ฟรี 100%
  * =========================================================================================
  * 
- * วิธีการติดตั้ง (ครั้งแรกเพียง 2 นาที):
- * 1. เปิด Google Sheets ที่ต้องการใช้ (หรือ Import ไฟล์ village_fund_2569.xlsx ขึ้น Google Drive)
- * 2. ไปที่เมนู: ส่วนขยาย (Extensions) > Apps Script
- * 3. ลบโค้ดเดิมทั้งหมดออก แล้ววางโค้ดชุดนี้ลงไปทั้งหมด
- * 4. กดปุ่มบันทึก (รูปแผ่นดิสก์ Save)
- * 5. กดปุ่มสีน้ำเงินมุมขวาบน "ทำให้ใช้งานได้" (Deploy) > "การทำให้ใช้งานได้ใหม่" (New deployment)
- * 6. เลือกประเภท (Gear icon): "เว็บแอป" (Web app)
- *    - คำอธิบาย (Description): Village Fund Webhook
- *    - ดำเนินการในฐานะ (Execute as): ตัวฉัน (Me)
- *    - ผู้มีสิทธิ์เข้าถึง (Who has access): ทุกคน (Anyone)  <--- สำคัญมาก ต้องเลือก ทุกคน (Anyone)
- * 7. กด "ทำให้ใช้งานได้" (Deploy) แล้วอนุญาตสิทธิ์ (Authorize access)
- * 8. คัดลอก "URL ของเว็บแอป" (Web app URL) ที่ลงท้ายด้วย /exec
- * 9. นำ URL ไปใส่ในตัวแปรสภาพแวดล้อม (Environment Variable) บน Render.com:
- *    ชื่อตัวแปร: GOOGLE_SHEET_WEBHOOK_URL
- *    ค่า: URL ที่คัดลอกมา
+ * โครงสร้างฐานข้อมูล 4 ตารางหลัก:
+ * 1. tb_members        : ทะเบียนสมาชิก 162 หลังคาเรือน
+ * 2. tb_payments       : ประวัติธุรกรรมรับชำระเงิน (Transaction Ledger)
+ * 3. tb_expenses       : รายการเบิกจ่ายค่าใช้จ่ายทั้งหมด
+ * 4. tb_summary_config : ค่ายอดยกมา ดอกเบี้ย และเงินกองทุน
  * =========================================================================================
  */
 
 function doGet(e) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   
-  // 1. อ่านข้อมูลชีท ทะเบียนสมาชิกและการชำระ
-  var memberSheet = ss.getSheetByName("ทะเบียนสมาชิกและการชำระ");
+  // 1. อ่านข้อมูลสมาชิก (tb_members)
+  var memberSheet = ss.getSheetByName("tb_members");
   var members = [];
   if (memberSheet && memberSheet.getLastRow() >= 2) {
-    var mData = memberSheet.getRange(2, 1, memberSheet.getLastRow() - 1, 24).getValues();
+    var mData = memberSheet.getRange(2, 1, memberSheet.getLastRow() - 1, 7).getValues();
     for (var i = 0; i < mData.length; i++) {
       var r = mData[i];
-      if (!r[2] && !r[3]) continue; // ข้ามแถวว่าง
+      if (!r[2] && !r[3]) continue;
       members.push({
-        id: r[0] || (i + 1),
+        member_id: r[0],
         alley: String(r[1] || ""),
-        house_no: String(r[2] || ""),
-        name: String(r[3] || ""),
-        fee_monthly: Number(r[4]) || 50,
-        m1: Number(r[5]) || 0,
-        m2: Number(r[6]) || 0,
-        m3: Number(r[7]) || 0,
-        q1_total: Number(r[8]) || 0,
-        m4: Number(r[9]) || 0,
-        m5: Number(r[10]) || 0,
-        m6: Number(r[11]) || 0,
-        q2_total: Number(r[12]) || 0,
-        m7: Number(r[13]) || 0,
-        m8: Number(r[14]) || 0,
-        m9: Number(r[15]) || 0,
-        q3_total: Number(r[16]) || 0,
-        m10: Number(r[17]) || 0,
-        m11: Number(r[18]) || 0,
-        m12: Number(r[19]) || 0,
-        q4_total: Number(r[20]) || 0,
-        year_total: Number(r[21]) || 0,
-        due_amount: Number(r[22]) || 0,
-        status: String(r[23] || "ยังไม่ชำระ")
+        house_no: String(r[2] || "").trim(),
+        owner_name: String(r[3] || "").trim(),
+        monthly_rate: Number(r[4]) || 300,
+        annual_target: Number(r[5]) || 3600,
+        remark: String(r[6] || "")
       });
     }
   }
 
-  // 2. อ่านข้อมูลชีท รายละเอียดค่าใช้จ่าย
-  var expSheet = ss.getSheetByName("รายละเอียดค่าใช้จ่าย");
+  // 2. อ่านประวัติการชำระเงิน (tb_payments)
+  var paySheet = ss.getSheetByName("tb_payments");
+  var payments = [];
+  if (paySheet && paySheet.getLastRow() >= 2) {
+    var pData = paySheet.getRange(2, 1, paySheet.getLastRow() - 1, 10).getValues();
+    for (var j = 0; j < pData.length; j++) {
+      var pr = pData[j];
+      if (!pr[0] && !pr[2]) continue;
+      payments.push({
+        payment_id: String(pr[0] || ""),
+        payment_date: String(pr[1] || ""),
+        house_no: String(pr[2] || "").trim(),
+        payer_name: String(pr[3] || "").trim(),
+        quarters_paid: String(pr[4] || ""),
+        months_paid: String(pr[5] || "[]"),
+        amount: Number(pr[6]) || 0,
+        channel: String(pr[7] || "ธนาคาร"),
+        recorded_by: String(pr[8] || "เจ้าหน้าที่"),
+        remark: String(pr[9] || "")
+      });
+    }
+  }
+
+  // 3. อ่านรายละเอียดค่าใช้จ่าย (tb_expenses)
+  var expSheet = ss.getSheetByName("tb_expenses");
   var expenses = [];
   if (expSheet && expSheet.getLastRow() >= 2) {
-    var eData = expSheet.getRange(2, 1, expSheet.getLastRow() - 1, 7).getValues();
-    for (var j = 0; j < eData.length; j++) {
-      var er = eData[j];
-      if (!er[3]) continue;
+    var eData = expSheet.getRange(2, 1, expSheet.getLastRow() - 1, 8).getValues();
+    for (var k = 0; k < eData.length; k++) {
+      var er = eData[k];
+      if (!er[0] && !er[3]) continue;
       expenses.push({
         doc_no: String(er[0] || ""),
-        date: String(er[1] || ""),
-        category: String(er[2] || "ค่าใช้จ่ายทั่วไป"),
+        expense_date: String(er[1] || ""),
+        category: String(er[2] || "ทั่วไป"),
         title: String(er[3] || ""),
         amount: Number(er[4]) || 0,
         payee: String(er[5] || ""),
-        status: String(er[6] || "จ่ายแล้ว")
+        paid_from: String(er[6] || "บัญชีธนาคาร"),
+        status: String(er[7] || "จ่ายแล้ว")
       });
+    }
+  }
+
+  // 4. อ่านการตั้งค่ากองทุน (tb_summary_config)
+  var cfgSheet = ss.getSheetByName("tb_summary_config");
+  var config = {};
+  if (cfgSheet && cfgSheet.getLastRow() >= 2) {
+    var cData = cfgSheet.getRange(2, 1, cfgSheet.getLastRow() - 1, 3).getValues();
+    for (var c = 0; c < cData.length; c++) {
+      config[String(cData[c][0])] = Number(cData[c][1]) || 0;
     }
   }
 
   var output = {
     status: "success",
-    system: "Village Fund 2569 Google Sheets Live Database",
+    system: "Village Fund 2569 Normalized API",
     updated_at: new Date().toISOString(),
     total_members: members.length,
+    total_payments: payments.length,
     total_expenses: expenses.length,
     members: members,
-    expenses: expenses
+    payments: payments,
+    expenses: expenses,
+    config: config
   };
 
   return ContentService.createTextOutput(JSON.stringify(output))
@@ -99,14 +109,12 @@ function doGet(e) {
 function doPost(e) {
   var lock = LockService.getScriptLock();
   try {
-    // ล็อก script สูงสุด 10 วินาทีเพื่อป้องกันการเขียนชนกันพร้อมกัน
     lock.waitLock(10000);
-    
     var payload = {};
     if (e && e.postData && e.postData.contents) {
       payload = JSON.parse(e.postData.contents);
     } else {
-      return responseJson({ status: "error", message: "No data payload received" });
+      return responseJson({ status: "error", message: "No data payload" });
     }
 
     var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -114,73 +122,58 @@ function doPost(e) {
     var data = payload.data || {};
 
     // ----------------------------------------------------
-    // ACTION 1: บันทึกการรับชำระเงิน (PAYMENT)
+    // ACTION 1: บันทึกรับเงิน (PAYMENT)
     // ----------------------------------------------------
     if (action === "PAYMENT") {
-      var memberSheet = getOrCreateSheet(ss, "ทะเบียนสมาชิกและการชำระ", getMemberHeaders());
-      var logSheet = getOrCreateSheet(ss, "ประวัติการชำระเงิน_Log", [
-        "วันเวลาบันทึก", "เลขที่ใบเสร็จ", "รหัสสมาชิก", "ชื่อ-นามสกุล", "บ้านเลขที่", 
-        "ซอย", "จำนวนเงิน (บาท)", "งวดเดือนที่จ่าย", "ช่องทาง", "สถานะใหม่", "ยอดคงค้าง", "ผู้บันทึก"
-      ]);
+      var payHeaders = ["เลขที่ใบเสร็จ", "วันที่ชำระเงิน", "บ้านเลขที่", "ชื่อผู้ชำระ", "งวดที่ชำระ", "เดือนที่ชำระ (JSON)", "จำนวนเงิน (บาท)", "ช่องทาง", "ผู้บันทึก", "หมายเหตุ"];
+      var paySheet = getOrCreateSheet(ss, "tb_payments", payHeaders, "#047857");
 
-      // 1. เพิ่มประวัติใน Log Sheet
-      logSheet.appendRow([
-        new Date().toLocaleString("th-TH"),
-        data.receipt_no || "-",
-        data.member_id || "-",
-        data.member_name || "-",
-        data.house_no || "-",
-        data.alley || "-",
+      paySheet.appendRow([
+        data.payment_id || ("REC-69-" + new Date().getTime()),
+        data.payment_date || new Date().toLocaleDateString("th-TH"),
+        String(data.house_no || "").trim(),
+        String(data.payer_name || "").trim(),
+        data.quarters_paid || "-",
+        JSON.stringify(data.months_paid || []),
         data.amount || 0,
-        JSON.stringify(data.months || []),
-        data.channel === "bank" ? "โอนเงินเข้าธนาคาร" : "เงินสด",
-        data.new_status || "-",
-        data.remaining_due || 0,
-        data.actor || "เจ้าหน้าที่"
+        data.channel || "ธนาคาร",
+        data.recorded_by || "เจ้าหน้าที่",
+        data.remark || ""
       ]);
 
-      // 2. อัปเดตในชีทสมาชิกหลัก (ถ้ามีแถวของสมาชิกอยู่)
-      updateMemberRow(memberSheet, data);
-
-      return responseJson({ status: "success", action: "PAYMENT", receipt_no: data.receipt_no });
+      return responseJson({ status: "success", action: "PAYMENT", payment_id: data.payment_id });
     }
 
     // ----------------------------------------------------
     // ACTION 2: บันทึกรายจ่าย (EXPENSE)
     // ----------------------------------------------------
     else if (action === "EXPENSE") {
-      var expenseSheet = getOrCreateSheet(ss, "รายละเอียดค่าใช้จ่าย", [
-        "เลขที่เอกสาร", "วันที่", "หมวดหมู่", "รายการค่าใช้จ่าย", "จำนวนเงิน (บาท)", "ผู้รับเงิน", "สถานะ", "ผู้บันทึก"
-      ]);
+      var expHeaders = ["เลขที่เอกสาร", "วันที่จ่าย", "หมวดหมู่ค่าใช้จ่าย", "รายการค่าใช้จ่าย", "จำนวนเงิน (บาท)", "ผู้รับเงิน / ผู้เบิก", "จ่ายจาก", "สถานะ"];
+      var expSheet = getOrCreateSheet(ss, "tb_expenses", expHeaders, "#B91C1C");
 
-      expenseSheet.appendRow([
-        data.doc_no || "-",
-        data.date || new Date().toLocaleDateString("th-TH"),
-        data.category || "ค่าใช้จ่ายทั่วไป",
+      expSheet.appendRow([
+        data.doc_no || ("EXP-" + new Date().getTime()),
+        data.expense_date || new Date().toLocaleDateString("th-TH"),
+        data.category || "ทั่วไป",
         data.title || "-",
         data.amount || 0,
         data.payee || "-",
-        data.status || "จ่ายแล้ว",
-        data.actor || "เจ้าหน้าที่"
+        data.paid_from || "บัญชีธนาคาร",
+        data.status || "จ่ายแล้ว"
       ]);
 
       return responseJson({ status: "success", action: "EXPENSE", doc_no: data.doc_no });
     }
 
     // ----------------------------------------------------
-    // ACTION 3: ซิงก์ข้อมูลทั้งหมด (SYNC_ALL)
+    // ACTION 3: นำเข้าข้อมูลทั้งหมด (SYNC_ALL)
     // ----------------------------------------------------
     else if (action === "SYNC_ALL") {
-      if (data.members && data.members.length > 0) {
-        syncAllMembers(ss, data.members);
-      }
-      if (data.expenses && data.expenses.length > 0) {
-        syncAllExpenses(ss, data.expenses);
-      }
-      return responseJson({ status: "success", action: "SYNC_ALL", message: "ซิงก์ข้อมูลทั้งหมดเรียบร้อย" });
+      syncAllToSheets(ss, data);
+      return responseJson({ status: "success", action: "SYNC_ALL", message: "สร้างและซิงก์ตารางข้อมูลทั้งหมดเรียบร้อย" });
     }
 
-    return responseJson({ status: "error", message: "Unknown action: " + action });
+    return responseJson({ status: "error", message: "Unknown action" });
 
   } catch (err) {
     return responseJson({ status: "error", message: err.toString() });
@@ -189,130 +182,117 @@ function doPost(e) {
   }
 }
 
-// ----------------------------------------------------
-// HELPER FUNCTIONS
-// ----------------------------------------------------
-
 function responseJson(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-function getOrCreateSheet(ss, sheetName, headers) {
+function getOrCreateSheet(ss, sheetName, headers, headerColor) {
   var sheet = ss.getSheetByName(sheetName);
   if (!sheet) {
     sheet = ss.insertSheet(sheetName);
     if (headers && headers.length > 0) {
       sheet.appendRow(headers);
       var headerRange = sheet.getRange(1, 1, 1, headers.length);
-      headerRange.setFontWeight("bold");
-      headerRange.setBackground("#E8F0FE");
+      headerRange.setFontWeight("bold").setFontColor("#FFFFFF").setBackground(headerColor || "#1E3A8A");
     }
   }
   return sheet;
 }
 
-function getMemberHeaders() {
-  return [
-    "ลำดับ", "ซอย", "บ้านเลขที่", "ชื่อ-นามสกุล", "อัตรา/เดือน",
-    "ม.ค.", "ก.พ.", "มี.ค.", "รวมงวด 1",
-    "เม.ย.", "พ.ค.", "มิ.ย.", "รวมงวด 2",
-    "ก.ค.", "ส.ค.", "ก.ย.", "รวมงวด 3",
-    "ต.ค.", "พ.ย.", "ธ.ค.", "รวมงวด 4",
-    "รวมชำระทั้งปี", "ยอดคงค้าง", "สถานะ", "อัปเดตล่าสุด"
+function syncAllToSheets(ss, data) {
+  // 1. tb_members
+  if (data.members && data.members.length > 0) {
+    var mHeaders = ["รหัสสมาชิก (ID)", "ซอย", "บ้านเลขที่", "ชื่อ-สกุล สมาชิก", "อัตราต่อเดือน (บาท)", "เป้าหมายทั้งปี (บาท)", "หมายเหตุ"];
+    var mSheet = getOrCreateSheet(ss, "tb_members", mHeaders, "#1E3A8A");
+    mSheet.clearContents();
+    mSheet.appendRow(mHeaders);
+    var mRows = [];
+    for (var i = 0; i < data.members.length; i++) {
+      var m = data.members[i];
+      mRows.push([
+        m.member_id || (i + 1),
+        m.alley || "-",
+        m.house_no || "-",
+        m.owner_name || "-",
+        m.monthly_rate || 300,
+        m.annual_target || (m.monthly_rate * 12),
+        m.remark || ""
+      ]);
+    }
+    if (mRows.length > 0) {
+      mSheet.getRange(2, 1, mRows.length, mRows[0].length).setValues(mRows);
+      mSheet.getRange(1, 1, 1, mHeaders.length).setFontWeight("bold").setFontColor("#FFFFFF").setBackground("#1E3A8A");
+    }
+  }
+
+  // 2. tb_payments
+  if (data.payments && data.payments.length > 0) {
+    var pHeaders = ["เลขที่ใบเสร็จ", "วันที่ชำระเงิน", "บ้านเลขที่", "ชื่อผู้ชำระ", "งวดที่ชำระ", "เดือนที่ชำระ (JSON)", "จำนวนเงิน (บาท)", "ช่องทาง", "ผู้บันทึก", "หมายเหตุ"];
+    var pSheet = getOrCreateSheet(ss, "tb_payments", pHeaders, "#047857");
+    pSheet.clearContents();
+    pSheet.appendRow(pHeaders);
+    var pRows = [];
+    for (var j = 0; j < data.payments.length; j++) {
+      var p = data.payments[j];
+      pRows.push([
+        p.payment_id || "-",
+        p.payment_date || "-",
+        p.house_no || "-",
+        p.payer_name || "-",
+        p.quarters_paid || "-",
+        typeof p.months_paid === "string" ? p.months_paid : JSON.stringify(p.months_paid || []),
+        p.amount || 0,
+        p.channel || "ธนาคาร",
+        p.recorded_by || "เจ้าหน้าที่",
+        p.remark || ""
+      ]);
+    }
+    if (pRows.length > 0) {
+      pSheet.getRange(2, 1, pRows.length, pRows[0].length).setValues(pRows);
+      pSheet.getRange(1, 1, 1, pHeaders.length).setFontWeight("bold").setFontColor("#FFFFFF").setBackground("#047857");
+    }
+  }
+
+  // 3. tb_expenses
+  if (data.expenses && data.expenses.length > 0) {
+    var eHeaders = ["เลขที่เอกสาร", "วันที่จ่าย", "หมวดหมู่ค่าใช้จ่าย", "รายการค่าใช้จ่าย", "จำนวนเงิน (บาท)", "ผู้รับเงิน / ผู้เบิก", "จ่ายจาก", "สถานะ"];
+    var eSheet = getOrCreateSheet(ss, "tb_expenses", eHeaders, "#B91C1C");
+    eSheet.clearContents();
+    eSheet.appendRow(eHeaders);
+    var eRows = [];
+    for (var k = 0; k < data.expenses.length; k++) {
+      var e = data.expenses[k];
+      eRows.push([
+        e.doc_no || "-",
+        e.expense_date || "-",
+        e.category || "-",
+        e.title || "-",
+        e.amount || 0,
+        e.payee || "-",
+        e.paid_from || "บัญชีธนาคาร",
+        e.status || "จ่ายแล้ว"
+      ]);
+    }
+    if (eRows.length > 0) {
+      eSheet.getRange(2, 1, eRows.length, eRows[0].length).setValues(eRows);
+      eSheet.getRange(1, 1, 1, eHeaders.length).setFontWeight("bold").setFontColor("#FFFFFF").setBackground("#B91C1C");
+    }
+  }
+
+  // 4. tb_summary_config
+  var cHeaders = ["รหัสค่าตัวแปร", "จำนวนเงิน (บาท)", "คำอธิบาย"];
+  var cSheet = getOrCreateSheet(ss, "tb_summary_config", cHeaders, "#475569");
+  cSheet.clearContents();
+  cSheet.appendRow(cHeaders);
+  var cRows = [
+    ["initial_balance_2568", 82969.73, "ยอดเงินคงเหลือปี 2568 (ณ 24 ม.ค. 69) ยกมา"],
+    ["initial_reserve_cash", 10049.57, "ยอดเงินสดสำรอง ยกมาจากปี 2568"],
+    ["support_income", 168.39, "เงินสนับสนุน / ดอกเบี้ยรับปี 2569"],
+    ["current_cash_reserve", 13764.47, "เงินสำรองคงเหลือ (เงินสด) ปัจจุบัน"],
+    ["current_bank_balance", 54353.55, "เงินคงเหลือในสมุดบัญชีธนาคาร ปัจจุบัน"],
+    ["total_ending_balance", 68118.02, "รวมเงินคงเหลือทั้งหมด (เงินสด + ธนาคาร)"]
   ];
-}
-
-function updateMemberRow(sheet, data) {
-  var lastRow = sheet.getLastRow();
-  if (lastRow < 2) return;
-
-  var values = sheet.getRange(2, 1, lastRow - 1, 3).getValues(); // ค้นหาจาก ลำดับ หรือ บ้านเลขที่
-  var targetRow = -1;
-
-  for (var i = 0; i < values.length; i++) {
-    var rowMemberId = values[i][0];
-    var rowHouseNo = String(values[i][2]).trim();
-    if (rowMemberId == data.member_id || rowHouseNo == String(data.house_no).trim()) {
-      targetRow = i + 2; // +2 เพราะ offset header 1 แถว และ 0-indexed
-      break;
-    }
-  }
-
-  if (targetRow > 0) {
-    // ถ้าเจอแถว ให้ปรับยอดรวมและสถานะ
-    var p = data.payments || [];
-    if (p.length === 12) {
-      var rowData = [
-        p[0], p[1], p[2], data.q1,
-        p[3], p[4], p[5], data.q2,
-        p[6], p[7], p[8], data.q3,
-        p[9], p[10], p[11], data.q4,
-        data.year_total, data.remaining_due, data.new_status, new Date().toLocaleString("th-TH")
-      ];
-      sheet.getRange(targetRow, 6, 1, rowData.length).setValues([rowData]);
-    } else {
-      // อัปเดตเฉพาะคอลัมน์สรุป
-      sheet.getRange(targetRow, 22, 1, 4).setValues([[
-        data.year_total, data.remaining_due, data.new_status, new Date().toLocaleString("th-TH")
-      ]]);
-    }
-  }
-}
-
-function syncAllMembers(ss, members) {
-  var sheet = getOrCreateSheet(ss, "ทะเบียนสมาชิกและการชำระ", getMemberHeaders());
-  sheet.clearContents();
-  sheet.appendRow(getMemberHeaders());
-
-  var rows = [];
-  for (var i = 0; i < members.length; i++) {
-    var m = members[i];
-    rows.push([
-      m.id || (i + 1),
-      m.alley || "-",
-      m.house_no || "-",
-      m.name || "-",
-      m.fee_monthly || 50,
-      m.m1 || 0, m.m2 || 0, m.m3 || 0, m.q1_total || 0,
-      m.m4 || 0, m.m5 || 0, m.m6 || 0, m.q2_total || 0,
-      m.m7 || 0, m.m8 || 0, m.m9 || 0, m.q3_total || 0,
-      m.m10 || 0, m.m11 || 0, m.m12 || 0, m.q4_total || 0,
-      m.year_total || 0,
-      m.due_amount || 0,
-      m.status || "ยังไม่ชำระ",
-      new Date().toLocaleString("th-TH")
-    ]);
-  }
-
-  if (rows.length > 0) {
-    sheet.getRange(2, 1, rows.length, rows[0].length).setValues(rows);
-    sheet.getRange(1, 1, 1, getMemberHeaders().length).setFontWeight("bold").setBackground("#E8F0FE");
-  }
-}
-
-function syncAllExpenses(ss, expenses) {
-  var headers = ["เลขที่เอกสาร", "วันที่", "หมวดหมู่", "รายการค่าใช้จ่าย", "จำนวนเงิน (บาท)", "ผู้รับเงิน", "สถานะ"];
-  var sheet = getOrCreateSheet(ss, "รายละเอียดค่าใช้จ่าย", headers);
-  sheet.clearContents();
-  sheet.appendRow(headers);
-
-  var rows = [];
-  for (var i = 0; i < expenses.length; i++) {
-    var ex = expenses[i];
-    rows.push([
-      ex.doc_no || "-",
-      ex.date || "-",
-      ex.category || "-",
-      ex.title || "-",
-      ex.amount || 0,
-      ex.payee || "-",
-      ex.status || "จ่ายแล้ว"
-    ]);
-  }
-
-  if (rows.length > 0) {
-    sheet.getRange(2, 1, rows.length, rows[0].length).setValues(rows);
-    sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#FEF3C7");
-  }
+  cSheet.getRange(2, 1, cRows.length, cRows[0].length).setValues(cRows);
+  cSheet.getRange(1, 1, 1, cHeaders.length).setFontWeight("bold").setFontColor("#FFFFFF").setBackground("#475569");
 }
