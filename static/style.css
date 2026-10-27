@@ -66,6 +66,7 @@ body {
   align-items: center;
   justify-content: center;
   font-size: 24px;
+  flex-shrink: 0;
 }
 
 .brand-text h1 {
@@ -115,6 +116,7 @@ body {
   gap: 6px;
   transition: all 0.2s;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .nav-tab-btn:hover {
@@ -142,6 +144,7 @@ body {
   gap: 6px;
   box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .btn-staff-portal:hover {
@@ -149,10 +152,64 @@ body {
   transform: translateY(-1px);
 }
 
+@media (max-width: 900px) {
+  .top-navbar {
+    padding: 10px 14px;
+  }
+  .nav-container {
+    gap: 12px;
+  }
+  .brand-icon {
+    width: 38px;
+    height: 38px;
+    font-size: 20px;
+  }
+  .brand-text h1 {
+    font-size: 15px;
+  }
+  .brand-text p {
+    font-size: 11px;
+  }
+  .btn-staff-portal {
+    padding: 6px 12px;
+    font-size: 12px;
+    border-radius: 8px;
+  }
+  .nav-tabs {
+    width: 100%;
+    order: 3;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 4px;
+    gap: 6px;
+  }
+  .nav-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .nav-tab-btn {
+    flex-shrink: 0;
+    padding: 7px 12px;
+    font-size: 13px;
+  }
+}
+
 /* Announcement Ticker */
 .announcement-bar {
   background: #ebf5ff;
   border-bottom: 1px solid #dbeafe;
+  padding: 8px 24px;
+  font-size: 13px;
+}
+
+@media (max-width: 768px) {
+  .announcement-bar {
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+}
   padding: 8px 24px;
   font-size: 13px;
 }
@@ -228,7 +285,43 @@ body {
 }
 
 @media (max-width: 640px) {
-  .grid-4 { grid-template-columns: 1fr; }
+  .grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .stat-card {
+    padding: 12px;
+    border-radius: 12px;
+  }
+  .stat-title {
+    font-size: 11px;
+    line-height: 1.3;
+  }
+  .stat-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+    border-radius: 8px;
+  }
+  .stat-amount {
+    font-size: 17px;
+    margin-bottom: 8px;
+    word-break: break-word;
+  }
+  .stat-footer {
+    font-size: 10px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    padding-top: 6px;
+  }
+}
+
+@media (max-width: 350px) {
+  .grid-4 {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Stat Cards */
@@ -316,6 +409,21 @@ body {
   margin-bottom: 20px;
 }
 
+@media (max-width: 640px) {
+  .content-section {
+    padding: 14px;
+    border-radius: 12px;
+    margin-bottom: 14px;
+  }
+  .section-header {
+    margin-bottom: 14px;
+    gap: 8px;
+  }
+  .section-title {
+    font-size: 15px;
+  }
+}
+
 .section-header {
   display: flex;
   justify-content: space-between;
@@ -351,10 +459,11 @@ body {
 }
 
 @media (max-width: 900px) {
-  .period-grid { grid-template-columns: repeat(2, 1fr); }
+  .period-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
 }
-@media (max-width: 500px) {
-  .period-grid { grid-template-columns: 1fr; }
+@media (max-width: 480px) {
+  .period-grid { grid-template-columns: 1fr; gap: 10px; }
+}
 }
 
 .period-card {
@@ -449,6 +558,34 @@ body {
   color: #cbd5e1;
   max-width: 600px;
   margin: 0 auto 24px;
+}
+
+@media (max-width: 640px) {
+  .hero-search-card {
+    padding: 24px 14px;
+    border-radius: 14px;
+    margin-bottom: 16px;
+  }
+  .hero-search-card h2 {
+    font-size: 18px;
+    margin-bottom: 6px;
+  }
+  .hero-search-card p {
+    font-size: 12px;
+    margin-bottom: 16px;
+  }
+  .search-input-group {
+    padding: 4px;
+    border-radius: 10px;
+  }
+  .search-input-group input {
+    font-size: 14px;
+    padding: 6px 8px;
+  }
+  .btn-search {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
 }
 
 .search-input-group {
@@ -712,7 +849,42 @@ body {
   background: #f8fafc;
 }
 
+@media (max-width: 768px) {
+  .bank-info-card {
+    padding: 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .bank-info-left {
+    gap: 12px;
+  }
+  .bank-icon-box {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+  .bank-title {
+    font-size: 14px;
+  }
+  .bank-sub {
+    font-size: 12px;
+  }
+  .bank-right-pill {
+    width: 100%;
+    text-align: center;
+    padding: 6px 12px;
+    font-size: 11px;
+  }
+}
+
 /* ---------------- Financial Statement (Image 3) ---------------- */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .paper-statement {
   background: #fff;
   border: 1px solid #cbd5e1;
@@ -762,11 +934,45 @@ body {
 .table-statement th.r,
 .table-statement td.r {
   text-align: right;
+  white-space: nowrap;
 }
 
 .table-statement th.c,
 .table-statement td.c {
   text-align: center;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .paper-statement {
+    padding: 20px 14px;
+    border-radius: 12px;
+  }
+  .statement-title-area {
+    margin-bottom: 16px;
+  }
+  .statement-title-area h2 {
+    font-size: 16px;
+  }
+  .table-statement {
+    font-size: 12px;
+    min-width: 460px;
+  }
+  .table-statement th,
+  .table-statement td {
+    padding: 8px 10px;
+  }
+  .signatures-area {
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+    margin-top: 36px;
+    padding: 0;
+  }
+  .sig-block {
+    width: 100%;
+    max-width: 260px;
+  }
 }
 
 .tr-highlight-blue {
@@ -935,6 +1141,33 @@ body {
 .staff-menu-btn.active {
   background: #2563eb;
   color: #fff;
+}
+
+@media (max-width: 860px) {
+  .staff-topbar {
+    padding: 10px 14px;
+  }
+  .staff-subnav {
+    padding: 6px 10px;
+  }
+  .staff-menu {
+    gap: 6px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .staff-menu::-webkit-scrollbar {
+    display: none;
+  }
+  .staff-menu-btn {
+    padding: 7px 12px;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+  .form-card {
+    padding: 16px;
+    border-radius: 12px;
+  }
 }
 
 /* Form Styles */

@@ -34,9 +34,6 @@
         <button class="nav-tab-btn" data-tab="committee">
           <span>👥</span> คณะกรรมการ
         </button>
-        <button class="nav-tab-btn" data-tab="public-info">
-          <span>ℹ️</span> ข้อมูลสาธารณะ
-        </button>
       </nav>
 
       <a href="/staff" class="btn-staff-portal">
@@ -195,7 +192,7 @@
             </select>
           </div>
         </div>
-        <div style="overflow-x: auto;">
+        <div class="table-responsive">
           <table class="table-statement" id="houses-table">
             <!-- Rendered by JS -->
           </table>
@@ -227,18 +224,20 @@
           </p>
         </div>
 
-        <table class="table-statement">
-          <thead>
-            <tr>
-              <th style="width: 15%;" class="c">ว/ด/ป</th>
-              <th style="width: 60%;">รายการ</th>
-              <th style="width: 25%;" class="r">จำนวนเงิน (บาท)</th>
-            </tr>
-          </thead>
-          <tbody id="statement-tbody">
-            <!-- Filled dynamically -->
-          </tbody>
-        </table>
+        <div class="table-responsive">
+          <table class="table-statement">
+            <thead>
+              <tr>
+                <th style="width: 15%;" class="c">ว/ด/ป</th>
+                <th style="width: 60%;">รายการ</th>
+                <th style="width: 25%;" class="r">จำนวนเงิน (บาท)</th>
+              </tr>
+            </thead>
+            <tbody id="statement-tbody">
+              <!-- Filled dynamically -->
+            </tbody>
+          </table>
+        </div>
 
         <!-- Signatures Area (Image 3) -->
         <div class="signatures-area">
@@ -334,50 +333,6 @@
         </div>
         <div class="bank-right-pill">
           โอนแล้วกรุณาแจ้งสลิปกับเจ้าหน้าที่เพื่อออกใบเสร็จ
-        </div>
-      </div>
-    </div>
-
-    <!-- ==================== TAB 5: ข้อมูลสาธารณะ ==================== -->
-    <div id="tab-public-info" class="tab-content hidden">
-      <div class="grid-2">
-        <div class="content-section">
-          <div class="section-title" style="margin-bottom: 16px;">🏦 ช่องทางการชำระเงินเข้ากองทุน</div>
-          <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 18px; margin-bottom: 16px;">
-            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-              <span style="font-size: 28px;">🏧</span>
-              <div>
-                <b style="font-size: 16px; color: #1e40af;">ธนาคารกรุงเทพ (BBL)</b>
-                <div style="font-size: 13px; color: #475569;">บัญชีกองทุนพัฒนาหมู่บ้าน</div>
-              </div>
-            </div>
-            <p style="font-size: 13px; color: #334155;">
-              หลังโอนเงิน กรุณาส่งสลิปหลักฐานแจ้งเจ้าหน้าที่หรือเหรัญญิกเพื่อบันทึกและออกใบเสร็จรับเงิน
-            </p>
-          </div>
-          <div class="section-title" style="font-size: 15px; margin-bottom: 12px;">📋 อัตราค่าบำรุงกองทุนประจำปี 2569</div>
-          <ul style="font-size: 14px; color: #334155; padding-left: 20px; line-height: 1.8;">
-            <li><b>บ้านในซอย 1 ถึง 10:</b> เดือนละ 300 บาท (งวดละ 900 บาท / ทั้งปี 3,600 บาท)</li>
-            <li><b>บ้านติดถนนสายหลัก:</b> เดือนละ 100 บาท (งวดละ 300 บาท / ทั้งปี 1,200 บาท)</li>
-          </ul>
-        </div>
-
-        <div class="content-section">
-          <div class="section-title" style="margin-bottom: 16px;">📅 กำหนดการจัดเก็บเงิน 4 งวด</div>
-          <div style="display: flex; flex-direction: column; gap: 12px;">
-            <div style="border-left: 4px solid #10b981; padding: 8px 14px; background: #f8fafc;">
-              <b>งวดที่ 1 (ม.ค. - มี.ค.)</b>: กำหนดชำระภายในเดือนมีนาคม
-            </div>
-            <div style="border-left: 4px solid #3b82f6; padding: 8px 14px; background: #f8fafc;">
-              <b>งวดที่ 2 (เม.ย. - มิ.ย.)</b>: กำหนดชำระภายในเดือนมิถุนายน
-            </div>
-            <div style="border-left: 4px solid #8b5cf6; padding: 8px 14px; background: #f8fafc;">
-              <b>งวดที่ 3 (ก.ค. - ก.ย.)</b>: กำหนดชำระภายในเดือนกันยายน
-            </div>
-            <div style="border-left: 4px solid #f59e0b; padding: 8px 14px; background: #f8fafc;">
-              <b>งวดที่ 4 (ต.ค. - ธ.ค.)</b>: กำหนดชำระภายในเดือนธันวาคม
-            </div>
-          </div>
         </div>
       </div>
     </div>
