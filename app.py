@@ -110,6 +110,22 @@ def pull_from_google_sheet(force=False):
         c = conn.cursor()
         updated_count = 0
 
+        # Sync members first if available
+        members_data = data.get("members", [])
+        if members_data:
+            for m in members_data:
+                mid = m.get('member_id') or m.get('id')
+                alley = m.get('alley', '')
+                h_no = str(m.get('house_no', '')).strip()
+                name = m.get('owner_name') or m.get('name', '')
+                rate = float(m.get('monthly_rate') or m.get('fee_monthly') or 300)
+                target = float(m.get('annual_target') or (rate * 12))
+                rem = m.get('remark', '')
+                c.execute("""
+                    INSERT OR REPLACE INTO tb_members (member_id, alley, house_no, owner_name, monthly_rate, annual_target, remark)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (mid, alley, h_no, name, rate, target, rem))
+
         # If normalized payments returned from Google Sheets
         payments = data.get("payments", [])
         if payments:
@@ -119,12 +135,12 @@ def pull_from_google_sheet(force=False):
                     INSERT OR REPLACE INTO tb_payments (payment_id, payment_date, house_no, payer_name, quarters_paid, months_paid, amount, channel, recorded_by, remark)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
-                    p.get('payment_id'), p.get('payment_date'), p.get('house_no'), p.get('payer_name'),
+                    p.get('payment_id'), p.get('payment_date'), str(p.get('house_no', '')).strip(), p.get('payer_name'),
                     p.get('quarters_paid'), str(p.get('months_paid', '[]')), p.get('amount', 0),
                     p.get('channel', 'ธนาคาร'), p.get('recorded_by', 'เจ้าหน้าที่'), p.get('remark', '')
                 ))
 
-            # Re-evaluate all members payment status from tb_payments
+            # Re-evaluate all members payment status from tb_payments into members table
             c.execute("SELECT * FROM tb_members ORDER BY member_id ASC")
             all_m = c.fetchall()
             c.execute("SELECT * FROM tb_payments")
@@ -157,13 +173,13 @@ def pull_from_google_sheet(force=False):
                 stat = "ชำระครบทั้งปี" if yt >= annual_target else ("ชำระบางส่วน" if yt > 0 else "ยังไม่ชำระ")
 
                 c.execute("""
-                    UPDATE members SET
-                        m1=?, m2=?, m3=?, m4=?, m5=?, m6=?,
-                        m7=?, m8=?, m9=?, m10=?, m11=?, m12=?,
-                        q1_total=?, q2_total=?, q3_total=?, q4_total=?,
-                        year_total=?, due_amount=?, status=?
-                    WHERE house_no=? OR id=?
-                """, (*m_arr, q1, q2, q3, q4, yt, due, stat, h, m['member_id']))
+                    INSERT OR REPLACE INTO members (id, row_no, alley, house_no, name, fee_monthly,
+                                                    m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12,
+                                                    q1_total, q2_total, q3_total, q4_total,
+                                                    year_total, due_amount, status, remark)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (m['member_id'], m['member_id'], m['alley'], h, m['owner_name'], rate,
+                      *m_arr, q1, q2, q3, q4, yt, due, stat, m['remark']))
                 updated_count += 1
 
         elif members:
@@ -373,19 +389,16 @@ class VillageFundHandler(BaseHTTPRequestHandler):
         """)
         alley_stats = [dict(row) for row in c.fetchall()]
 
-        # Real-time Expense total
-        # Base baseline is 311,420.10 plus any newly recorded expenses beyond the initial 6
+        # Real-time Expense total directly from expenses table
         c.execute("SELECT COALESCE(SUM(amount), 0) FROM expenses")
-        all_exp_in_db = c.fetchone()[0]
-        # Initial 6 expenses sum to 27,784.00
-        baseline_cum_expenses = 311420.10
-        extra_expenses = max(0.0, all_exp_in_db - 27784.00)
-        total_expenses = baseline_cum_expenses + extra_expenses
+        total_expenses = float(c.fetchone()[0] or 0.0)
 
-        # Latest bank balance
-        c.execute("SELECT balance FROM bank_transactions ORDER BY id DESC LIMIT 1")
-        last_bank = c.fetchone()
-        bank_bal = last_bank[0] if last_bank else 54353.55
+        # Dynamic bank balance = Initial 2568 (82,969.73) + Member income + Interest (168.39) - Expenses - Petty cash (13,764.47)
+        initial_balance_2568 = 82969.73
+        support_income = 168.39
+        cash_reserve = 13764.47
+        bank_bal = initial_balance_2568 + gen["total_collected"] + support_income - total_expenses - cash_reserve
+        total_ending_balance = cash_reserve + bank_bal
 
         # Current Thai Date
         now = datetime.now()
