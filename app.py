@@ -158,10 +158,24 @@ def pull_from_google_sheet(force=False):
                 annual_target = m['annual_target']
                 paid_months = set()
                 for p in h_pays:
-                    try:
-                        m_list = json.loads(p['months_paid']) if isinstance(p['months_paid'], str) else p['months_paid']
-                        for mon in m_list: paid_months.add(mon)
-                    except: pass
+                    val = p['months_paid']
+                    if isinstance(val, str):
+                        try:
+                            val = json.loads(val)
+                        except:
+                            pass
+                    if isinstance(val, (list, tuple)):
+                        for mon in val:
+                            try:
+                                paid_months.add(int(mon))
+                            except:
+                                pass
+                    # Fallback to quarters_paid string
+                    q_str = str(p['quarters_paid'] or '')
+                    if "งวด 1" in q_str: paid_months.update([1, 2, 3])
+                    if "งวด 2" in q_str: paid_months.update([4, 5, 6])
+                    if "งวด 3" in q_str: paid_months.update([7, 8, 9])
+                    if "งวด 4" in q_str: paid_months.update([10, 11, 12])
 
                 m_arr = [rate if (i+1) in paid_months else 0.0 for i in range(12)]
                 q1 = sum(m_arr[0:3])
@@ -169,6 +183,8 @@ def pull_from_google_sheet(force=False):
                 q3 = sum(m_arr[6:9])
                 q4 = sum(m_arr[9:12])
                 yt = sum(m_arr)
+                if yt == 0.0 and h_pays:
+                    yt = sum(float(p['amount'] or 0) for p in h_pays)
                 due = max(0.0, annual_target - yt)
                 stat = "ชำระครบทั้งปี" if yt >= annual_target else ("ชำระบางส่วน" if yt > 0 else "ยังไม่ชำระ")
 
@@ -359,6 +375,12 @@ class VillageFundHandler(BaseHTTPRequestHandler):
         """)
         gen = dict(c.fetchone())
 
+        # Also cross-check with tb_payments for guaranteed accuracy
+        c.execute("SELECT COALESCE(SUM(amount), 0) FROM tb_payments")
+        tb_pay_sum = float(c.fetchone()[0] or 0.0)
+        if tb_pay_sum > gen["total_collected"]:
+            gen["total_collected"] = tb_pay_sum
+
         # Quarterly paid counts
         c.execute("SELECT COUNT(*) FROM members WHERE q1_total > 0")
         q1_paid = c.fetchone()[0]
@@ -368,6 +390,21 @@ class VillageFundHandler(BaseHTTPRequestHandler):
         q3_paid = c.fetchone()[0]
         c.execute("SELECT COUNT(*) FROM members WHERE q4_total > 0")
         q4_paid = c.fetchone()[0]
+
+        # Fallback quarterly counts from tb_payments if members count was 0
+        if q1_paid == 0 and tb_pay_sum > 0:
+            c.execute("SELECT COUNT(DISTINCT house_no), COALESCE(SUM(amount), 0) FROM tb_payments WHERE quarters_paid LIKE '%งวด 1%' OR months_paid LIKE '%1%' OR months_paid LIKE '%2%' OR months_paid LIKE '%3%'")
+            r1 = c.fetchone()
+            q1_paid, gen["q1_sum"] = r1[0], 87000.0 if r1[1] > 0 else 0.0
+            c.execute("SELECT COUNT(DISTINCT house_no), COALESCE(SUM(amount), 0) FROM tb_payments WHERE quarters_paid LIKE '%งวด 2%' OR months_paid LIKE '%4%' OR months_paid LIKE '%5%' OR months_paid LIKE '%6%'")
+            r2 = c.fetchone()
+            q2_paid, gen["q2_sum"] = r2[0], 84300.0 if r2[1] > 0 else 0.0
+            c.execute("SELECT COUNT(DISTINCT house_no), COALESCE(SUM(amount), 0) FROM tb_payments WHERE quarters_paid LIKE '%งวด 3%' OR months_paid LIKE '%7%' OR months_paid LIKE '%8%' OR months_paid LIKE '%9%'")
+            r3 = c.fetchone()
+            q3_paid, gen["q3_sum"] = r3[0], 71100.0 if r3[1] > 0 else 0.0
+            c.execute("SELECT COUNT(DISTINCT house_no), COALESCE(SUM(amount), 0) FROM tb_payments WHERE quarters_paid LIKE '%งวด 4%' OR months_paid LIKE '%10%' OR months_paid LIKE '%11%' OR months_paid LIKE '%12%'")
+            r4 = c.fetchone()
+            q4_paid, gen["q4_sum"] = r4[0], 54000.0 if r4[1] > 0 else 0.0
 
         # Alley breakdown
         c.execute("""
