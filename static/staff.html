@@ -587,12 +587,23 @@
       sel.innerHTML = '<option value="">-- ค้นหาหรือเลือกลูกบ้าน (162 หลัง) --</option>' +
         houses.map(h => `<option value="${h.house_id}">${h.house_no} · ${h.zone} · ${h.owner_full} (ค้าง ${h.overdue_count} ด.)</option>`).join('');
 
-      // Also populate PDF Tab Dropdown
+      // Also populate PDF Tab Dropdown (Only houses with actual payments)
       const pdfSel = document.getElementById('pdf-sel-house');
       if (pdfSel) {
-        pdfSel.innerHTML = houses.map(h => `<option value="${h.house_id}">${h.house_no} - ${h.owner_full} (${h.zone}) [ชำระแล้ว ฿${fmt0(h.paid_amount)}]</option>`).join('');
+        const paidHouses = houses.filter(h => h.paid_amount > 0);
+        pdfSel.innerHTML = '<option value="">-- เลือกลูกบ้านที่มีประวัติชำระเงิน (' + paidHouses.length + ' หลัง) --</option>' +
+          paidHouses.map(h => `<option value="${h.house_id}">${h.house_no} - ${h.owner_full} (${h.zone}) [ชำระแล้ว ฿${fmt0(h.paid_amount)}]</option>`).join('');
       }
     }
+
+    document.getElementById('pdf-sel-house')?.addEventListener('change', () => {
+      updatePdfPeriodOptions();
+      generateOfficialReceipt();
+    });
+
+    document.getElementById('pdf-sel-period')?.addEventListener('change', () => {
+      generateOfficialReceipt();
+    });
 
     function toggleQuarter(q) {
       const card = document.querySelector(`.period-check-card[data-q="${q}"]`);
@@ -661,13 +672,13 @@
         const res = await apiCall('/api/staff/payments', 'POST', body);
         showAlert('บันทึกการรับชำระเงินสำเร็จ ออกใบเสร็จเรียบร้อย!');
 
-        // Switch to Tab 4 and show receipt preview
-        openReceiptModal(hid);
-
         SELECTED_QUARTERS.clear();
         document.getElementById('input-pay-note').value = '';
         await loadHouses();
         loadRecentPayments();
+
+        // Switch to Tab 4 and show receipt preview for newly paid quarters
+        openReceiptModal(hid);
       } catch (err) {
         showAlert(err.message, false);
       } finally {
@@ -785,9 +796,13 @@
             </td>
             <td class="c">${badgeHtml}</td>
             <td class="c">
-              <button class="btn-icon-print" onclick="openReceiptModal('${h.house_id}')" title="พิมพ์ใบเสร็จรับเงิน">
-                🖨️
-              </button>
+              ${h.paid_amount > 0 ? `
+                <button class="btn-icon-print" onclick="openReceiptModal('${h.house_id}')" title="พิมพ์ใบเสร็จรับเงิน (ชำระแล้ว ฿${fmt0(h.paid_amount)})">
+                  🖨️
+                </button>
+              ` : `
+                <span style="color: #cbd5e1; font-size: 14px;" title="ยังไม่มีประวัติการชำระเงิน">-</span>
+              `}
             </td>
           </tr>
         `;
@@ -819,28 +834,86 @@
     }
 
     // ==================== TAB 4: PDF Generation (Image 4) ====================
-    function openReceiptModal(houseId) {
+    function updatePdfPeriodOptions(selectedPeriod = null) {
+      const hid = document.getElementById('pdf-sel-house').value;
+      const periodSel = document.getElementById('pdf-sel-period');
+      if (!periodSel) return;
+      periodSel.innerHTML = '';
+
+      const h = HOUSES.find(x => x.house_id === hid);
+      if (!h || h.paid_amount <= 0) {
+        periodSel.innerHTML = '<option value="">(ยังไม่มีประวัติการชำระเงิน — ไม่ออกใบเสร็จ)</option>';
+        return;
+      }
+
+      const paidQuarters = h.quarters.filter(q => q.paid_count > 0);
+      const qNames = paidQuarters.map(q => `งวด ${q.period}`).join(', ');
+      const optAll = document.createElement('option');
+      optAll.value = 'all';
+      optAll.textContent = `ทุกงวดที่ชำระแล้ว (${qNames}) — รวม ฿${fmt(h.paid_amount)}`;
+      periodSel.appendChild(optAll);
+
+      paidQuarters.forEach(q => {
+        const opt = document.createElement('option');
+        opt.value = String(q.period);
+        const qAmt = h.rate * q.paid_count;
+        const fullTxt = q.is_full ? 'ชำระเต็มงวด' : `ชำระ ${q.paid_count}/3 เดือน`;
+        opt.textContent = `งวดที่ ${q.period} (${fullTxt}) — ฿${fmt(qAmt)}`;
+        periodSel.appendChild(opt);
+      });
+
+      if (selectedPeriod && periodSel.querySelector(`option[value="${selectedPeriod}"]`)) {
+        periodSel.value = selectedPeriod;
+      }
+    }
+
+    function openReceiptModal(houseId, defaultPeriod = null) {
+      const h = HOUSES.find(x => x.house_id === houseId);
+      if (!h || h.paid_amount <= 0) {
+        showAlert(`บ้านเลขที่ ${h ? h.house_no : houseId} ยังไม่มีประวัติการชำระเงิน ไม่สามารถออกใบเสร็จรับเงินได้`, false);
+        return;
+      }
       document.querySelector('.staff-menu-btn[data-tab="receipts"]').click();
       document.getElementById('pdf-sel-house').value = houseId;
+      updatePdfPeriodOptions(defaultPeriod);
       generateOfficialReceipt();
     }
 
     function generateOfficialReceipt() {
       const hid = document.getElementById('pdf-sel-house').value;
       const h = HOUSES.find(x => x.house_id === hid);
-      if (!h) return showAlert('กรุณาเลือกลูกบ้าน', false);
+      if (!h) return showAlert('กรุณาเลือกลูกบ้านที่มีประวัติการชำระเงิน', false);
+
+      if (h.paid_amount <= 0 || h.paid_count === 0) {
+        showAlert(`บ้านเลขที่ ${h.house_no} ยังไม่มีประวัติการชำระเงิน ไม่สามารถออกใบเสร็จรับเงินได้`, false);
+        document.getElementById('pdf-preview-box').classList.add('hidden');
+        return;
+      }
 
       const periodChoice = document.getElementById('pdf-sel-period').value;
       let quartersTxt = '';
       let amount = 0;
 
-      if (periodChoice === 'all') {
-        const paidQ = h.quarters.filter(q => q.paid_count > 0).map(q => `งวดที่ ${q.period}`);
-        quartersTxt = paidQ.length > 0 ? paidQ.join(', ') : 'ทุกงวดที่ชำระ (งวด 1-4)';
-        amount = h.paid_amount > 0 ? h.paid_amount : h.rate * 12;
+      if (periodChoice === 'all' || !periodChoice) {
+        const paidQ = h.quarters.filter(q => q.paid_count > 0).map(q => `งวดที่ ${q.period} (${q.is_full ? 'ครบ' : q.paid_count + '/3 ด.'})`);
+        quartersTxt = paidQ.join(', ');
+        amount = h.paid_amount;
       } else {
-        quartersTxt = `งวดที่ ${periodChoice} (3 เดือน)`;
-        amount = h.rate * 3;
+        const qNum = parseInt(periodChoice);
+        const targetQ = h.quarters.find(q => q.period === qNum);
+        if (!targetQ || targetQ.paid_count === 0) {
+          showAlert(`บ้านเลขที่ ${h.house_no} ยังไม่ได้ชำระเงินในงวดที่ ${qNum} ไม่สามารถออกใบเสร็จได้`, false);
+          document.getElementById('pdf-preview-box').classList.add('hidden');
+          return;
+        }
+        quartersTxt = `งวดที่ ${qNum} (${targetQ.is_full ? 'ชำระเต็มงวด 3 เดือน' : 'ชำระ ' + targetQ.paid_count + ' เดือน'})`;
+        amount = h.rate * targetQ.paid_count;
+      }
+
+      if (amount <= 0) {
+        showAlert('ยอดเงินที่ชำระเป็น 0 ไม่สามารถออกใบเสร็จได้', false);
+        document.getElementById('pdf-preview-box').classList.add('hidden');
+        return;
       }
 
       const canvas = document.getElementById('pdf-render-canvas');
@@ -857,7 +930,7 @@
             </div>
             <div style="text-align: right; font-size: 13px;">
               <div style="font-weight: 700; color: #0f172a; font-size: 14px;">เลขที่: <b>REC-2569-${h.house_no.replace('/', '')}</b></div>
-              <div style="color: #475569; margin-top: 4px;">วันที่: <b>${formatThaiDate(todayStr())}</b></div>
+              <div style="color: #475569; margin-top: 4px;">วันที่ออกใบเสร็จ: <b>${formatThaiDate(todayStr())}</b></div>
             </div>
           </div>
 
@@ -868,19 +941,19 @@
                 <td style="font-size: 15px; font-weight: 700; color: #0f172a;">${h.owner_full}</td>
               </tr>
               <tr>
-                <td style="background: #f8fafc; font-weight: 600;">บ้านเลขที่ / โซน:</td>
+                <td style="background: #f8fafc; font-weight: 600;">บ้านเลขที่ / ซอย:</td>
                 <td><b>${h.house_no}</b> (ซอย: ${h.zone} | อัตราเดือนละ ${fmt0(h.rate)} บาท)</td>
               </tr>
               <tr>
-                <td style="background: #f8fafc; font-weight: 600;">รายการชำระ:</td>
-                <td>ค่าบำรุงกองทุนพัฒนาหมู่บ้าน ปี 2569 (${quartersTxt})</td>
+                <td style="background: #f8fafc; font-weight: 600;">รายการที่ชำระแล้ว:</td>
+                <td><span style="display:inline-block; background:#ecfdf5; color:#065f46; padding:2px 8px; border-radius:4px; font-weight:600; font-size:12px;">ชำระแล้ว</span> ค่าบำรุงกองทุนพัฒนาหมู่บ้าน ปี 2569 (${quartersTxt})</td>
               </tr>
               <tr>
-                <td style="background: #f8fafc; font-weight: 600;">จำนวนเงิน (ตัวเลข):</td>
+                <td style="background: #f8fafc; font-weight: 600;">จำนวนเงินที่ชำระ (ตัวเลข):</td>
                 <td style="font-size: 18px; font-weight: 700; color: #059669;">฿${fmt(amount)} บาท</td>
               </tr>
               <tr style="background: #f0fdf4;">
-                <td style="background: #ecfdf5; font-weight: 600; color: #065f46;">จำนวนเงิน (ตัวอักษร):</td>
+                <td style="background: #ecfdf5; font-weight: 600; color: #065f46;">จำนวนเงินที่ชำระ (ตัวอักษร):</td>
                 <td style="font-size: 15px; font-weight: 700; color: #065f46;">(${thaiBaht(amount)})</td>
               </tr>
             </tbody>
@@ -893,7 +966,7 @@
               <div style="color: #64748b; font-size: 12px; margin-top: 2px;">เหรัญญิก ผู้รับเงิน</div>
             </div>
             <div style="text-align: center; font-size: 11px; color: #94a3b8; max-width: 220px;">
-              ใบเสร็จรับเงินฉบับนี้จะสมบูรณ์<br>เมื่อมีลายมือชื่อของผู้รับเงินครบถ้วน
+              ใบเสร็จรับเงินฉบับนี้ออกให้เฉพาะยอดที่ชำระจริง<br>สมบูรณ์เมื่อมีลายมือชื่อผู้รับเงินครบถ้วน
             </div>
             <div class="sig-block" style="text-align: center; width: 220px;">
               <div class="sig-line" style="border-bottom: 1px dotted #64748b; height: 35px; margin-bottom: 8px;"></div>
