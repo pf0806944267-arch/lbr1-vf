@@ -1,0 +1,7 @@
+# ข้อมูลส่วนบุคคลของสมาชิก ห้ามขึ้น GitHub
+*.xlsx
+~$*
+data/
+node_modules/
+.env
+__pycache__/

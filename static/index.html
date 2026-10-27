@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>กองทุนพัฒนาหมู่บ้าน - Dashboard</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+  <h1>กองทุนพัฒนาหมู่บ้าน <span id="fy"></span></h1>
+  <div class="live"><span class="dot" id="dot"></span><span id="live">กำลังเชื่อมต่อ...</span> <a href="/staff">สำหรับเจ้าหน้าที่</a></div>
+</header>
+<main>
+  <div class="grid" id="kpis"></div>
+  <div class="card"><h2>การรับเงินจากสมาชิกรายเดือน (บาท)</h2><div class="chart" id="monthly"></div></div>
+  <div class="card"><h2>เปอร์เซ็นต์การจ่ายรายซอย (บ้านที่จ่ายครบทั้งงวด)</h2><div class="scroll"><table id="zones"></table></div></div>
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))">
+    <div class="card"><h2>ค่าใช้จ่ายแยกหมวด</h2><div id="cats"></div></div>
+    <div class="card"><h2>ค่าใช้จ่ายล่าสุด</h2><div class="scroll"><table id="recent"></table></div></div>
+  </div>
+  <div class="card">
+    <h2>สถานะรายบ้าน</h2>
+    <div class="row"><input id="q" placeholder="ค้นหาบ้านเลขที่ เช่น 448/12"><select id="zf"><option value="">ทุกซอย</option></select></div>
+    <p style="font-size:13px;color:var(--mute)">สีเขียว = ชำระแล้ว, สีแดง = ค้างถึงเดือนปัจจุบัน, สีเทา = ยังไม่ถึงกำหนด (ม.ค.–ธ.ค.)</p>
+    <div class="scroll"><table id="houses"></table></div>
+  </div>
+</main>
+<script>
+const TH=["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+const f=n=>Number(n||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+const f0=n=>Number(n||0).toLocaleString('th-TH',{maximumFractionDigits:0});
+let HOUSES=[];
+function bars(el,arr,cls){const mx=Math.max(...arr,1);
+ el.className='chart '+(cls||'');
+ el.innerHTML=arr.map((v,i)=>`<div title="${f(v)}"><span style="height:${Math.round(v/mx*120)}px"></span>${TH[i]}<br>${f0(v)}</div>`).join('');}
+async function load(){
+ const [s,h]=await Promise.all([fetch('/api/dashboard').then(r=>r.json()),fetch('/api/houses').then(r=>r.json())]);
+ HOUSES=h;render(s);renderHouses();
+}
+function render(s){
+ document.getElementById('fy').textContent='ปี '+s.fiscal_year;
+ const b=s.balance;
+ const k=(t,v,c)=>`<div class="card kpi"><small>${t}</small><b class="${c||''}">${f(v)}</b></div>`;
+ document.getElementById('kpis').innerHTML=
+  k('เงินคงเหลือรวมทั้งหมด',b.total,'pos')+k('คงเหลือในบัญชีธนาคาร',b.bank)+k('เงินสำรองจ่าย (เงินสด)',b.reserve)+
+  k('รับจากสมาชิกรวม',b.received,'pos')+k('ค่าใช้จ่ายรวม',b.expenses,'neg')+k('ยอดยกมาปีก่อน',b.opening)+
+  `<div class="card kpi"><small>จ่ายแล้วทั้งปี (เทียบยอดเต็มปี)</small><b>${s.year_collected_pct}%</b></div>`;
+ bars(document.getElementById('monthly'),s.monthly);
+ let t=`<tr><th class="l">ซอย</th><th>บ้าน</th>`+[1,2,3,4].map(i=>`<th>งวด ${i}</th>`).join('')+`<th>รับแล้ว</th></tr>`;
+ let tot=[0,0,0,0],th=0;
+ s.zones.forEach(z=>{th+=z.houses;t+=`<tr><td class="l">${z.zone}</td><td>${z.houses}</td>`+z.periods.map((p,i)=>{tot[i]+=p.paid;return `<td>${p.paid}/${p.paid+p.unpaid} (${p.pct}%)<div class="bar"><i style="width:${p.pct}%"></i></div></td>`}).join('')+`<td>${f0(z.collected)}</td></tr>`});
+ t+=`<tr><th class="l">รวม</th><th>${th}</th>`+tot.map(x=>`<th>${x}/${th} (${(100*x/th).toFixed(1)}%)</th>`).join('')+`<th>${f0(b.received)}</th></tr>`;
+ document.getElementById('zones').innerHTML=t;
+ const mx=Math.max(...s.expenses_by_category.map(c=>c.amount),1);
+ document.getElementById('cats').innerHTML=s.expenses_by_category.map(c=>`<div style="margin:8px 0"><div style="display:flex;justify-content:space-between"><span>${c.name}</span><b>${f(c.amount)}</b></div><div class="bar"><i style="width:${c.amount/mx*100}%;background:var(--y)"></i></div></div>`).join('');
+ document.getElementById('recent').innerHTML='<tr><th class="l">วันที่</th><th class="l">รายการ</th><th>บาท</th></tr>'+s.recent_expenses.map(e=>`<tr><td class="l">${e.date}</td><td class="l">${e.description}</td><td>${f(e.amount)}</td></tr>`).join('');
+ const zf=document.getElementById('zf');
+ if(zf.options.length==1) s.zones.forEach(z=>zf.add(new Option(z.zone,z.zone)));
+ document.getElementById('dot').classList.add('on');
+ document.getElementById('live').textContent='เรียลไทม์ · อัปเดต '+s.as_of.slice(11,19);
+ window.CM=s.current_month;
+}
+function renderHouses(){
+ const q=document.getElementById('q').value.trim(),z=document.getElementById('zf').value,cm=window.CM||0;
+ const rows=HOUSES.filter(h=>(!q||h.house_no.includes(q))&&(!z||h.zone==z));
+ document.getElementById('houses').innerHTML='<tr><th class="l">บ้านเลขที่</th><th class="l">ซอย</th><th class="l">เจ้าของ</th><th class="l">ม.ค. → ธ.ค.</th><th>จ่ายแล้ว</th><th>ค้าง</th></tr>'+
+  rows.map(h=>`<tr><td class="l">${h.house_no}</td><td class="l">${h.zone}</td><td class="l">${h.name}</td><td class="l"><div class="chips">${h.months.map((m,i)=>`<span class="chip ${m?'p':(i<cm?'o':'')}" title="${TH[i]}"></span>`).join('')}</div></td><td>${h.paid_count}</td><td class="${h.overdue?'neg':''}">${h.overdue}</td></tr>`).join('');
+}
+document.getElementById('q').oninput=renderHouses;document.getElementById('zf').onchange=renderHouses;
+load();
+const es=new EventSource('/api/stream');
+es.addEventListener('update',()=>load());
+es.onerror=()=>{document.getElementById('dot').classList.remove('on');document.getElementById('live').textContent='เชื่อมต่อใหม่...'};
+</script>
+</body>
+</html>

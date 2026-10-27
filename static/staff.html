@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>เจ้าหน้าที่ - กองทุนพัฒนาหมู่บ้าน</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header><h1>เจ้าหน้าที่กองทุน</h1><div><span id="who"></span> <a href="/">ดู Dashboard</a> <a href="#" id="logout" class="hidden">ออกจากระบบ</a></div></header>
+<main>
+<div id="login" class="card" style="max-width:380px;margin:30px auto">
+  <h2>เข้าสู่ระบบ</h2>
+  <label>ชื่อผู้ใช้</label><input id="u" autocomplete="username">
+  <label>รหัสผ่าน</label><input id="p" type="password" autocomplete="current-password">
+  <div id="lmsg"></div><br><button id="lbtn">เข้าสู่ระบบ</button>
+</div>
+<div id="app" class="hidden">
+  <div class="tabs" id="tabs">
+    <button data-t="pay" class="on">บันทึกการชำระเงิน</button>
+    <button data-t="exp">บันทึกค่าใช้จ่าย</button>
+    <button data-t="recent">รายการล่าสุด</button>
+    <button data-t="users" class="admin hidden">ผู้ใช้ระบบ</button>
+  </div>
+  <div id="msg"></div>
+
+  <div class="card tab" id="t-pay">
+    <h2>บันทึกการชำระเงิน</h2>
+    <label>ค้นหาบ้านเลขที่</label><input id="hq" placeholder="พิมพ์บ้านเลขที่/ชื่อ">
+    <label>เลือกบ้าน</label><select id="house" size="6"></select>
+    <label>เลือกเดือนที่ชำระ (เดือนที่จ่ายแล้วจะเลือกไม่ได้)</label><div class="months" id="months"></div>
+    <div class="row">
+      <div><label>วันที่ชำระ</label><input type="date" id="pdate"></div>
+      <div><label>ช่องทาง</label><select id="chan"><option value="transfer">โอนเงิน</option><option value="cash">เงินสด</option></select></div>
+      <div><label>เวลาโอน (ถ้ามี)</label><input id="ptime" placeholder="เช่น 14:30"></div>
+    </div>
+    <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="slip" style="width:auto"> มีสลิปการโอน</label>
+    <label>หมายเหตุ</label><input id="pnote">
+    <div id="ptotal" style="margin:10px 0;font-weight:700"></div>
+    <button id="psave">บันทึกการชำระ</button>
+  </div>
+
+  <div class="card tab hidden" id="t-exp">
+    <h2>บันทึกค่าใช้จ่าย</h2>
+    <div class="row">
+      <div><label>วันที่</label><input type="date" id="edate"></div>
+      <div><label>จำนวนเงิน (บาท)</label><input id="eamt" inputmode="decimal"></div>
+      <div><label>หมวด</label><select id="ecat"></select></div>
+      <div><label>จ่ายจาก</label><select id="esrc"><option value="bank">บัญชีธนาคาร</option><option value="reserve">เงินสำรองจ่าย (เงินสด)</option></select></div>
+    </div>
+    <label>รายการ</label><input id="edesc">
+    <label>ผู้เบิก / จ่ายให้</label><input id="epayee">
+    <br><button id="esave">บันทึกค่าใช้จ่าย</button>
+  </div>
+
+  <div class="card tab hidden" id="t-recent"><h2>รายการล่าสุด</h2><div class="scroll"><table id="rp"></table></div><br><div class="scroll"><table id="re"></table></div></div>
+
+  <div class="card tab hidden" id="t-users">
+    <h2>เพิ่มผู้ใช้</h2>
+    <div class="row"><div><label>ชื่อผู้ใช้</label><input id="nu"></div><div><label>รหัสผ่าน (≥ 8 ตัว)</label><input id="np" type="password"></div>
+    <div><label>สิทธิ์</label><select id="nr"><option value="staff">เจ้าหน้าที่</option><option value="admin">ผู้ดูแลระบบ</option></select></div></div>
+    <br><button id="usave">เพิ่มผู้ใช้</button><br><br><table id="ul"></table>
+  </div>
+</div>
+</main>
+<script>
+const TH=["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+const $=id=>document.getElementById(id);
+const f=n=>Number(n||0).toLocaleString('th-TH',{minimumFractionDigits:2});
+let T=sessionStorage.getItem('tok'),ROLE=sessionStorage.getItem('role'),HOUSES=[];
+async function api(path,method='GET',body){
+ const r=await fetch(path,{method,headers:{'Content-Type':'application/json',...(T?{Authorization:'Bearer '+T}:{})},body:body?JSON.stringify(body):undefined});
+ const j=await r.json().catch(()=>({}));
+ if(r.status==401&&T){logout();}
+ if(!r.ok)throw new Error(j.error||'เกิดข้อผิดพลาด');return j;
+}
+function say(t,ok=true){$('msg').innerHTML=`<div class="msg ${ok?'ok':'err'}">${t}</div>`;window.scrollTo(0,0);setTimeout(()=>$('msg').innerHTML='',6000)}
+function logout(){sessionStorage.clear();T=null;location.reload()}
+$('logout').onclick=e=>{e.preventDefault();logout()};
+$('lbtn').onclick=async()=>{try{const j=await api('/api/login','POST',{username:$('u').value,password:$('p').value});
+ sessionStorage.setItem('tok',j.token);sessionStorage.setItem('role',j.role);sessionStorage.setItem('who',j.username);location.reload()}
+ catch(e){$('lmsg').innerHTML=`<div class="msg err">${e.message}</div>`}};
+$('p').onkeydown=e=>{if(e.key=='Enter')$('lbtn').click()};
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{
+ document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x==b));
+ document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('hidden',x.id!='t-'+b.dataset.t));
+ if(b.dataset.t=='recent')loadRecent();if(b.dataset.t=='users')loadUsers();});
+function today(){return new Date(Date.now()+7*3600e3).toISOString().slice(0,10)}
+async function init(){
+ if(!T){return}
+ $('login').classList.add('hidden');$('app').classList.remove('hidden');$('logout').classList.remove('hidden');
+ $('who').textContent=sessionStorage.getItem('who')+' ('+(ROLE=='admin'?'ผู้ดูแล':'เจ้าหน้าที่')+')';
+ if(ROLE=='admin')document.querySelectorAll('.admin').forEach(x=>x.classList.remove('hidden'));
+ $('pdate').value=today();$('edate').value=today();
+ const cats=await api('/api/staff/categories');$('ecat').innerHTML=cats.map(c=>`<option value="${c.category_id}">${c.name}</option>`).join('');
+ await loadHouses();
+}
+async function loadHouses(){HOUSES=await api('/api/staff/houses');drawHouses();}
+function drawHouses(){
+ const q=$('hq').value.trim();const cur=$('house').value;
+ $('house').innerHTML=HOUSES.filter(h=>!q||h.house_no.includes(q)||h.name.includes(q)||h.zone.includes(q))
+  .map(h=>`<option value="${h.house_id}">${h.house_no} · ${h.zone} · ${h.name} (ค้าง ${h.overdue})</option>`).join('');
+ if(cur)$('house').value=cur;drawMonths();
+}
+function drawMonths(){
+ const h=HOUSES.find(x=>x.house_id==$('house').value);
+ $('months').innerHTML=TH.map((m,i)=>`<label class="${h&&h.months[i]?'paid':''}"><input type="checkbox" value="${i+1}" ${h&&h.months[i]?'disabled checked':''}>${m}</label>`).join('');
+ $('months').querySelectorAll('input').forEach(x=>x.onchange=total);total();
+}
+function total(){const n=[...$('months').querySelectorAll('input:not(:disabled):checked')].length;
+ const h=HOUSES.find(x=>x.house_id==$('house').value);const rate=h&&h.zone=='สายหลัก'?100:300;
+ $('ptotal').textContent=n?`${n} เดือน × ${rate} = ${f(n*rate)} บาท`:''}
+$('hq').oninput=drawHouses;$('house').onchange=drawMonths;
+$('psave').onclick=async()=>{
+ const months=[...$('months').querySelectorAll('input:not(:disabled):checked')].map(x=>+x.value);
+ if(!$('house').value||!months.length)return say('เลือกบ้านและเดือนก่อน',false);
+ if(!confirm('ยืนยันบันทึกการชำระ '+months.length+' เดือน?'))return;
+ try{$('psave').disabled=true;await api('/api/staff/payments','POST',{house_id:$('house').value,months,paid_date:$('pdate').value,channel:$('chan').value,transfer_time:$('ptime').value,has_slip:$('slip').checked,note:$('pnote').value});
+  say('บันทึกการชำระเงินเรียบร้อย');$('pnote').value='';$('ptime').value='';await loadHouses()}
+ catch(e){say(e.message,false)}finally{$('psave').disabled=false}};
+$('esave').onclick=async()=>{
+ try{$('esave').disabled=true;const j=await api('/api/staff/expenses','POST',{expense_date:$('edate').value,amount:$('eamt').value,category_id:$('ecat').value,source:$('esrc').value,description:$('edesc').value,payee:$('epayee').value});
+  say('บันทึกค่าใช้จ่ายเลขที่ '+j.expense.doc_no+' เรียบร้อย');$('eamt').value='';$('edesc').value='';$('epayee').value=''}
+ catch(e){say(e.message,false)}finally{$('esave').disabled=false}};
+async function loadRecent(){
+ const j=await api('/api/staff/recent');const adm=ROLE=='admin';
+ $('rp').innerHTML='<tr><th class="l">รหัส</th><th class="l">บ้าน</th><th>เดือน</th><th>บาท</th><th class="l">วันที่</th><th class="l">ช่องทาง</th>'+(adm?'<th></th>':'')+'</tr>'+
+  j.payments.map(p=>`<tr><td class="l">${p.payment_id}</td><td class="l">${p.house_no}</td><td>${TH[p.month-1]||''}</td><td>${f(p.amount)}</td><td class="l">${p.paid_date}</td><td class="l">${p.channel=='cash'?'เงินสด':'โอน'}</td>${adm?`<td><button class="del" onclick="del('payments','${p.payment_id}')">ลบ</button></td>`:''}</tr>`).join('');
+ $('re').innerHTML='<tr><th class="l">เลขที่</th><th class="l">วันที่</th><th class="l">รายการ</th><th>บาท</th>'+(adm?'<th></th>':'')+'</tr>'+
+  j.expenses.map(e=>`<tr><td class="l">${e.doc_no}</td><td class="l">${e.expense_date}</td><td class="l">${e.description}</td><td>${f(e.amount)}</td>${adm?`<td><button class="del" onclick="del('expenses','${e.expense_id}')">ลบ</button></td>`:''}</tr>`).join('');
+}
+async function del(t,id){if(!confirm('ลบรายการ '+id+' ? (ลงบันทึก audit log)'))return;
+ try{await api(`/api/admin/${t}/${id}`,'DELETE');say('ลบแล้ว');loadRecent();loadHouses()}catch(e){say(e.message,false)}}
+async function loadUsers(){const u=await api('/api/admin/users');
+ $('ul').innerHTML='<tr><th class="l">ผู้ใช้</th><th class="l">สิทธิ์</th></tr>'+u.map(x=>`<tr><td class="l">${x.username}</td><td class="l">${x.role}</td></tr>`).join('')}
+$('usave').onclick=async()=>{try{await api('/api/admin/users','POST',{username:$('nu').value,password:$('np').value,role:$('nr').value});
+ say('เพิ่มผู้ใช้แล้ว');$('nu').value='';$('np').value='';loadUsers()}catch(e){say(e.message,false)}};
+init();
+</script>
+</body>
+</html>
