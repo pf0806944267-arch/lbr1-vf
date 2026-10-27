@@ -15,7 +15,8 @@ from datetime import datetime
 
 PORT = int(os.environ.get("PORT", 8000))
 DB_FILE = "village_fund.db"
-GOOGLE_SHEET_WEBHOOK_URL = os.environ.get("GOOGLE_SHEET_WEBHOOK_URL", "")
+DEFAULT_WEBHOOK = "https://script.google.com/macros/s/AKfycbxdXzn8UZsA0TeYKuzcbU3IEL2ixyJjPTu4RRFjMB5axjPURET3HipvnpQP5i6Hkyi4/exec"
+GOOGLE_SHEET_WEBHOOK_URL = os.environ.get("GOOGLE_SHEET_WEBHOOK_URL", DEFAULT_WEBHOOK)
 _last_sheet_pull_time = 0
 
 def sync_to_google_sheet(action_type, payload):
