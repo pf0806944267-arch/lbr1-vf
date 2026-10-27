@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบงานเจ้าหน้าที่ - กองทุนพัฒนาหมู่บ้าน ปี 2569</title>
+  
+  <!-- Google Fonts: Prompt & Sarabun -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Prompt', 'Sarabun', 'sans-serif'],
+            sarabun: ['Sarabun', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Prompt', sans-serif;
+      background-color: #f1f5f9;
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.98);
+      border: 1px solid rgba(226, 232, 240, 0.9);
+    }
+    #print-area {
+      display: none;
+    }
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #print-area, #print-area * {
+        visibility: visible;
+      }
+      #print-area {
+        display: block !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 20px;
+        background: white;
+      }
+      .no-print {
+        display: none !important;
+      }
+      @page {
+        size: A4;
+        margin: 1.5cm;
+      }
+    }
+  </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+
+  <!-- STAFF LOGIN GATE (Shown if not logged in) -->
+  <div id="staff-login-screen" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-900 via-indigo-950 to-blue-950">
+    <div class="max-w-md w-full bg-white rounded-3xl p-8 sm:p-10 shadow-2xl space-y-6 text-center border border-white/20">
+      
+      <div class="w-20 h-20 bg-blue-50 text-blue-700 rounded-3xl flex items-center justify-center text-3xl mx-auto shadow-inner border border-blue-100">
+        <i class="fa-solid fa-user-shield"></i>
+      </div>
+
+      <div>
+        <span class="bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full font-semibold">ระบบงานเฉพาะเจ้าหน้าที่</span>
+        <h2 class="text-2xl font-black text-slate-900 mt-2">เข้าสู่ระบบเจ้าหน้าที่</h2>
+        <p class="text-xs text-slate-500 mt-1">กองทุนพัฒนาหมู่บ้าน ปี 2569</p>
+      </div>
+
+      <!-- Manual Login Form -->
+      <form onsubmit="handleManualLogin(event)" class="space-y-4 text-left text-xs pt-2">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">ชื่อผู้ใช้ (Username)</label>
+          <input type="text" id="staff-username" placeholder="กรอกชื่อผู้ใช้..." required class="w-full px-3.5 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm bg-slate-50">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">รหัสผ่าน (Password)</label>
+          <input type="password" id="staff-password" placeholder="กรอกรหัสผ่าน..." required class="w-full px-3.5 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm bg-slate-50">
+        </div>
+        <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl shadow-md transition text-sm flex items-center justify-center">
+          <i class="fa-solid fa-right-to-bracket mr-2"></i> เข้าสู่ระบบ
+        </button>
+      </form>
+
+      <div class="pt-2 border-t">
+        <a href="/" class="text-xs text-slate-500 hover:text-slate-800 flex items-center justify-center">
+          <i class="fa-solid fa-arrow-left mr-1.5"></i> กลับหน้าสาธารณะสำหรับประชาชน
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- AUTHENTICATED STAFF PORTAL (Shown only after login) -->
+  <div id="staff-portal-screen" class="hidden min-h-screen flex flex-col">
+    
+    <!-- Top Header -->
+    <header class="bg-slate-900 text-white shadow-md sticky top-0 z-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16 sm:h-20">
+          
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center border border-emerald-500/30">
+              <i class="fa-solid fa-user-shield text-xl"></i>
+            </div>
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="font-bold text-base sm:text-lg">ระบบงานเจ้าหน้าที่และกรรมการ</span>
+                <span class="bg-blue-600 text-[10px] px-2 py-0.5 rounded-full font-bold">STAFF ONLY</span>
+              </div>
+              <p class="text-xs text-slate-400 hidden sm:block">กองทุนพัฒนาหมู่บ้าน ปี 2569</p>
+            </div>
+          </div>
+
+          <!-- Staff Active Status & Actions -->
+          <div class="flex items-center space-x-3">
+            <div class="bg-white/10 px-3.5 py-1.5 rounded-xl border border-white/10 flex items-center space-x-2 text-xs">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <div>
+                <span id="active-staff-name" class="font-bold text-slate-100">นายสุนทร คำสุข</span>
+                <span id="active-staff-role" class="text-[10px] text-emerald-300 block">ผู้ดูแลระบบ</span>
+              </div>
+            </div>
+
+            <a href="/" target="_blank" class="hidden sm:flex items-center text-xs bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-xl text-slate-200 transition">
+              <i class="fa-solid fa-arrow-up-right-from-square mr-1.5 text-blue-400"></i> ดูหน้าประชาชน
+            </a>
+
+            <button onclick="logoutStaff()" class="bg-rose-600/80 hover:bg-rose-600 text-white text-xs px-3 py-2 rounded-xl transition flex items-center font-medium">
+              <i class="fa-solid fa-power-off mr-1.5"></i> ออกจากระบบ
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Staff Tab Navigation -->
+        <nav class="flex overflow-x-auto py-2 space-x-1 border-t border-slate-800 text-xs scrollbar-none">
+          <button onclick="switchStaffTab('pay')" id="snav-pay" class="px-3.5 py-2 rounded-xl font-bold transition text-white bg-blue-600 whitespace-nowrap">
+            <i class="fa-solid fa-cash-register mr-1.5"></i> 1. บันทึกรับชำระเงิน
+          </button>
+          <button onclick="switchStaffTab('expense')" id="snav-expense" class="px-3.5 py-2 rounded-xl font-medium text-slate-300 hover:text-white hover:bg-white/10 transition whitespace-nowrap">
+            <i class="fa-solid fa-minus-circle mr-1.5 text-rose-400"></i> 2. บันทึกรายจ่ายกองทุน
+          </button>
+          <button onclick="switchStaffTab('members')" id="snav-members" class="px-3.5 py-2 rounded-xl font-medium text-slate-300 hover:text-white hover:bg-white/10 transition whitespace-nowrap">
+            <i class="fa-solid fa-users mr-1.5 text-amber-400"></i> 3. ทะเบียนสมาชิก 162 หลัง
+          </button>
+          <button onclick="switchStaffTab('reports')" id="snav-reports" class="px-3.5 py-2 rounded-xl font-medium text-slate-300 hover:text-white hover:bg-white/10 transition whitespace-nowrap">
+            <i class="fa-solid fa-file-pdf mr-1.5 text-rose-300"></i> 4. ออกเอกสารทางการ PDF
+          </button>
+          <button onclick="switchStaffTab('audit')" id="snav-audit" class="px-3.5 py-2 rounded-xl font-medium text-slate-300 hover:text-white hover:bg-white/10 transition whitespace-nowrap">
+            <i class="fa-solid fa-clock-rotate-left mr-1.5 text-cyan-400"></i> 5. ประวัติการทำรายการ
+          </button>
+          <button onclick="switchStaffTab('backup')" id="snav-backup" class="px-3.5 py-2 rounded-xl font-medium text-slate-300 hover:text-white hover:bg-white/10 transition whitespace-nowrap">
+            <i class="fa-solid fa-cloud-arrow-up mr-1.5 text-emerald-400"></i> 6. Google Drive & Sheets
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- MAIN STAFF WORKSPACE CONTENT -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+      <!-- STAFF TAB 1: RECORD PAYMENT (เคาน์เตอร์รับชำระเงิน) -->
+      <section id="stab-pay" class="space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          <!-- Payment Form -->
+          <div class="lg:col-span-7 glass-card rounded-3xl p-6 sm:p-8 shadow-sm space-y-5">
+            <div class="border-b pb-4">
+              <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md">เคาน์เตอร์การเงิน</span>
+              <h3 class="text-xl font-black text-slate-800 mt-1">บันทึกรับชำระเงินค่ากองทุนพัฒนาหมู่บ้าน</h3>
+              <p class="text-xs text-slate-500">บันทึกรับเงิน ออกใบเสร็จรับเงิน (E-Receipt) และอัปเดตระบบเรียลไทม์</p>
+            </div>
+
+            <form onsubmit="handleStaffSubmitPayment(event)" class="space-y-4">
+              
+              <!-- Select Member -->
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">เลือกลูกบ้าน / บ้านเลขที่ *</label>
+                <select id="staff-pay-member" onchange="onStaffSelectMember()" required class="w-full text-xs border border-slate-300 rounded-xl p-3 bg-slate-50 focus:ring-2 focus:ring-blue-500 font-semibold">
+                  <option value="">-- ค้นหาหรือเลือกลูกบ้าน (162 หลัง) --</option>
+                  <!-- Populated by JS -->
+                </select>
+              </div>
+
+              <!-- Member Information Preview Box -->
+              <div id="staff-member-preview" class="hidden p-4 rounded-2xl bg-blue-50 border border-blue-200 text-xs space-y-1.5">
+                <!-- Injected by JS -->
+              </div>
+
+              <!-- Select Quarters -->
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-2">เลือกงวดที่ต้องการชำระเงิน *</label>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                  <label class="flex items-center p-3 rounded-xl border bg-white hover:bg-slate-50 cursor-pointer">
+                    <input type="checkbox" name="staff_quarter" value="1" onchange="calculateStaffPaymentAmount()" class="mr-2.5 rounded text-blue-600">
+                    <div>
+                      <span class="font-bold text-slate-800">งวดที่ 1</span>
+                      <p class="text-[10px] text-slate-400">ม.ค. - มี.ค.</p>
+                    </div>
+                  </label>
+                  <label class="flex items-center p-3 rounded-xl border bg-white hover:bg-slate-50 cursor-pointer">
+                    <input type="checkbox" name="staff_quarter" value="2" onchange="calculateStaffPaymentAmount()" class="mr-2.5 rounded text-blue-600">
+                    <div>
+                      <span class="font-bold text-slate-800">งวดที่ 2</span>
+                      <p class="text-[10px] text-slate-400">เม.ย. - มิ.ย.</p>
+                    </div>
+                  </label>
+                  <label class="flex items-center p-3 rounded-xl border bg-white hover:bg-slate-50 cursor-pointer">
+                    <input type="checkbox" name="staff_quarter" value="3" onchange="calculateStaffPaymentAmount()" class="mr-2.5 rounded text-blue-600">
+                    <div>
+                      <span class="font-bold text-slate-800">งวดที่ 3</span>
+                      <p class="text-[10px] text-slate-400">ก.ค. - ก.ย.</p>
+                    </div>
+                  </label>
+                  <label class="flex items-center p-3 rounded-xl border bg-white hover:bg-slate-50 cursor-pointer">
+                    <input type="checkbox" name="staff_quarter" value="4" onchange="calculateStaffPaymentAmount()" class="mr-2.5 rounded text-blue-600">
+                    <div>
+                      <span class="font-bold text-slate-800">งวดที่ 4</span>
+                      <p class="text-[10px] text-slate-400">ต.ค. - ธ.ค.</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Channel & Calculated Amount -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">ช่องทางการชำระ *</label>
+                  <select id="staff-pay-channel" class="w-full text-xs border border-slate-300 rounded-xl p-3 bg-slate-50">
+                    <option value="bank">โอนเงินเข้าบัญชี (ธนาคารกรุงเทพ)</option>
+                    <option value="cash">ชำระด้วยเงินสด (สำรองจ่าย)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">ยอดเงินที่คำนวณได้ (บาท) *</label>
+                  <input type="text" id="staff-pay-amount-display" readonly value="0.00" class="w-full text-lg border border-slate-300 rounded-xl p-2.5 bg-slate-100 font-black text-blue-600">
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">หมายเหตุ หรือข้อมูลสลิป</label>
+                <input type="text" id="staff-pay-note" placeholder="เช่น เวลาโอน 14.30 น. หรือ ชำระแทนโดยคุณ..." class="w-full text-xs border border-slate-300 rounded-xl p-3 bg-slate-50">
+              </div>
+
+              <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3.5 rounded-2xl shadow-lg transition text-sm flex items-center justify-center">
+                <i class="fa-solid fa-receipt mr-2"></i> บันทึกรับเงิน & ออกใบเสร็จ E-Receipt ทันที
+              </button>
+            </form>
+          </div>
+
+          <!-- Right Column: Quick Status & Recent Actions -->
+          <div class="lg:col-span-5 space-y-6">
+            
+            <div class="glass-card rounded-3xl p-6 shadow-sm border border-slate-200">
+              <h4 class="text-sm font-bold text-slate-800 flex items-center mb-3">
+                <i class="fa-solid fa-circle-info text-blue-600 mr-2"></i> สรุปเกณฑ์การจัดเก็บประจำปี 2569
+              </h4>
+              <ul class="text-xs text-slate-600 space-y-2">
+                <li class="flex justify-between border-b pb-1.5">
+                  <span>ซอย 1 ถึง 10:</span>
+                  <strong>300 บาท/เดือน (900 บาท/งวด)</strong>
+                </li>
+                <li class="flex justify-between border-b pb-1.5">
+                  <span>สายหลัก:</span>
+                  <strong>100 บาท/เดือน (300 บาท/งวด)</strong>
+                </li>
+                <li class="flex justify-between border-b pb-1.5">
+                  <span>ผู้รับเงินและลงนามใบเสร็จ:</span>
+                  <strong class="text-emerald-700">นางราตรี แย้มวจี (เหรัญญิก)</strong>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Recent Transactions Mini Feed -->
+            <div class="glass-card rounded-3xl p-6 shadow-sm border border-slate-200">
+              <h4 class="text-sm font-bold text-slate-800 flex items-center mb-3">
+                <i class="fa-solid fa-clock-rotate-left text-slate-500 mr-2"></i> รายการรับเงินล่าสุดในระบบ
+              </h4>
+              <div id="staff-mini-feed" class="space-y-2 max-h-64 overflow-y-auto text-xs">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+      <!-- STAFF TAB 2: EXPENSES (บันทึกรายจ่าย) -->
+      <section id="stab-expense" class="hidden space-y-6">
+        <div class="max-w-2xl mx-auto glass-card rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+          <div class="border-b pb-4">
+            <span class="text-xs font-bold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-md">การเบิกจ่าย</span>
+            <h3 class="text-xl font-black text-slate-800 mt-1">บันทึกรายจ่ายกองทุนพัฒนาหมู่บ้าน</h3>
+            <p class="text-xs text-slate-500">บันทึกค่า รปภ. สาธารณูปโภค ค่าซ่อมแซม และค่าอุปกรณ์</p>
+          </div>
+
+          <form onsubmit="handleStaffSubmitExpense(event)" class="space-y-4 text-xs">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">รายการค่าใช้จ่าย *</label>
+              <input type="text" id="staff-exp-title" placeholder="เช่น ค่า รปภ. ประจำเดือน, ค่าไฟฟ้าอาคารอเนกประสงค์" required class="w-full p-3 border rounded-xl text-sm">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">จำนวนเงิน (บาท) *</label>
+                <input type="number" step="0.01" id="staff-exp-amount" placeholder="0.00" required class="w-full p-3 border rounded-xl text-sm font-black text-rose-600">
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">ผู้รับเงิน / หน่วยงาน *</label>
+                <input type="text" id="staff-exp-payee" placeholder="เช่น บริษัท รปภ., การไฟฟ้าส่วนภูมิภาค" required class="w-full p-3 border rounded-xl text-sm">
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">หมวดหมู่ค่าใช้จ่าย</label>
+              <select id="staff-exp-cat" class="w-full p-3 border rounded-xl bg-slate-50">
+                <option value="ค่ารักษาความปลอดภัย">ค่ารักษาความปลอดภัย (รปภ.)</option>
+                <option value="สาธารณูปโภค">สาธารณูปโภค (ค่าไฟ / ค่าน้ำ)</option>
+                <option value="ค่าบำรุงรักษา">ค่าบำรุงรักษา & สวน (ตัดหญ้า / ซ่อมแซม)</option>
+                <option value="ค่าธรรมเนียม">ค่าธรรมเนียมธนาคาร SMS</option>
+                <option value="ค่าใช้จ่ายทั่วไป">ค่าใช้จ่ายทั่วไป</option>
+              </select>
+            </div>
+
+            <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-2xl shadow-lg transition text-sm">
+              <i class="fa-solid fa-check mr-2"></i> ยืนยันบันทึกรายจ่าย
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- STAFF TAB 3: MEMBER DIRECTORY (ทะเบียนสมาชิก) -->
+      <section id="stab-members" class="hidden space-y-6">
+        <div class="glass-card rounded-3xl p-6 shadow-sm space-y-4">
+          <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+            <div>
+              <h3 class="text-lg font-bold text-slate-800">ทะเบียนสมาชิกและประวัติการชำระ (162 หลังคาเรือน)</h3>
+              <p class="text-xs text-slate-500">จัดการข้อมูลลูกบ้าน ตรวจสอบรายซอย และพิมพ์ใบเสร็จย้อนหลัง</p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+              <select id="staff-filter-alley" onchange="renderStaffMembersTable()" class="text-xs border rounded-xl p-2 bg-slate-50">
+                <option value="all">ทุกซอย (162 หลัง)</option>
+                <option value="ซอย 1">ซอย 1 (11 หลัง)</option>
+                <option value="ซอย 2">ซอย 2 (18 หลัง)</option>
+                <option value="ซอย 3">ซอย 3 (13 หลัง)</option>
+                <option value="ซอย 4">ซอย 4 (17 หลัง)</option>
+                <option value="ซอย 5">ซอย 5 (15 หลัง)</option>
+                <option value="ซอย 6">ซอย 6 (16 หลัง)</option>
+                <option value="ซอย 7">ซอย 7 (16 หลัง)</option>
+                <option value="ซอย 8">ซอย 8 (7 หลัง)</option>
+                <option value="ซอย 9">ซอย 9 (18 หลัง)</option>
+                <option value="ซอย 10">ซอย 10 (15 หลัง)</option>
+                <option value="สายหลัก">สายหลัก (16 หลัง)</option>
+              </select>
+
+              <select id="staff-filter-status" onchange="renderStaffMembersTable()" class="text-xs border rounded-xl p-2 bg-slate-50">
+                <option value="all">ทุกสถานะ</option>
+                <option value="ชำระครบทั้งปี">ชำระครบทั้งปี</option>
+                <option value="ชำระบางส่วน">ชำระบางส่วน</option>
+                <option value="ยังไม่ชำระ">ยังไม่ชำระ</option>
+              </select>
+
+              <input type="text" id="staff-search-box" oninput="renderStaffMembersTable()" placeholder="ค้นหาชื่อ หรือบ้านเลขที่..." class="text-xs border rounded-xl p-2">
+              
+              <a href="/village_fund_2569.xlsx" download class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-2 rounded-xl font-bold flex items-center">
+                <i class="fa-solid fa-file-excel mr-1.5"></i> ส่งออก Excel
+              </a>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto border rounded-2xl">
+            <table class="min-w-full divide-y divide-slate-200 text-xs text-left">
+              <thead class="bg-slate-50 text-slate-700 font-bold sticky top-0">
+                <tr>
+                  <th class="px-3 py-3">ซอย</th>
+                  <th class="px-3 py-3">บ้านเลขที่</th>
+                  <th class="px-3 py-3">ชื่อ-สกุล</th>
+                  <th class="px-2 py-3 text-center">งวด 1</th>
+                  <th class="px-2 py-3 text-center">งวด 2</th>
+                  <th class="px-2 py-3 text-center">งวด 3</th>
+                  <th class="px-2 py-3 text-center">งวด 4</th>
+                  <th class="px-3 py-3 text-right">ชำระแล้ว</th>
+                  <th class="px-3 py-3 text-right text-rose-600">ยอดค้าง</th>
+                  <th class="px-3 py-3 text-center">สถานะ</th>
+                  <th class="px-3 py-3 text-center">พิมพ์ใบเสร็จ</th>
+                </tr>
+              </thead>
+              <tbody id="staff-member-body" class="divide-y divide-slate-100 bg-white">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- STAFF TAB 4: OFFICIAL PDF REPORTS (ศูนย์ออกเอกสาร) -->
+      <section id="stab-reports" class="hidden space-y-6">
+        <div class="glass-card rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+          <div class="border-b pb-4">
+            <h3 class="text-lg font-bold text-slate-800 flex items-center">
+              <i class="fa-solid fa-file-pdf text-rose-600 mr-2"></i> ศูนย์ออกเอกสารและรายงานทางการ (PDF A4)
+            </h3>
+            <p class="text-xs text-slate-500">เลือกรายงานที่ต้องการพิมพ์ หรือบันทึกเป็นเอกสาร PDF สำหรับคณะกรรมการ</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <!-- Report 1: Receipt -->
+            <div class="border rounded-3xl p-6 bg-gradient-to-br from-white to-blue-50/50 flex flex-col justify-between shadow-sm">
+              <div class="space-y-2">
+                <div class="w-12 h-12 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center text-xl">
+                  <i class="fa-solid fa-receipt"></i>
+                </div>
+                <h4 class="text-base font-bold text-slate-800">1. ใบเสร็จรับเงิน (Official E-Receipt)</h4>
+                <p class="text-xs text-slate-500">ใบเสร็จรับเงินระบุงวดที่ชำระตามจริง พร้อมลงนามเหรัญญิก</p>
+              </div>
+              <div class="mt-4 pt-3 border-t space-y-2">
+                <div>
+                  <label class="text-[10px] text-slate-500 font-bold block mb-1">เลือกลูกบ้าน:</label>
+                  <select id="staff-receipt-select" class="w-full text-xs border rounded-xl p-2 bg-white font-medium">
+                    <!-- Populated by JS -->
+                  </select>
+                </div>
+                <div>
+                  <label class="text-[10px] text-slate-500 font-bold block mb-1">เลือกงวดที่ต้องการออกใบเสร็จ:</label>
+                  <select id="staff-receipt-quarter-select" class="w-full text-xs border rounded-xl p-2 bg-white font-medium">
+                    <option value="all">ทุกงวดที่ชำระแล้ว (แจกแจงรายงวด)</option>
+                    <option value="1">เฉพาะงวดที่ 1 (ม.ค. - มี.ค. 2569)</option>
+                    <option value="2">เฉพาะงวดที่ 2 (เม.ย. - มิ.ย. 2569)</option>
+                    <option value="3">เฉพาะงวดที่ 3 (ก.ค. - ก.ย. 2569)</option>
+                    <option value="4">เฉพาะงวดที่ 4 (ต.ค. - ธ.ค. 2569)</option>
+                  </select>
+                </div>
+                <button onclick="staffGenerateReceiptPDF()" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 rounded-xl transition flex items-center justify-center shadow">
+                  <i class="fa-solid fa-print mr-1.5"></i> ดูตัวอย่าง & พิมพ์ใบเสร็จ PDF
+                </button>
+              </div>
+            </div>
+
+            <!-- Report 2: Financial Statement -->
+            <div class="border rounded-3xl p-6 bg-gradient-to-br from-white to-emerald-50/50 flex flex-col justify-between shadow-sm">
+              <div class="space-y-2">
+                <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl">
+                  <i class="fa-solid fa-file-invoice"></i>
+                </div>
+                <h4 class="text-base font-bold text-slate-800">2. รายงานสรุปงบการเงิน 2569</h4>
+                <p class="text-xs text-slate-500">งบดุลสรุปยอดเงินและเงินฝากธนาคาร พร้อมลายเซ็นประธานและเหรัญญิก</p>
+              </div>
+              <div class="mt-4 pt-3 border-t">
+                <button onclick="staffGenerateStatementPDF()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 rounded-xl transition flex items-center justify-center">
+                  <i class="fa-solid fa-print mr-1.5"></i> ดูตัวอย่าง & พิมพ์งบดุล PDF
+                </button>
+              </div>
+            </div>
+
+            <!-- Report 3: Unpaid Defaulters List -->
+            <div class="border rounded-3xl p-6 bg-gradient-to-br from-white to-rose-50/50 flex flex-col justify-between shadow-sm">
+              <div class="space-y-2">
+                <div class="w-12 h-12 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center text-xl">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <h4 class="text-base font-bold text-slate-800">3. รายงานผู้ค้างชำระแยกซอย</h4>
+                <p class="text-xs text-slate-500">บัญชีรายชื่อบ้านที่ค้างชำระเงิน สำหรับคณะกรรมการลงพื้นที่</p>
+              </div>
+              <div class="mt-4 pt-3 border-t">
+                <button onclick="staffGenerateUnpaidPDF()" class="w-full bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold py-2.5 rounded-xl transition flex items-center justify-center">
+                  <i class="fa-solid fa-print mr-1.5"></i> ดูตัวอย่าง & พิมพ์รายชื่อค้างชำระ PDF
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- STAFF TAB 5: AUDIT LOGS (ประวัติการทำรายการ) -->
+      <section id="stab-audit" class="hidden space-y-6">
+        <div class="glass-card rounded-3xl p-6 shadow-sm space-y-4">
+          <div class="border-b pb-3">
+            <h3 class="text-lg font-bold text-slate-800 flex items-center">
+              <i class="fa-solid fa-clock-rotate-left text-cyan-600 mr-2"></i> บันทึกประวัติการทำรายการ (Audit Log)
+            </h3>
+            <p class="text-xs text-slate-500">ระบบบันทึกความเคลื่อนไหวทุกขั้นตอนเพื่อความโปร่งใสและตรวจสอบได้</p>
+          </div>
+          <div id="staff-audit-logs-container" class="space-y-2 text-xs">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- STAFF TAB 6: BACKUP & GOOGLE SYNC -->
+      <section id="stab-backup" class="hidden space-y-6">
+        <div class="max-w-3xl mx-auto glass-card rounded-3xl p-8 shadow-sm space-y-6">
+          <div class="flex items-center space-x-4 border-b pb-4">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl">
+              <i class="fa-brands fa-google-drive"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-slate-800">การสำรองข้อมูล & Google Cloud Sync</h3>
+              <p class="text-xs text-slate-500">ดาวน์โหลดฐานข้อมูล หรือซิงก์ข้อมูลไปยัง Google Sheets และ Google Drive</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <a href="/village_fund_2569.xlsx" download class="p-4 bg-white border rounded-2xl hover:border-emerald-500 flex items-center space-x-3 transition">
+              <i class="fa-solid fa-file-excel text-emerald-600 text-3xl"></i>
+              <div>
+                <p class="text-xs font-bold text-slate-800">village_fund_2569.xlsx</p>
+                <p class="text-[10px] text-slate-500">Excel รวมครบทั้ง 5 ชีท</p>
+              </div>
+            </a>
+            <a href="/village_fund_members.csv" download class="p-4 bg-white border rounded-2xl hover:border-blue-500 flex items-center space-x-3 transition">
+              <i class="fa-solid fa-file-csv text-blue-600 text-3xl"></i>
+              <div>
+                <p class="text-xs font-bold text-slate-800">village_fund_members.csv</p>
+                <p class="text-[10px] text-slate-500">CSV สมาชิก 162 หลังคาเรือน</p>
+              </div>
+            </a>
+          </div>
+
+          <div class="p-5 border rounded-2xl bg-slate-50 space-y-3">
+            <h4 class="text-xs font-bold text-slate-700">ทดสอบคำสั่งซิงก์ Google Sheets Webhook:</h4>
+            <button onclick="testStaffSync()" id="staff-sync-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow flex items-center">
+              <i class="fa-solid fa-rotate mr-2"></i> สั่งซิงก์ข้อมูลเดี๋ยวนี้
+            </button>
+            <div id="staff-sync-result" class="hidden text-xs p-3 rounded-xl bg-white border font-mono text-slate-700"></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- PRINT MODAL FOR OFFICIAL DOCUMENTS -->
+  <div id="staff-doc-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-3 no-print">
+        <h3 class="text-base font-bold text-slate-800 flex items-center">
+          <i class="fa-solid fa-print text-blue-600 mr-2"></i> เอกสารทางการกองทุนพัฒนาหมู่บ้าน
+        </h3>
+        <div class="flex space-x-2">
+          <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-4 py-1.5 rounded-lg transition font-bold flex items-center">
+            <i class="fa-solid fa-print mr-1.5"></i> พิมพ์ / บันทึก PDF
+          </button>
+          <button onclick="closeDocModal()" class="text-slate-400 hover:text-slate-600 text-sm px-2">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+      <div id="staff-doc-modal-content">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- PRINT CONTAINER -->
+  <div id="print-area">
+    <!-- Populated dynamically -->
+  </div>
+
+  <!-- SCRIPT -->
+  <script>
+    let currentStaff = null;
+    let staffMembers = [];
+
+    // Thai Baht Text conversion
+    function thaiBahtText(number) {
+      if (isNaN(number)) return "";
+      number = Number(number).toFixed(2);
+      const split = number.split('.');
+      const baht = split[0];
+      const satang = split[1];
+      const numbers = ["ศูนย์", "หนึ่ง", "สอง", "สาม", "สี่", "ห้า", "หก", "เจ็ด", "แปด", "เก้า"];
+      const units = ["", "สิบ", "ร้อย", "พัน", "หมื่น", "แสน", "ล้าน"];
+
+      function readGroup(str) {
+        let res = "";
+        const len = str.length;
+        for (let i = 0; i < len; i++) {
+          const digit = parseInt(str.charAt(i));
+          const unit = units[len - i - 1];
+          if (digit !== 0) {
+            if (len - i === 1 && digit === 1 && len > 1 && str.charAt(i - 1) !== '0') {
+              res += "เอ็ด";
+            } else if (len - i === 2 && digit === 2) {
+              res += "ยี่" + unit;
+            } else if (len - i === 2 && digit === 1) {
+              res += unit;
+            } else {
+              res += numbers[digit] + unit;
+            }
+          }
+        }
+        return res;
+      }
+
+      let result = parseInt(baht) === 0 ? "ศูนย์บาท" : readGroup(baht) + "บาท";
+      result += parseInt(satang) === 0 ? "ถ้วน" : readGroup(satang) + "สตางค์";
+      return result;
+    }
+
+    // Login functions
+    async function quickLogin(username, password) {
+      await doStaffLogin(username, password);
+    }
+
+    async function handleManualLogin(e) {
+      e.preventDefault();
+      const u = document.getElementById('staff-username').value;
+      const p = document.getElementById('staff-password').value;
+      await doStaffLogin(u, p);
+    }
+
+    async function doStaffLogin(username, password) {
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (data.success) {
+          currentStaff = data.user;
+          document.getElementById('active-staff-name').innerText = currentStaff.full_name;
+          document.getElementById('active-staff-role').innerText = currentStaff.role === 'admin' ? 'ผู้ดูแลระบบ / ประธานกรรมการ' : 'เหรัญญิกกองทุน';
+          document.getElementById('staff-login-screen').classList.add('hidden');
+          document.getElementById('staff-portal-screen').classList.remove('hidden');
+          await initStaffPortal();
+        } else {
+          alert(data.message || "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
+        }
+      } catch (err) {
+        alert("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
+      }
+    }
+
+    function logoutStaff() {
+      currentStaff = null;
+      document.getElementById('staff-portal-screen').classList.add('hidden');
+      document.getElementById('staff-login-screen').classList.remove('hidden');
+    }
+
+    function switchStaffTab(tabId) {
+      const tabs = ['pay', 'expense', 'members', 'reports', 'audit', 'backup'];
+      tabs.forEach(t => {
+        const el = document.getElementById(`stab-${t}`);
+        const nav = document.getElementById(`snav-${t}`);
+        if (el) {
+          if (t === tabId) el.classList.remove('hidden');
+          else el.classList.add('hidden');
+        }
+        if (nav) {
+          if (t === tabId) {
+            nav.className = "px-3.5 py-2 rounded-xl font-bold transition text-white bg-blue-600 whitespace-nowrap";
+          } else {
+            nav.className = "px-3.5 py-2 rounded-xl font-medium text-slate-300 hover:text-white hover:bg-white/10 transition whitespace-nowrap";
+          }
+        }
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function initStaffPortal() {
+      await loadStaffMembers();
+      await loadStaffAuditLogs();
+    }
+
+    async function loadStaffMembers() {
+      try {
+        const res = await fetch('/api/members');
+        staffMembers = await res.json();
+        populateStaffMemberSelect();
+        renderStaffMembersTable();
+        populateStaffReceiptSelect();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function populateStaffMemberSelect() {
+      const select = document.getElementById('staff-pay-member');
+      select.innerHTML = '<option value="">-- ค้นหาหรือเลือกลูกบ้าน (162 หลัง) --</option>';
+      staffMembers.forEach(m => {
+        select.innerHTML += `<option value="${m.id}">${m.house_no} - ${m.name} (${m.alley}) [ค้าง ฿${m.due_amount}]</option>`;
+      });
+    }
+
+    function populateStaffReceiptSelect() {
+      const select = document.getElementById('staff-receipt-select');
+      select.innerHTML = '';
+      staffMembers.filter(m => m.year_total > 0).forEach(m => {
+        select.innerHTML += `<option value="${m.id}">${m.house_no} - ${m.name} (${m.alley}) [ชำระแล้ว ฿${m.year_total}]</option>`;
+      });
+    }
+
+    function onStaffSelectMember() {
+      const id = document.getElementById('staff-pay-member').value;
+      const preview = document.getElementById('staff-member-preview');
+      if (!id) {
+        preview.classList.add('hidden');
+        return;
+      }
+      const m = staffMembers.find(x => x.id == id);
+      if (!m) return;
+
+      preview.innerHTML = `
+        <div class="flex justify-between font-bold text-slate-800">
+          <span>${m.name} (บ้านเลขที่ ${m.house_no})</span>
+          <span class="text-blue-700">${m.alley}</span>
+        </div>
+        <div class="text-slate-600 flex justify-between">
+          <span>อัตราจัดเก็บ: <strong>฿${m.fee_monthly}/เดือน</strong> (฿${m.fee_monthly*3}/งวด)</span>
+          <span>ยอดค้างชำระปัจจุบัน: <strong class="text-rose-600">฿${m.due_amount}</strong></span>
+        </div>
+      `;
+      preview.classList.remove('hidden');
+      calculateStaffPaymentAmount();
+    }
+
+    function calculateStaffPaymentAmount() {
+      const id = document.getElementById('staff-pay-member').value;
+      if (!id) return;
+      const m = staffMembers.find(x => x.id == id);
+      if (!m) return;
+
+      const checked = Array.from(document.querySelectorAll('input[name="staff_quarter"]:checked')).map(el => parseInt(el.value));
+      const quarterFee = m.fee_monthly * 3;
+      const total = checked.length * quarterFee;
+      document.getElementById('staff-pay-amount-display').value = total.toLocaleString('th-TH', {minimumFractionDigits: 2});
+    }
+
+    async function handleStaffSubmitPayment(e) {
+      e.preventDefault();
+      const memberId = parseInt(document.getElementById('staff-pay-member').value);
+      const checkedQuarters = Array.from(document.querySelectorAll('input[name="staff_quarter"]:checked')).map(el => parseInt(el.value));
+      const channel = document.getElementById('staff-pay-channel').value;
+      const note = document.getElementById('staff-pay-note').value;
+
+      if (!memberId || checkedQuarters.length === 0) {
+        alert("กรุณาเลือกลูกบ้านและเลือกงวดที่ต้องการชำระเงิน");
+        return;
+      }
+
+      let months = [];
+      checkedQuarters.forEach(q => {
+        const start = (q - 1) * 3 + 1;
+        months.push(start, start + 1, start + 2);
+      });
+
+      const payload = {
+        member_id: memberId,
+        months: months,
+        channel: channel,
+        note: note,
+        actor: currentStaff ? currentStaff.full_name : "นางราตรี แย้มวจี"
+      };
+
+      try {
+        const res = await fetch('/api/pay', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+        if (result.success) {
+          alert(`บันทึกรับเงินเรียบร้อยแล้ว!\nเลขที่ใบเสร็จ: ${result.receipt_no}\nจำนวนเงิน: ฿${result.amount.toLocaleString('th-TH')}`);
+          await loadStaffMembers();
+          await loadStaffAuditLogs();
+          showOfficialReceipt(memberId, result.receipt_no, checkedQuarters);
+        } else {
+          alert(result.error || "เกิดข้อผิดพลาด");
+        }
+      } catch (err) {
+        alert("ไม่สามารถบันทึกได้");
+      }
+    }
+
+    async function handleStaffSubmitExpense(e) {
+      e.preventDefault();
+      const title = document.getElementById('staff-exp-title').value;
+      const amount = parseFloat(document.getElementById('staff-exp-amount').value);
+      const payee = document.getElementById('staff-exp-payee').value;
+      const category = document.getElementById('staff-exp-cat').value;
+
+      const payload = {
+        title: title,
+        amount: amount,
+        payee: payee,
+        category: category,
+        actor: currentStaff ? currentStaff.full_name : "เจ้าหน้าที่"
+      };
+
+      try {
+        const res = await fetch('/api/expenses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+        if (result.success) {
+          alert("บันทึกรายจ่ายเรียบร้อยแล้ว");
+          document.getElementById('staff-exp-title').value = '';
+          document.getElementById('staff-exp-amount').value = '';
+          document.getElementById('staff-exp-payee').value = '';
+          await loadStaffAuditLogs();
+        }
+      } catch (err) {
+        alert("เกิดข้อผิดพลาด");
+      }
+    }
+
+    function renderStaffMembersTable() {
+      const tbody = document.getElementById('staff-member-body');
+      tbody.innerHTML = '';
+      const alley = document.getElementById('staff-filter-alley').value;
+      const status = document.getElementById('staff-filter-status').value;
+      const q = document.getElementById('staff-search-box').value.toLowerCase().trim();
+
+      const filtered = staffMembers.filter(m => {
+        if (alley !== 'all' && m.alley !== alley) return false;
+        if (status !== 'all' && m.status !== status) return false;
+        if (q && !(m.name.toLowerCase().includes(q) || m.house_no.toLowerCase().includes(q))) return false;
+        return true;
+      });
+
+      filtered.forEach(m => {
+        const statusBadge = m.status === 'ชำระครบทั้งปี' 
+          ? `<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full text-[10px] font-bold">ชำระครบ</span>`
+          : (m.status === 'ชำระบางส่วน' 
+            ? `<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-[10px] font-bold">ชำระบางส่วน</span>`
+            : `<span class="bg-rose-100 text-rose-800 px-2 py-0.5 rounded-full text-[10px] font-bold">ยังไม่ชำระ</span>`);
+
+        const qIcon = (amount) => amount > 0 
+          ? `<i class="fa-solid fa-circle-check text-emerald-500"></i>` 
+          : `<i class="fa-solid fa-circle-xmark text-slate-300"></i>`;
+
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="px-3 py-2.5 font-medium text-slate-600">${m.alley}</td>
+            <td class="px-3 py-2.5 font-bold text-slate-900">${m.house_no}</td>
+            <td class="px-3 py-2.5 text-slate-800">${m.name}</td>
+            <td class="px-2 py-2.5 text-center">${qIcon(m.q1_total)}</td>
+            <td class="px-2 py-2.5 text-center">${qIcon(m.q2_total)}</td>
+            <td class="px-2 py-2.5 text-center">${qIcon(m.q3_total)}</td>
+            <td class="px-2 py-2.5 text-center">${qIcon(m.q4_total)}</td>
+            <td class="px-3 py-2.5 text-right font-bold text-emerald-600">฿${m.year_total.toLocaleString('th-TH')}</td>
+            <td class="px-3 py-2.5 text-right font-bold ${m.due_amount > 0 ? 'text-rose-600' : 'text-slate-400'}">฿${m.due_amount.toLocaleString('th-TH')}</td>
+            <td class="px-3 py-2.5 text-center">${statusBadge}</td>
+            <td class="px-3 py-2.5 text-center">
+              <button onclick="showOfficialReceipt(${m.id})" class="text-blue-600 hover:text-blue-800 text-xs font-bold p-1">
+                <i class="fa-solid fa-print"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    async function loadStaffAuditLogs() {
+      try {
+        const res = await fetch('/api/audit-logs');
+        const logs = await res.json();
+        
+        const mini = document.getElementById('staff-mini-feed');
+        if (mini) {
+          mini.innerHTML = '';
+          logs.slice(0, 5).forEach(l => {
+            mini.innerHTML += `
+              <div class="p-2 rounded-xl bg-slate-50 border border-slate-100">
+                <p class="font-medium text-slate-800">${l.details}</p>
+                <span class="text-[10px] text-slate-400">${l.timestamp} (${l.actor})</span>
+              </div>
+            `;
+          });
+        }
+
+        const full = document.getElementById('staff-audit-logs-container');
+        if (full) {
+          full.innerHTML = '';
+          logs.forEach(l => {
+            full.innerHTML += `
+              <div class="p-3 rounded-2xl bg-white border border-slate-200 flex justify-between items-center">
+                <div>
+                  <p class="font-bold text-slate-800">${l.details}</p>
+                  <span class="text-[10px] text-slate-400">${l.action} • ผู้ดำเนินการ: ${l.actor}</span>
+                </div>
+                <span class="text-[10px] text-slate-400 font-mono">${l.timestamp}</span>
+              </div>
+            `;
+          });
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Official Receipt Modal (Itemized by Quarter)
+    function showOfficialReceipt(memberId, customNo, quartersToPrint) {
+      const m = staffMembers.find(x => x.id === memberId);
+      if (!m) return;
+
+      const now = new Date();
+      const thaiMonths = ["", "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+                          "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+      const today = `${now.getDate()} ${thaiMonths[now.getMonth() + 1]} 2569`;
+      const receiptNo = customNo || `REC-69-${m.id.toString().padStart(3, '0')}-${now.getDate().toString().padStart(2, '0')}${(now.getMonth()+1).toString().padStart(2, '0')}`;
+      const quarterFee = m.fee_monthly * 3;
+
+      // Determine which quarters to list
+      let quarters = quartersToPrint;
+      if (!quarters || quarters.length === 0) {
+        quarters = [];
+        if (m.q1_total > 0) quarters.push(1);
+        if (m.q2_total > 0) quarters.push(2);
+        if (m.q3_total > 0) quarters.push(3);
+        if (m.q4_total > 0) quarters.push(4);
+        if (quarters.length === 0) quarters = [1];
+      }
+
+      const quarterNames = {
+        1: 'งวดที่ 1 (มกราคม - มีนาคม 2569)',
+        2: 'งวดที่ 2 (เมษายน - มิถุนายน 2569)',
+        3: 'งวดที่ 3 (กรกฎาคม - กันยายน 2569)',
+        4: 'งวดที่ 4 (ตุลาคม - ธันวาคม 2569)'
+      };
+
+      let rowsHtml = '';
+      let totalAmount = 0;
+      quarters.forEach((q, idx) => {
+        totalAmount += quarterFee;
+        rowsHtml += `
+          <tr>
+            <td class="p-3 text-center font-bold text-slate-700">${idx + 1}</td>
+            <td class="p-3">
+              <span class="font-bold text-slate-900 block">ค่าบำรุงกองทุนพัฒนาหมู่บ้าน ปี 2569 - ${quarterNames[q]}</span>
+              <span class="text-[11px] text-slate-500">อัตราเดือนละ ฿${m.fee_monthly.toLocaleString('th-TH')} x 3 เดือน (${m.alley})</span>
+            </td>
+            <td class="p-3 text-right font-bold text-slate-900">฿${quarterFee.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+          </tr>
+        `;
+      });
+
+      const bahtText = thaiBahtText(totalAmount);
+
+      const html = `
+        <div class="p-8 bg-white font-sarabun text-slate-800 space-y-5">
+          <!-- Receipt Header -->
+          <div class="text-center border-b pb-4">
+            <h2 class="text-2xl font-bold tracking-tight text-slate-900">กองทุนพัฒนาหมู่บ้าน ประจำปี 2569</h2>
+            <p class="text-xs text-slate-600 mt-0.5">อาคารอเนกประสงค์กองทุนพัฒนาหมู่บ้าน</p>
+            <div class="inline-block mt-2 bg-blue-50 text-blue-900 px-4 py-1 rounded-full border border-blue-200">
+              <span class="text-sm font-bold">ใบเสร็จรับเงิน (Official E-Receipt)</span>
+            </div>
+          </div>
+
+          <!-- Metadata -->
+          <div class="flex justify-between items-start text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">
+            <div class="space-y-1">
+              <p><strong>ได้รับเงินจาก:</strong> <span class="font-bold text-slate-900">${m.name}</span></p>
+              <p><strong>บ้านเลขที่:</strong> <span class="font-bold">${m.house_no}</span> &nbsp;&nbsp;|&nbsp;&nbsp; <strong>โซน/ซอย:</strong> ${m.alley}</p>
+            </div>
+            <div class="text-right space-y-1">
+              <p><strong>เลขที่ใบเสร็จ:</strong> <span class="font-mono font-bold text-blue-700">${receiptNo}</span></p>
+              <p><strong>วันที่ออกใบเสร็จ:</strong> <span class="font-semibold">${today}</span></p>
+            </div>
+          </div>
+
+          <!-- Table Itemized by Quarters -->
+          <table class="w-full text-xs border border-slate-300 divide-y divide-slate-300 rounded-xl overflow-hidden">
+            <thead class="bg-slate-100 font-bold text-slate-700">
+              <tr>
+                <th class="p-3 text-center w-14">ลำดับ</th>
+                <th class="p-3 text-left">รายการชำระแยกตามงวด</th>
+                <th class="p-3 text-right w-36">จำนวนเงิน (บาท)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200">
+              ${rowsHtml}
+            </tbody>
+            <tfoot class="bg-blue-50/60 font-bold border-t-2 border-slate-300">
+              <tr>
+                <td colspan="2" class="p-3 text-left">
+                  <span class="text-slate-600">จำนวนเงินตัวอักษร:</span>
+                  <span class="font-bold text-slate-900 ml-1">(${bahtText})</span>
+                </td>
+                <td class="p-3 text-right text-base font-extrabold text-blue-900">฿${totalAmount.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+              </tr>
+            </tfoot>
+          </table>
+
+          <!-- Signatures -->
+          <div class="grid grid-cols-2 gap-8 pt-8 text-center text-xs">
+            <div>
+              <p class="mb-8">.....................................................</p>
+              <p class="font-bold text-slate-900">(${m.name})</p>
+              <p class="text-slate-500">ผู้ชำระเงิน</p>
+            </div>
+            <div>
+              <p class="mb-8">.....................................................</p>
+              <p class="font-bold text-slate-900">(นางราตรี แย้มวจี / น.ส.วีระออ สุวรรณสิทธิ์)</p>
+              <p class="text-slate-500">เหรัญญิกกองทุน / ผู้รับเงิน</p>
+            </div>
+          </div>
+
+          <div class="text-center text-[10px] text-slate-400 border-t pt-3">
+            เอกสารนี้ออกโดยระบบอิเล็กทรอนิกส์กองทุนพัฒนาหมู่บ้าน | วันที่พิมพ์: ${today}
+          </div>
+        </div>
+      `;
+
+      document.getElementById('staff-doc-modal-content').innerHTML = html;
+      document.getElementById('print-area').innerHTML = html;
+      document.getElementById('staff-doc-modal').classList.remove('hidden');
+    }
+
+    function closeDocModal() {
+      document.getElementById('staff-doc-modal').classList.add('hidden');
+    }
+
+    function staffGenerateReceiptPDF() {
+      const id = parseInt(document.getElementById('staff-receipt-select').value);
+      const qVal = document.getElementById('staff-receipt-quarter-select').value;
+      const quarters = qVal === 'all' ? null : [parseInt(qVal)];
+      if (id) showOfficialReceipt(id, null, quarters);
+    }
+
+    // Real-Time Financial Statement
+    async function staffGenerateStatementPDF() {
+      const res = await fetch('/api/stats');
+      const s = await res.json();
+      
+      const html = `
+        <div class="p-8 bg-white font-sarabun text-slate-800 space-y-4">
+          <div class="text-center border-b pb-4">
+            <h2 class="text-2xl font-bold text-slate-900">รายงานสรุปการรับ-จ่ายเงินของกองทุนพัฒนาหมู่บ้าน ปี 2569</h2>
+            <div class="flex items-center justify-center space-x-2 mt-1">
+              <span class="text-xs font-semibold text-slate-600">ข้อมูลปรับปรุง Real-time ณ วันที่ ${s.as_of_datetime}</span>
+              <span class="bg-emerald-100 text-emerald-800 text-[10px] px-2.5 py-0.5 rounded-full font-bold">● ปัจจุบัน</span>
+            </div>
+          </div>
+
+          <table class="w-full text-xs border border-slate-400 divide-y divide-slate-400">
+            <thead class="bg-slate-100 font-bold">
+              <tr>
+                <th class="p-2.5 text-center w-24">ว/ด/ป</th>
+                <th class="p-2.5 text-left">รายการ</th>
+                <th class="p-2.5 text-right w-36">จำนวนเงิน (บาท)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200">
+              <tr>
+                <td class="p-2 text-center">24/1/69</td>
+                <td class="p-2">ยอดเงินคงเหลือ ปี 2568 (ยกมา)</td>
+                <td class="p-2 text-right font-semibold">${s.financial_summary.initial_2568.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+              </tr>
+              <tr>
+                <td class="p-2 text-center">-</td>
+                <td class="p-2">รับเงินจากสมาชิก งวดที่ 1 (ม.ค. - มี.ค. 69) [ชำระแล้ว ${s.quarter_counts.q1.paid}/162 หลัง]</td>
+                <td class="p-2 text-right">${s.quarter_counts.q1.amount.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+              </tr>
+              <tr>
+                <td class="p-2 text-center">-</td>
+                <td class="p-2">รับเงินจากสมาชิก งวดที่ 2 (เม.ย. - มิ.ย. 69) [ชำระแล้ว ${s.quarter_counts.q2.paid}/162 หลัง]</td>
+                <td class="p-2 text-right">${s.quarter_counts.q2.amount.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+              </tr>
+              <tr>
+                <td class="p-2 text-center">-</td>
+                <td class="p-2">รับเงินจากสมาชิก งวดที่ 3 (ก.ค. - ก.ย. 69) [ชำระแล้ว ${s.quarter_counts.q3.paid}/162 หลัง]</td>
+                <td class="p-2 text-right">${s.quarter_counts.q3.amount.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+              </tr>
+              <tr>
+                <td class="p-2 text-center">-</td>
+                <td class="p-2">รับเงินจากสมาชิก งวดที่ 4 (ต.ค. - ธ.ค. 69) [ชำระแล้ว ${s.quarter_counts.q4.paid}/162 หลัง]</td>
+                <td class="p-2 text-right">${s.quarter_counts.q4.amount.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+              </tr>
+              <tr class="bg-blue-50 font-bold">
+                <td class="p-2 text-center">-</td>
+                <td class="p-2">รวมรับเงินจากสมาชิกทั้ง 4 งวด (162 หลังคาเรือน)</td>
+                <td class="p-2 text-right text-blue-900">${s.financial_summary.member_income.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+              </tr>
+              <tr>
+                <td class="p-2 text-center">-</td>
+                <td class="p-2">เงินสนับสนุน</td>
+                <td class="p-2 text-right">${s.financial_summary.support_income.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+              </tr>
+              <tr class="bg-rose-50 font-bold text-rose-900">
+                <td class="p-2 text-center">-</td>
+                <td class="p-2">รวมค่าใช้จ่ายตั้งแต่ ม.ค. 2569 - ปัจจุบัน</td>
+                <td class="p-2 text-right">${s.financial_summary.expenses_cum.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+              </tr>
+              <tr class="border-t-2 border-slate-400">
+                <td class="p-2 text-center">-</td>
+                <td class="p-2">เงินสำรองคงเหลือ (เงินสดในมือ)</td>
+                <td class="p-2 text-right font-semibold">${s.financial_summary.cash_reserve.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+              </tr>
+              <tr>
+                <td class="p-2 text-center">-</td>
+                <td class="p-2">เงินคงเหลือในสมุดบัญชีธนาคาร (ธนาคารกรุงเทพ)</td>
+                <td class="p-2 text-right font-semibold">${s.financial_summary.bank_balance.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+              </tr>
+              <tr class="bg-emerald-100 font-extrabold text-sm text-emerald-950 border-t-2 border-b-4 border-slate-900">
+                <td class="p-2.5 text-center">ณ ปัจจุบัน</td>
+                <td class="p-2.5">รวมเงินคงเหลือสุทธิทั้งสิ้น (Real-time)</td>
+                <td class="p-2.5 text-right">฿${s.financial_summary.total_ending_balance.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="grid grid-cols-2 gap-8 pt-10 text-center text-xs">
+            <div>
+              <p class="mb-10">.....................................................</p>
+              <p class="font-bold">(นางราตรี แย้มวจี / น.ส.วีระออ สุวรรณสิทธิ์)</p>
+              <p>เหรัญญิกผู้จัดทำบัญชี</p>
+            </div>
+            <div>
+              <p class="mb-10">.....................................................</p>
+              <p class="font-bold">(นายสุนทร คำสุข)</p>
+              <p>ประธานกรรมการกองทุนพัฒนาหมู่บ้าน</p>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('staff-doc-modal-content').innerHTML = html;
+      document.getElementById('print-area').innerHTML = html;
+      document.getElementById('staff-doc-modal').classList.remove('hidden');
+    }
+
+    function staffGenerateUnpaidPDF() {
+      const unpaid = staffMembers.filter(m => m.due_amount > 0);
+      let rows = '';
+      unpaid.forEach((m, idx) => {
+        rows += `
+          <tr>
+            <td class="p-1.5 text-center">${idx + 1}</td>
+            <td class="p-1.5">${m.alley}</td>
+            <td class="p-1.5 font-bold">${m.house_no}</td>
+            <td class="p-1.5">${m.name}</td>
+            <td class="p-1.5 text-right font-bold text-rose-700">฿${m.due_amount.toLocaleString('th-TH')}</td>
+            <td class="p-1.5 text-center">${m.remarks || '-'}</td>
+          </tr>
+        `;
+      });
+
+      const html = `
+        <div class="p-8 bg-white font-sarabun text-slate-800 space-y-4">
+          <div class="text-center border-b pb-4">
+            <h2 class="text-2xl font-bold">รายงานรายชื่อบ้านที่ค้างชำระเงินกองทุนพัฒนาหมู่บ้าน ปี 2569</h2>
+            <p class="text-xs text-slate-500">สำหรับคณะกรรมการลงพื้นที่ติดตามยอดค้างชำระ | ข้อมูล ณ วันที่ 9 ตุลาคม 2569</p>
+          </div>
+
+          <table class="w-full text-xs border border-slate-300 divide-y divide-slate-300">
+            <thead class="bg-slate-100 font-bold">
+              <tr>
+                <th class="p-2 text-center w-10">ลำดับ</th>
+                <th class="p-2 text-left">ซอย</th>
+                <th class="p-2 text-left">บ้านเลขที่</th>
+                <th class="p-2 text-left">ชื่อ-สกุล</th>
+                <th class="p-2 text-right">ยอดค้างชำระ</th>
+                <th class="p-2 text-center">หมายเหตุ</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              ${rows}
+            </tbody>
+          </table>
+
+          <div class="pt-4 text-xs flex justify-between font-bold">
+            <span>รวมบ้านที่ค้างชำระ: ${unpaid.length} หลังคาเรือน</span>
+            <span>ยอดค้างรวมทั้งสิ้น: ฿${unpaid.reduce((acc, m) => acc + m.due_amount, 0).toLocaleString('th-TH')} บาท</span>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('staff-doc-modal-content').innerHTML = html;
+      document.getElementById('print-area').innerHTML = html;
+      document.getElementById('staff-doc-modal').classList.remove('hidden');
+    }
+
+    async function testStaffSync() {
+      const btn = document.getElementById('staff-sync-btn');
+      const resEl = document.getElementById('staff-sync-result');
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> กำลังซิงก์ข้อมูล...';
+      try {
+        const res = await fetch('/api/sync-sheets', { method: 'POST' });
+        const d = await res.json();
+        btn.innerHTML = '<i class="fa-solid fa-check text-emerald-400 mr-2"></i> ซิงก์ข้อมูลสำเร็จ!';
+        resEl.classList.remove('hidden');
+        resEl.innerHTML = `✓ เชื่อมต่อสำเร็จ: ${d.message} (${d.synced_at})`;
+      } catch (err) {
+        btn.innerHTML = '<i class="fa-solid fa-rotate mr-2"></i> สั่งซิงก์ข้อมูลเดี๋ยวนี้';
+        alert("ไม่สามารถซิงก์ได้");
+      }
+    }
+  </script>
+</body>
+</html>

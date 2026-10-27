@@ -1,0 +1,17 @@
+{
+  "year": 2569,
+  "as_of_date": "9/10/69",
+  "initial_balance_2568": 82969.73,
+  "income_q1": 87000.0,
+  "income_q2": 84300.0,
+  "income_q3": 71100.0,
+  "income_q4": 54000.0,
+  "total_member_income": 296400.0,
+  "no_slip_income": 0.0,
+  "support_income": 168.39,
+  "next_year_income": 0.0,
+  "total_expenses_cum": 311420.1,
+  "cash_reserve_balance": 13764.47,
+  "bank_account_balance": 54353.55,
+  "total_ending_balance": 68118.02
+}
