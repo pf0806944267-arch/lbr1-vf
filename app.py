@@ -34,7 +34,7 @@ SCRIPT_URL = os.environ.get("APPS_SCRIPT_URL", "")
 API_KEY = os.environ.get("API_KEY", "")
 SECRET = os.environ.get("SESSION_SECRET") or (API_KEY + "-session" if API_KEY else "secret-fund-2569")
 FY = int(os.environ.get("FISCAL_YEAR", "2569"))
-REFRESH_SECONDS = int(os.environ.get("REFRESH_SECONDS", "15"))
+REFRESH_SECONDS = int(os.environ.get("REFRESH_SECONDS", "60"))
 TABLES = ["fiscal_years", "zones", "fee_rates", "houses", "members", "house_members", "dues", "payments",
           "expense_categories", "expenses", "reserve_transactions", "other_income", "users", "audit_log"]
 MONTH_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."]
@@ -102,6 +102,19 @@ def load_local_cache():
     return data
 
 
+def append_to_csv(table, row):
+    p = os.path.join(ROOT, "data", table + ".csv")
+    try:
+        exists = os.path.exists(p)
+        with open(p, "a", encoding="utf-8-sig", newline="") as f:
+            w = csv.writer(f)
+            if not exists or os.path.getsize(p) == 0:
+                w.writerow(list(row.keys()))
+            w.writerow([row.get(k, "") for k in row.keys()])
+    except Exception as e:
+        print(f"append_to_csv error {table}: {e}")
+
+
 def num(v, default=0.0):
     try:
         return float(str(v).replace(",", ""))
@@ -133,6 +146,18 @@ class Store:
                         self.digest = digest
                         self.version += 1
                         self.cond.notify_all()
+                        for t, rows in new.items():
+                            if rows and isinstance(rows, list):
+                                p = os.path.join(ROOT, "data", t + ".csv")
+                                try:
+                                    h = list(rows[0].keys())
+                                    with open(p, "w", encoding="utf-8-sig", newline="") as f:
+                                        w = csv.writer(f)
+                                        w.writerow(h)
+                                        for r in rows:
+                                            w.writerow([r.get(col, "") for col in h])
+                                except Exception as err:
+                                    print(f"save cache error {t}: {err}")
         except Exception as e:
             self.error = str(e)
 
@@ -441,25 +466,29 @@ def next_id(prefix, rows, key, width):
 def audit(user, action, table, rid, old="", new=""):
     row = {
         "log_id": next_id("L", store.data.get("audit_log", []), "log_id", 5),
-        "user_id": user["user_id"],
+        "user_id": user["user_id"] if isinstance(user, dict) else str(user),
         "action": action,
         "table": table,
         "record_id": rid,
-        "old_value": old,
-        "new_value": new,
+        "old_value": str(old or ""),
+        "new_value": str(new or ""),
         "timestamp": now_th().strftime("%Y-%m-%d %H:%M:%S")
     }
-    sheet_post(action="append", table="audit_log", row=row)
+    try:
+        sheet_post(action="append", table="audit_log", row=row)
+    except Exception as e:
+        print(f"audit sheet error: {e}")
     store.data.setdefault("audit_log", []).append(row)
+    append_to_csv("audit_log", row)
 
 
 def bootstrap_admin():
     try:
         users = store.data.get("users", [])
-        if users or not os.environ.get("ADMIN_USERNAME"):
+        if any(x.get("username") == os.environ.get("ADMIN_USERNAME", "admin") for x in users) or not os.environ.get("ADMIN_USERNAME"):
             return
         row = {
-            "user_id": "U001",
+            "user_id": next_id("U", users, "user_id", 3),
             "username": os.environ["ADMIN_USERNAME"],
             "password_hash": generate_password_hash(os.environ.get("ADMIN_PASSWORD", "admin1234")),
             "role": "admin",
@@ -467,6 +496,7 @@ def bootstrap_admin():
         }
         sheet_post(action="append", table="users", row=row)
         store.data.setdefault("users", []).append(row)
+        append_to_csv("users", row)
     except Exception as e:
         print("bootstrap_admin skipped/error:", e)
 
@@ -606,10 +636,16 @@ def api_add_payment():
             }
             sheet_post(action="append", table="payments", row=row)
             d.setdefault("payments", []).append(row)
+            append_to_csv("payments", row)
             audit(request.user, "create", "payments", row["payment_id"], new=json.dumps(row, ensure_ascii=False))
             added.append(row["payment_id"])
 
-    store.refresh()
+        with store.cond:
+            store.version += 1
+            store.digest = json.dumps(d, sort_keys=True, ensure_ascii=False)
+            store.cond.notify_all()
+
+    threading.Thread(target=store.refresh, daemon=True).start()
     return jsonify(ok=True, added=added)
 
 
@@ -639,9 +675,15 @@ def api_add_expense():
         }
         sheet_post(action="append", table="expenses", row=row)
         d.setdefault("expenses", []).append(row)
+        append_to_csv("expenses", row)
         audit(request.user, "create", "expenses", row["expense_id"], new=json.dumps(row, ensure_ascii=False))
 
-    store.refresh()
+        with store.cond:
+            store.version += 1
+            store.digest = json.dumps(d, sort_keys=True, ensure_ascii=False)
+            store.cond.notify_all()
+
+    threading.Thread(target=store.refresh, daemon=True).start()
     return jsonify(ok=True, expense=row)
 
 
@@ -660,7 +702,26 @@ def api_admin_delete(table, rid):
         sheet_post(action="delete", table=table, idCol=keys[table], id=rid)
         rows.remove(old)
         audit(request.user, "delete", table, rid, old=json.dumps(old, ensure_ascii=False))
-    store.refresh()
+
+        # Re-write the table CSV
+        p = os.path.join(ROOT, "data", table + ".csv")
+        try:
+            if rows:
+                header = list(rows[0].keys())
+                with open(p, "w", encoding="utf-8-sig", newline="") as f:
+                    w = csv.writer(f)
+                    w.writerow(header)
+                    for r in rows:
+                        w.writerow([r.get(h, "") for h in header])
+        except Exception as e:
+            print(f"rewrite csv error: {e}")
+
+        with store.cond:
+            store.version += 1
+            store.digest = json.dumps(store.data, sort_keys=True, ensure_ascii=False)
+            store.cond.notify_all()
+
+    threading.Thread(target=store.refresh, daemon=True).start()
     return jsonify(ok=True)
 
 
@@ -689,8 +750,15 @@ def api_admin_add_user():
         }
         sheet_post(action="append", table="users", row=row)
         users.append(row)
+        append_to_csv("users", row)
         audit(request.user, "create", "users", row["user_id"], new=b["username"])
-    store.refresh()
+
+        with store.cond:
+            store.version += 1
+            store.digest = json.dumps(store.data, sort_keys=True, ensure_ascii=False)
+            store.cond.notify_all()
+
+    threading.Thread(target=store.refresh, daemon=True).start()
     return jsonify(ok=True)
 
 
