@@ -4,6 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ระบบงานเจ้าหน้าที่และกรรมการ - กองทุนพัฒนาหมู่บ้าน</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body style="background: #f1f5f9;">
@@ -83,9 +86,6 @@
         </button>
         <button class="staff-menu-btn" data-tab="history">
           <span>⏱️ 5.</span> ประวัติการทำรายการ
-        </button>
-        <button class="staff-menu-btn" data-tab="sheets">
-          <span>☁️ 6.</span> Google Drive & Sheets
         </button>
       </div>
     </div>
@@ -355,10 +355,10 @@
 
           <!-- Document Print Preview Area -->
           <div id="pdf-preview-box" class="hidden" style="margin-top: 30px; border-top: 2px solid #e2e8f0; padding-top: 24px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;" class="no-print">
               <h3 style="font-size: 16px;">ตัวอย่างเอกสารก่อนพิมพ์</h3>
               <div style="display: flex; gap: 8px;">
-                <button onclick="window.print()" class="btn-search">🖨️ สั่งพิมพ์เอกสารนี้</button>
+                <button onclick="printActiveDoc()" class="btn-search">🖨️ สั่งพิมพ์เอกสารนี้</button>
                 <button onclick="document.getElementById('pdf-preview-box').classList.add('hidden')" style="padding: 6px 12px; background: #e2e8f0; border: none; border-radius: 6px; cursor: pointer;">ปิด</button>
               </div>
             </div>
@@ -384,20 +384,6 @@
         </div>
       </div>
 
-      <!-- ==================== TAB 6: Google Drive & Sheets ==================== -->
-      <div id="view-sheets" class="staff-view hidden">
-        <div class="content-section" style="max-width: 680px; margin: 0 auto; text-align: center; padding: 40px;">
-          <div style="font-size: 48px; margin-bottom: 12px;">📊</div>
-          <h2 style="font-size: 22px; font-weight: 700; margin-bottom: 8px;">ฐานข้อมูล Google Sheet</h2>
-          <p style="font-size: 14px; color: #64748b; margin-bottom: 24px;">
-            ข้อมูลทั้งหมด (15 ตาราง) ซิงก์เชื่อมโยงกับ Google Sheet แบบเรียลไทม์ 2 ทาง
-          </p>
-          <a href="https://docs.google.com/spreadsheets/d/1-81A6uLjqa68rxtjmfontC6BKtVCYXYqlK82OpEaSMw/edit" target="_blank" class="btn-primary-green" style="display: inline-flex; width: auto; padding: 12px 28px; text-decoration: none;">
-            <span>↗</span> เปิด Google Sheet ของโครงการ
-          </a>
-        </div>
-      </div>
-
     </main>
   </div>
 
@@ -414,6 +400,73 @@
     function todayStr() {
       const d = new Date(Date.now() + 7 * 3600e3);
       return d.toISOString().slice(0, 10);
+    }
+
+    function formatThaiDate(dStr) {
+      if (!dStr) return '-';
+      const parts = dStr.split('-');
+      if (parts.length < 3) return dStr;
+      const y = parseInt(parts[0]);
+      const m = parseInt(parts[1]) - 1;
+      const d = parseInt(parts[2]);
+      const thYear = y > 2400 ? y : y + 543;
+      const monthsFull = [
+        "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+        "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+      ];
+      return `${d} ${monthsFull[m] || ''} ${thYear}`;
+    }
+
+    function thaiBaht(num) {
+      num = Number(num || 0).toFixed(2);
+      const parts = num.split('.');
+      const intPart = parts[0];
+      const decPart = parts[1];
+      const digits = ["", "หนึ่ง", "สอง", "สาม", "สี่", "ห้า", "หก", "เจ็ด", "แปด", "เก้า"];
+      const units = ["", "สิบ", "ร้อย", "พัน", "หมื่น", "แสน", "ล้าน"];
+
+      function convertGroup(n) {
+        let s = "";
+        const len = n.length;
+        for (let i = 0; i < len; i++) {
+          const d = parseInt(n[i]);
+          const pos = len - i - 1;
+          if (d !== 0) {
+            if (pos === 1 && d === 1) {
+              s += "สิบ";
+            } else if (pos === 1 && d === 2) {
+              s += "ยี่สิบ";
+            } else if (pos === 0 && d === 1 && len > 1 && n[len - 2] !== '0') {
+              s += "เอ็ด";
+            } else {
+              s += digits[d] + units[pos];
+            }
+          }
+        }
+        return s;
+      }
+
+      let text = "";
+      if (parseInt(intPart) === 0) {
+        text = "ศูนย์บาท";
+      } else {
+        text = convertGroup(intPart) + "บาท";
+      }
+
+      if (parseInt(decPart) === 0) {
+        text += "ถ้วน";
+      } else {
+        text += convertGroup(decPart) + "สตางค์";
+      }
+      return text;
+    }
+
+    function printActiveDoc() {
+      document.body.classList.add('printing-active-doc');
+      window.print();
+      setTimeout(() => {
+        document.body.classList.remove('printing-active-doc');
+      }, 1000);
     }
 
     async function apiCall(endpoint, method = 'GET', body = null) {
@@ -783,56 +836,69 @@
 
       if (periodChoice === 'all') {
         const paidQ = h.quarters.filter(q => q.paid_count > 0).map(q => `งวดที่ ${q.period}`);
-        quartersTxt = paidQ.length > 0 ? paidQ.join(', ') : 'ยังไม่มีงวดที่ชำระ';
-        amount = h.paid_amount;
+        quartersTxt = paidQ.length > 0 ? paidQ.join(', ') : 'ทุกงวดที่ชำระ (งวด 1-4)';
+        amount = h.paid_amount > 0 ? h.paid_amount : h.rate * 12;
       } else {
-        quartersTxt = `งวดที่ ${periodChoice}`;
+        quartersTxt = `งวดที่ ${periodChoice} (3 เดือน)`;
         amount = h.rate * 3;
       }
 
       const canvas = document.getElementById('pdf-render-canvas');
       canvas.innerHTML = `
-        <div style="border: 2px solid #0f172a; padding: 32px; border-radius: 8px;">
-          <div style="text-align: center; margin-bottom: 24px;">
-            <div style="font-size: 28px;">🏛️</div>
-            <h2 style="font-size: 22px; font-weight: 700; color: #0f172a;">ใบเสร็จรับเงินกองทุนพัฒนาหมู่บ้าน ปี 2569</h2>
-            <p style="font-size: 13px; color: #475569;">(เอกสารหลักฐานการรับเงินตามระเบียบกองทุน)</p>
+        <div class="receipt-box" style="border: 2px solid #0f172a; padding: 36px 32px; border-radius: 12px; background: #fff;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0f172a; padding-bottom: 16px; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 14px;">
+              <div style="font-size: 38px;">🏛️</div>
+              <div>
+                <h2 style="font-size: 22px; font-weight: 700; color: #0f172a; margin-bottom: 2px;">ใบเสร็จรับเงิน</h2>
+                <div style="font-size: 15px; font-weight: 600; color: #1e3a8a;">กองทุนพัฒนาหมู่บ้าน ประจำปี 2569</div>
+                <div style="font-size: 12px; color: #64748b;">เอกสารหลักฐานการรับเงินกองทุนตามระเบียบการเงินและบัญชี</div>
+              </div>
+            </div>
+            <div style="text-align: right; font-size: 13px;">
+              <div style="font-weight: 700; color: #0f172a; font-size: 14px;">เลขที่: <b>REC-2569-${h.house_no.replace('/', '')}</b></div>
+              <div style="color: #475569; margin-top: 4px;">วันที่: <b>${formatThaiDate(todayStr())}</b></div>
+            </div>
           </div>
 
-          <div style="display:flex; justify-content:space-between; margin-bottom: 12px; font-size: 14px;">
-            <span>เลขที่ใบเสร็จ: <b>REC-2569-${h.house_no.replace('/', '')}</b></span>
-            <span>วันที่ออกเอกสาร: <b>${todayStr()}</b></span>
-          </div>
-
-          <table class="table-statement" style="margin: 16px 0;">
-            <tr>
-              <td style="width: 30%; background: #f8fafc;"><b>ได้รับเงินจาก:</b></td>
-              <td><b>${h.owner_full}</b></td>
-            </tr>
-            <tr>
-              <td style="background: #f8fafc;"><b>บ้านเลขที่:</b></td>
-              <td><b>${h.house_no} (${h.zone})</b></td>
-            </tr>
-            <tr>
-              <td style="background: #f8fafc;"><b>รายการชำระ:</b></td>
-              <td>ค่าบำรุงกองทุนพัฒนาหมู่บ้าน ปี 2569 (${quartersTxt})</td>
-            </tr>
-            <tr style="background: #ecfdf5;">
-              <td style="font-size: 16px; font-weight: 700; color: #065f46;">จำนวนเงินรวม:</td>
-              <td style="font-size: 18px; font-weight: 700; color: #059669;">฿${fmt(amount)} บาท</td>
-            </tr>
+          <table class="table-statement" style="margin: 20px 0; border: 1px solid #cbd5e1;">
+            <tbody>
+              <tr>
+                <td style="width: 25%; background: #f8fafc; font-weight: 600;">ได้รับเงินจาก:</td>
+                <td style="font-size: 15px; font-weight: 700; color: #0f172a;">${h.owner_full}</td>
+              </tr>
+              <tr>
+                <td style="background: #f8fafc; font-weight: 600;">บ้านเลขที่ / โซน:</td>
+                <td><b>${h.house_no}</b> (ซอย: ${h.zone} | อัตราเดือนละ ${fmt0(h.rate)} บาท)</td>
+              </tr>
+              <tr>
+                <td style="background: #f8fafc; font-weight: 600;">รายการชำระ:</td>
+                <td>ค่าบำรุงกองทุนพัฒนาหมู่บ้าน ปี 2569 (${quartersTxt})</td>
+              </tr>
+              <tr>
+                <td style="background: #f8fafc; font-weight: 600;">จำนวนเงิน (ตัวเลข):</td>
+                <td style="font-size: 18px; font-weight: 700; color: #059669;">฿${fmt(amount)} บาท</td>
+              </tr>
+              <tr style="background: #f0fdf4;">
+                <td style="background: #ecfdf5; font-weight: 600; color: #065f46;">จำนวนเงิน (ตัวอักษร):</td>
+                <td style="font-size: 15px; font-weight: 700; color: #065f46;">(${thaiBaht(amount)})</td>
+              </tr>
+            </tbody>
           </table>
 
-          <div class="signatures-area" style="margin-top: 50px;">
-            <div class="sig-block">
-              <div class="sig-line"></div>
+          <div class="signatures-area" style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 50px; padding: 0 20px;">
+            <div class="sig-block" style="text-align: center; width: 220px;">
+              <div class="sig-line" style="border-bottom: 1px dotted #64748b; height: 35px; margin-bottom: 8px;"></div>
               <div><b>(นางราตรี แย้มวจี)</b></div>
-              <div style="color: #64748b; font-size: 12px;">เหรัญญิก ผู้รับเงิน</div>
+              <div style="color: #64748b; font-size: 12px; margin-top: 2px;">เหรัญญิก ผู้รับเงิน</div>
             </div>
-            <div class="sig-block">
-              <div class="sig-line"></div>
+            <div style="text-align: center; font-size: 11px; color: #94a3b8; max-width: 220px;">
+              ใบเสร็จรับเงินฉบับนี้จะสมบูรณ์<br>เมื่อมีลายมือชื่อของผู้รับเงินครบถ้วน
+            </div>
+            <div class="sig-block" style="text-align: center; width: 220px;">
+              <div class="sig-line" style="border-bottom: 1px dotted #64748b; height: 35px; margin-bottom: 8px;"></div>
               <div><b>(นายสุนทร คำสุข)</b></div>
-              <div style="color: #64748b; font-size: 12px;">ประธานกรรมการกองทุนพัฒนาหมู่บ้าน</div>
+              <div style="color: #64748b; font-size: 12px; margin-top: 2px;">ประธานกรรมการกองทุนพัฒนาหมู่บ้าน</div>
             </div>
           </div>
         </div>
@@ -848,7 +914,7 @@
       canvas.innerHTML = `
         <div style="text-align: center; margin-bottom: 20px;">
           <h2 style="font-size: 20px; font-weight: 700;">รายงานสรุปการรับ-จ่ายเงินของกองทุนพัฒนาหมู่บ้าน ปี 2569</h2>
-          <p style="font-size: 13px; color: #64748b;">ข้อมูลสรุปยอดเงินและเงินฝากธนาคาร ณ วันที่ ${DASH_DATA.as_of_thai}</p>
+          <p style="font-size: 13px; color: #64748b;">ข้อมูลสรุปยอดเงินและเงินฝากธนาคาร ณ วันที่ ${DASH_DATA.as_of_thai || formatThaiDate(todayStr())}</p>
         </div>
         <table class="table-statement">
           <thead>
@@ -868,7 +934,7 @@
             `).join('')}
           </tbody>
         </table>
-        <div class="signatures-area" style="margin-top: 50px;">
+        <div class="signatures-area" style="display: flex; justify-content: space-between; margin-top: 50px;">
           <div class="sig-block">
             <div class="sig-line"></div>
             <div><b>(นางราตรี แย้มวจี / น.ส.วีระออ สุวรรณสิทธิ์)</b></div>
@@ -891,7 +957,7 @@
       canvas.innerHTML = `
         <div style="text-align: center; margin-bottom: 20px;">
           <h2 style="font-size: 20px; font-weight: 700; color: #dc2626;">รายงานบัญชีรายชื่อบ้านที่ค้างชำระเงินแยกซอย</h2>
-          <p style="font-size: 13px; color: #64748b;">สำหรับคณะกรรมการลงพื้นที่ติดตาม ณ วันที่ ${todayStr()} (พบทั้งหมด ${overdueList.length} หลังคาเรือน)</p>
+          <p style="font-size: 13px; color: #64748b;">สำหรับคณะกรรมการลงพื้นที่ติดตาม ณ วันที่ ${formatThaiDate(todayStr())} (พบทั้งหมด ${overdueList.length} หลังคาเรือน)</p>
         </div>
         <table class="table-statement">
           <thead>
@@ -915,7 +981,7 @@
             `).join('')}
           </tbody>
         </table>
-        <div class="signatures-area" style="margin-top: 50px;">
+        <div class="signatures-area" style="display: flex; justify-content: space-between; margin-top: 50px;">
           <div class="sig-block">
             <div class="sig-line"></div>
             <div><b>(นางราตรี แย้มวจี)</b></div>

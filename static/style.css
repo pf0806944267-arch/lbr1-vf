@@ -1,6 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
 
 :root {
+  --font-main: 'Prompt', 'Sarabun', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-doc: 'Sarabun', 'Prompt', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --primary: #1e295d;
   --primary-light: #2c3a7c;
   --navy: #141b3d;
@@ -23,14 +25,35 @@
   --shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-body {
-  font-family: 'Prompt', 'Sarabun', system-ui, sans-serif;
+html, body {
+  font-family: var(--font-main);
   background-color: var(--bg);
   color: var(--ink);
-  line-height: 1.5;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* Ensure ALL interactive and typography controls inherit the unified font */
+button, input, select, textarea, optgroup {
+  font-family: var(--font-main);
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-main);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #0f172a;
 }
 
 /* ---------------- Top Navbar ---------------- */
@@ -1423,10 +1446,200 @@ body {
 
 .hidden { display: none !important; }
 
-/* Print styles for PDF / print button */
+/* ---------------- Print styles for PDF / print button ---------------- */
 @media print {
-  body { background: #fff !important; }
-  .top-navbar, .announcement-bar, .nav-tabs, .btn-staff-portal, .btn-print-hide, .staff-topbar, .staff-subnav { display: none !important; }
-  .main-wrapper { max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
-  .paper-statement, .print-sheet { border: none !important; box-shadow: none !important; padding: 0 !important; width: 100% !important; }
+  @page {
+    size: A4 portrait;
+    margin: 15mm 15mm 15mm 15mm;
+  }
+
+  *, *::before, *::after {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  html, body {
+    background: #fff !important;
+    color: #0f172a !important;
+    font-family: var(--font-doc) !important;
+    font-size: 11pt !important;
+    line-height: 1.5 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Hide all non-printable chrome */
+  .no-print,
+  .btn-print-hide,
+  .top-navbar,
+  .announcement-bar,
+  .nav-tabs,
+  .btn-staff-portal,
+  .staff-topbar,
+  .staff-subnav,
+  .staff-menu,
+  .hero-search-card,
+  .section-header,
+  .btn-search,
+  .btn-excel,
+  .btn-icon-print,
+  .alert,
+  #login-container,
+  #staff-alert-box,
+  #tab-dashboard,
+  #tab-search-house,
+  #tab-committee,
+  #view-pay,
+  #view-exp,
+  #view-members,
+  #view-history,
+  #pdf-preview-box > div:first-child,
+  .doc-card,
+  .grid-3 {
+    display: none !important;
+  }
+
+  .main-wrapper {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  .content-section {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+  }
+
+  /* Paper Statement & Official Sheet */
+  .paper-statement, .print-sheet {
+    background: #fff !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    font-family: var(--font-doc) !important;
+  }
+
+  .statement-title-area {
+    margin-bottom: 20px !important;
+    text-align: center !important;
+  }
+
+  .statement-title-area h2 {
+    font-size: 16pt !important;
+    color: #000 !important;
+    margin-bottom: 4px !important;
+  }
+
+  .statement-title-area p {
+    font-size: 10pt !important;
+    color: #475569 !important;
+  }
+
+  /* Official Tables */
+  .table-responsive {
+    overflow: visible !important;
+  }
+
+  .table-statement {
+    width: 100% !important;
+    min-width: 100% !important;
+    border-collapse: collapse !important;
+    font-size: 10pt !important;
+    margin-top: 10px !important;
+  }
+
+  .table-statement th,
+  .table-statement td {
+    border: 1px solid #475569 !important;
+    padding: 6px 10px !important;
+    color: #000 !important;
+  }
+
+  .table-statement th {
+    background-color: #f1f5f9 !important;
+    font-weight: 700 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .tr-highlight-blue {
+    background-color: #f0f7ff !important;
+    color: #1e3a8a !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .tr-highlight-green {
+    background-color: #f0fdf4 !important;
+    color: #14532d !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .tr-highlight-red {
+    background-color: #fef2f2 !important;
+    color: #7f1d1d !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Official Signatures */
+  .signatures-area {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    margin-top: 45px !important;
+    padding: 0 20px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .sig-block {
+    width: 260px !important;
+    text-align: center !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .sig-line {
+    border-bottom: 1px dotted #333 !important;
+    height: 30px !important;
+    margin-bottom: 8px !important;
+  }
+
+  /* Official Receipt Box Print Style */
+  .receipt-box {
+    border: 2px solid #000 !important;
+    padding: 24px !important;
+    border-radius: 8px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* When printing active document in staff portal */
+  body.printing-active-doc * {
+    visibility: hidden;
+  }
+
+  body.printing-active-doc #pdf-render-canvas,
+  body.printing-active-doc #pdf-render-canvas * {
+    visibility: visible;
+  }
+
+  body.printing-active-doc #pdf-render-canvas {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+  }
 }
