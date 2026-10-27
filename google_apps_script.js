@@ -23,12 +23,75 @@
  */
 
 function doGet(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  // 1. อ่านข้อมูลชีท ทะเบียนสมาชิกและการชำระ
+  var memberSheet = ss.getSheetByName("ทะเบียนสมาชิกและการชำระ");
+  var members = [];
+  if (memberSheet && memberSheet.getLastRow() >= 2) {
+    var mData = memberSheet.getRange(2, 1, memberSheet.getLastRow() - 1, 24).getValues();
+    for (var i = 0; i < mData.length; i++) {
+      var r = mData[i];
+      if (!r[2] && !r[3]) continue; // ข้ามแถวว่าง
+      members.push({
+        id: r[0] || (i + 1),
+        alley: String(r[1] || ""),
+        house_no: String(r[2] || ""),
+        name: String(r[3] || ""),
+        fee_monthly: Number(r[4]) || 50,
+        m1: Number(r[5]) || 0,
+        m2: Number(r[6]) || 0,
+        m3: Number(r[7]) || 0,
+        q1_total: Number(r[8]) || 0,
+        m4: Number(r[9]) || 0,
+        m5: Number(r[10]) || 0,
+        m6: Number(r[11]) || 0,
+        q2_total: Number(r[12]) || 0,
+        m7: Number(r[13]) || 0,
+        m8: Number(r[14]) || 0,
+        m9: Number(r[15]) || 0,
+        q3_total: Number(r[16]) || 0,
+        m10: Number(r[17]) || 0,
+        m11: Number(r[18]) || 0,
+        m12: Number(r[19]) || 0,
+        q4_total: Number(r[20]) || 0,
+        year_total: Number(r[21]) || 0,
+        due_amount: Number(r[22]) || 0,
+        status: String(r[23] || "ยังไม่ชำระ")
+      });
+    }
+  }
+
+  // 2. อ่านข้อมูลชีท รายละเอียดค่าใช้จ่าย
+  var expSheet = ss.getSheetByName("รายละเอียดค่าใช้จ่าย");
+  var expenses = [];
+  if (expSheet && expSheet.getLastRow() >= 2) {
+    var eData = expSheet.getRange(2, 1, expSheet.getLastRow() - 1, 7).getValues();
+    for (var j = 0; j < eData.length; j++) {
+      var er = eData[j];
+      if (!er[3]) continue;
+      expenses.push({
+        doc_no: String(er[0] || ""),
+        date: String(er[1] || ""),
+        category: String(er[2] || "ค่าใช้จ่ายทั่วไป"),
+        title: String(er[3] || ""),
+        amount: Number(er[4]) || 0,
+        payee: String(er[5] || ""),
+        status: String(er[6] || "จ่ายแล้ว")
+      });
+    }
+  }
+
   var output = {
-    status: "online",
-    system: "Village Fund 2569 Google Sheets Sync Webhook",
-    message: "Google Apps Script Webhook กองทุนหมู่บ้าน 2569 พร้อมทำงาน 100%",
-    timestamp: new Date().toISOString()
+    status: "success",
+    system: "Village Fund 2569 Google Sheets Live Database",
+    updated_at: new Date().toISOString(),
+    total_members: members.length,
+    total_expenses: expenses.length,
+    members: members,
+    expenses: expenses
   };
+
   return ContentService.createTextOutput(JSON.stringify(output))
     .setMimeType(ContentService.MimeType.JSON);
 }

@@ -538,11 +538,16 @@
             </a>
           </div>
 
-          <div class="p-5 border rounded-2xl bg-slate-50 space-y-3">
-            <h4 class="text-xs font-bold text-slate-700">ทดสอบคำสั่งซิงก์ Google Sheets Webhook:</h4>
-            <button onclick="testStaffSync()" id="staff-sync-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow flex items-center">
-              <i class="fa-solid fa-rotate mr-2"></i> สั่งซิงก์ข้อมูลเดี๋ยวนี้
-            </button>
+          <div class="p-5 border rounded-2xl bg-slate-50 space-y-4">
+            <h4 class="text-xs font-bold text-slate-700">การเชื่อมต่อ Google Sheets Webhook (สองทาง):</h4>
+            <div class="flex flex-wrap gap-3">
+              <button onclick="testStaffSync()" id="staff-sync-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow flex items-center">
+                <i class="fa-solid fa-cloud-arrow-up mr-2"></i> ส่งข้อมูลทั้งหมดขึ้น Google Sheets
+              </button>
+              <button onclick="pullStaffSync()" id="staff-pull-btn" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow flex items-center">
+                <i class="fa-solid fa-cloud-arrow-down mr-2"></i> ดึงข้อมูลล่าสุดจาก Google Sheets
+              </button>
+            </div>
             <div id="staff-sync-result" class="hidden text-xs p-3 rounded-xl bg-white border font-mono text-slate-700"></div>
           </div>
         </div>
@@ -1201,16 +1206,38 @@
     async function testStaffSync() {
       const btn = document.getElementById('staff-sync-btn');
       const resEl = document.getElementById('staff-sync-result');
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> กำลังซิงก์ข้อมูล...';
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> กำลังส่งข้อมูล...';
       try {
         const res = await fetch('/api/sync-sheets', { method: 'POST' });
         const d = await res.json();
-        btn.innerHTML = '<i class="fa-solid fa-check text-emerald-400 mr-2"></i> ซิงก์ข้อมูลสำเร็จ!';
+        btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2"></i> ส่งข้อมูลทั้งหมดขึ้น Google Sheets';
         resEl.classList.remove('hidden');
-        resEl.innerHTML = `✓ เชื่อมต่อสำเร็จ: ${d.message} (${d.synced_at})`;
+        resEl.innerHTML = `✓ ${d.message} (${d.synced_at})`;
       } catch (err) {
-        btn.innerHTML = '<i class="fa-solid fa-rotate mr-2"></i> สั่งซิงก์ข้อมูลเดี๋ยวนี้';
-        alert("ไม่สามารถซิงก์ได้");
+        btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2"></i> ส่งข้อมูลทั้งหมดขึ้น Google Sheets';
+        alert("ไม่สามารถเชื่อมต่อได้");
+      }
+    }
+
+    async function pullStaffSync() {
+      const btn = document.getElementById('staff-pull-btn');
+      const resEl = document.getElementById('staff-sync-result');
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> กำลังดึงข้อมูล...';
+      try {
+        const res = await fetch('/api/pull-from-sheets', { method: 'POST' });
+        const d = await res.json();
+        btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-down mr-2"></i> ดึงข้อมูลล่าสุดจาก Google Sheets';
+        resEl.classList.remove('hidden');
+        if (d.success) {
+          resEl.innerHTML = `✓ ดึงข้อมูลสำเร็จ: ${d.message}`;
+          // Reload staff members and stats
+          await loadStaffMembers();
+        } else {
+          resEl.innerHTML = `⚠ แจ้งเตือน: ${d.message}`;
+        }
+      } catch (err) {
+        btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-down mr-2"></i> ดึงข้อมูลล่าสุดจาก Google Sheets';
+        alert("ไม่สามารถดึงข้อมูลได้");
       }
     }
   </script>

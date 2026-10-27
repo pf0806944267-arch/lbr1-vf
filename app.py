@@ -16,6 +16,7 @@ from datetime import datetime
 PORT = int(os.environ.get("PORT", 8000))
 DB_FILE = "village_fund.db"
 GOOGLE_SHEET_WEBHOOK_URL = os.environ.get("GOOGLE_SHEET_WEBHOOK_URL", "")
+_last_sheet_pull_time = 0
 
 def sync_to_google_sheet(action_type, payload):
     """
@@ -41,6 +42,79 @@ def sync_to_google_sheet(action_type, payload):
             print(f"[GoogleSheets Sync] Notice: sync notice for {action_type}: {e}")
 
     threading.Thread(target=_worker, daemon=True).start()
+
+def pull_from_google_sheet(force=False):
+    """
+    Fetches the latest members and expenses data from Google Sheets Webhook and updates local SQLite.
+    Returns (success: bool, message: str, count: int)
+    """
+    global _last_sheet_pull_time
+    import time
+    now_ts = time.time()
+    # Cache / Throttle: do not pull more frequently than once every 20 seconds unless force=True
+    if not force and (now_ts - _last_sheet_pull_time < 20):
+        return True, "Cached recent pull", 0
+
+    if not GOOGLE_SHEET_WEBHOOK_URL:
+        return False, "ยังไม่ได้ตั้งค่า GOOGLE_SHEET_WEBHOOK_URL", 0
+
+    try:
+        import urllib.request
+        req = urllib.request.Request(GOOGLE_SHEET_WEBHOOK_URL, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+
+        members = data.get("members", [])
+        expenses = data.get("expenses", [])
+
+        if not members and not expenses:
+            return False, "ไม่พบข้อมูลจาก Google Sheets (อาจยังไม่ได้ Deploy โค้ดใหม่)", 0
+
+        conn = get_db()
+        c = conn.cursor()
+        updated_count = 0
+
+        if members:
+            for m in members:
+                # Update member payment records in SQLite from Google Sheets
+                c.execute("""
+                    UPDATE members SET
+                        m1=?, m2=?, m3=?, q1_total=?,
+                        m4=?, m5=?, m6=?, q2_total=?,
+                        m7=?, m8=?, m9=?, q3_total=?,
+                        m10=?, m11=?, m12=?, q4_total=?,
+                        year_total=?, due_amount=?, status=?
+                    WHERE id=? OR house_no=?
+                """, (
+                    m.get('m1', 0), m.get('m2', 0), m.get('m3', 0), m.get('q1_total', 0),
+                    m.get('m4', 0), m.get('m5', 0), m.get('m6', 0), m.get('q2_total', 0),
+                    m.get('m7', 0), m.get('m8', 0), m.get('m9', 0), m.get('q3_total', 0),
+                    m.get('m10', 0), m.get('m11', 0), m.get('m12', 0), m.get('q4_total', 0),
+                    m.get('year_total', 0), m.get('due_amount', 0), m.get('status', 'ยังไม่ชำระ'),
+                    m.get('id'), str(m.get('house_no', ''))
+                ))
+                updated_count += 1
+
+        if expenses:
+            for ex in expenses:
+                c.execute("SELECT id FROM expenses WHERE doc_no = ?", (ex.get('doc_no'),))
+                if not c.fetchone():
+                    c.execute("""
+                        INSERT INTO expenses (doc_no, date, category, title, amount, payee, status)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """, (
+                        ex.get('doc_no', ''), ex.get('date', ''), ex.get('category', 'ค่าใช้จ่ายทั่วไป'),
+                        ex.get('title', ''), ex.get('amount', 0), ex.get('payee', ''), ex.get('status', 'จ่ายแล้ว')
+                    ))
+
+        conn.commit()
+        conn.close()
+        _last_sheet_pull_time = now_ts
+        print(f"[GoogleSheets Sync] Successfully pulled {updated_count} members from Google Sheet")
+        return True, f"ดึงข้อมูลจาก Google Sheets สำเร็จ {updated_count} รายการ", updated_count
+    except Exception as e:
+        print(f"[GoogleSheets Sync] Error pulling from Google Sheets: {e}")
+        return False, str(e), 0
 
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
@@ -90,6 +164,8 @@ class VillageFundHandler(BaseHTTPRequestHandler):
 
         # API Routes
         if path == "/api/stats":
+            # Auto-pull latest updates from Google Sheets if configured
+            pull_from_google_sheet(force=False)
             self.handle_get_stats()
         elif path == "/api/members":
             self.handle_get_members(query)
@@ -104,6 +180,9 @@ class VillageFundHandler(BaseHTTPRequestHandler):
             self.handle_get_audit_logs()
         elif path == "/api/overview":
             self.handle_get_overview()
+        elif path == "/api/pull-from-sheets":
+            ok, msg, cnt = pull_from_google_sheet(force=True)
+            self.send_json({"success": ok, "message": msg, "count": cnt})
         else:
             self.send_json({"error": "Endpoint not found"}, 404)
 
@@ -126,6 +205,9 @@ class VillageFundHandler(BaseHTTPRequestHandler):
             self.handle_add_expense(data)
         elif path == "/api/sync-sheets":
             self.handle_sync_sheets(data)
+        elif path == "/api/pull-from-sheets":
+            ok, msg, cnt = pull_from_google_sheet(force=True)
+            self.send_json({"success": ok, "message": msg, "count": cnt})
         else:
             self.send_json({"error": "Endpoint not found"}, 404)
 
