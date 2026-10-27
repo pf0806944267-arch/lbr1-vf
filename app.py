@@ -17,6 +17,7 @@ PORT = int(os.environ.get("PORT", 8000))
 DB_FILE = "village_fund.db"
 DEFAULT_WEBHOOK = "https://script.google.com/macros/s/AKfycbxdXzn8UZsA0TeYKuzcbU3IEL2ixyJjPTu4RRFjMB5axjPURET3HipvnpQP5i6Hkyi4/exec"
 GOOGLE_SHEET_WEBHOOK_URL = os.environ.get("GOOGLE_SHEET_WEBHOOK_URL", DEFAULT_WEBHOOK)
+GOOGLE_SPREADSHEET_ID = os.environ.get("GOOGLE_SPREADSHEET_ID", "1ovw2jq_v3uISdJOSEwBxAu3SD2FkahjQobHf_3c_FKw")
 _last_sheet_pull_time = 0
 
 def sync_to_google_sheet(action_type, payload):
@@ -68,8 +69,42 @@ def pull_from_google_sheet(force=False):
         members = data.get("members", [])
         expenses = data.get("expenses", [])
 
+        # Fallback to direct Google Sheets CSV if Webhook returned no member data
+        if not members and GOOGLE_SPREADSHEET_ID:
+            import csv
+            import io
+            sheet_name_enc = urllib.parse.quote("ทะเบียนสมาชิกและการชำระ")
+            csv_url = f"https://docs.google.com/spreadsheets/d/{GOOGLE_SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet={sheet_name_enc}"
+            try:
+                c_req = urllib.request.Request(csv_url, headers={'User-Agent': 'Mozilla/5.0'})
+                with urllib.request.urlopen(c_req, timeout=12) as c_resp:
+                    csv_text = c_resp.read().decode('utf-8')
+                    reader = csv.reader(io.StringIO(csv_text))
+                    next(reader, None) # skip header
+                    for row in reader:
+                        if len(row) >= 23 and (row[2] or row[3]):
+                            def to_f(v):
+                                try: return float(str(v).replace(',', '').strip())
+                                except: return 0.0
+                            m_obj = {
+                                'id': row[0],
+                                'alley': row[1],
+                                'house_no': row[2],
+                                'name': row[3],
+                                'fee_monthly': to_f(row[4]),
+                                'm1': to_f(row[5]), 'm2': to_f(row[6]), 'm3': to_f(row[7]), 'q1_total': to_f(row[8]),
+                                'm4': to_f(row[9]), 'm5': to_f(row[10]), 'm6': to_f(row[11]), 'q2_total': to_f(row[12]),
+                                'm7': to_f(row[13]), 'm8': to_f(row[14]), 'm9': to_f(row[15]), 'q3_total': to_f(row[16]),
+                                'm10': to_f(row[17]), 'm11': to_f(row[18]), 'm12': to_f(row[19]), 'q4_total': to_f(row[20]),
+                                'year_total': to_f(row[21]), 'due_amount': to_f(row[22]),
+                                'status': row[23] if len(row) > 23 else 'ยังไม่ชำระ'
+                            }
+                            members.append(m_obj)
+            except Exception as e:
+                print(f"[GoogleSheets CSV] Fallback notice: {e}")
+
         if not members and not expenses:
-            return False, "ไม่พบข้อมูลจาก Google Sheets (อาจยังไม่ได้ Deploy โค้ดใหม่)", 0
+            return False, "ไม่พบข้อมูลจาก Google Sheets (กรุณาเปิดสิทธิ์แชร์เป็น 'ทุกคนที่มีลิงก์ดูได้' หรืออัปเดตเวอร์ชัน Apps Script)", 0
 
         conn = get_db()
         c = conn.cursor()
