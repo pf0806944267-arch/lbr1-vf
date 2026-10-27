@@ -1,77 +1,666 @@
 <!doctype html>
 <html lang="th">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>กองทุนพัฒนาหมู่บ้าน - Dashboard</title>
-<link rel="stylesheet" href="/static/style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>กองทุนพัฒนาหมู่บ้าน - ระบบข้อมูลสาธารณะและความโปร่งใส</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-<header>
-  <h1>กองทุนพัฒนาหมู่บ้าน <span id="fy"></span></h1>
-  <div class="live"><span class="dot" id="dot"></span><span id="live">กำลังเชื่อมต่อ...</span> <a href="/staff">สำหรับเจ้าหน้าที่</a></div>
-</header>
-<main>
-  <div class="grid" id="kpis"></div>
-  <div class="card"><h2>การรับเงินจากสมาชิกรายเดือน (บาท)</h2><div class="chart" id="monthly"></div></div>
-  <div class="card"><h2>เปอร์เซ็นต์การจ่ายรายซอย (บ้านที่จ่ายครบทั้งงวด)</h2><div class="scroll"><table id="zones"></table></div></div>
-  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))">
-    <div class="card"><h2>ค่าใช้จ่ายแยกหมวด</h2><div id="cats"></div></div>
-    <div class="card"><h2>ค่าใช้จ่ายล่าสุด</h2><div class="scroll"><table id="recent"></table></div></div>
+
+  <!-- Top Navbar -->
+  <header class="top-navbar">
+    <div class="nav-container">
+      <div class="brand">
+        <div class="brand-icon">🏛️</div>
+        <div class="brand-text">
+          <h1>กองทุนพัฒนาหมู่บ้าน <span class="year-badge" id="nav-year">ปี 2569</span></h1>
+          <p>ระบบข้อมูลสาธารณะ ความโปร่งใส และบริการประชาชน</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="nav-tabs">
+        <button class="nav-tab-btn active" data-tab="dashboard">
+          <span>📊</span> แดชบอร์ดภาพรวม
+        </button>
+        <button class="nav-tab-btn" data-tab="search-house">
+          <span>🔍</span> ตรวจสอบสถานะบ้านของฉัน
+        </button>
+        <button class="nav-tab-btn" data-tab="statement">
+          <span>📄</span> สรุปงบการเงิน
+        </button>
+        <button class="nav-tab-btn" data-tab="committee">
+          <span>👥</span> คณะกรรมการ
+        </button>
+        <button class="nav-tab-btn" data-tab="public-info">
+          <span>ℹ️</span> ข้อมูลสาธารณะ
+        </button>
+      </nav>
+
+      <a href="/staff" class="btn-staff-portal">
+        <span>🔐</span> ระบบเจ้าหน้าที่
+      </a>
+    </div>
+  </header>
+
+  <!-- Announcement Ticker -->
+  <div class="announcement-bar">
+    <div class="announce-container">
+      <div>
+        <span class="announce-tag">ประชาสัมพันธ์</span>
+        <span>กองทุนพัฒนาหมู่บ้าน ปี 2569 จัดเก็บงวดที่ 1-4 เพื่อบำรุงรักษา ความปลอดภัย (รปภ.) และสาธารณูปโภค</span>
+      </div>
+      <div class="announce-info">
+        <div class="live-indicator">
+          <span class="live-dot" id="live-dot"></span>
+          <span id="live-status">ข้อมูลแบบเรียลไทม์</span>
+        </div>
+        <span>📞 ติดต่อคณะกรรมการ</span>
+        <span>🏦 โอนเงินผ่าน ธ.กรุงเทพ</span>
+      </div>
+    </div>
   </div>
-  <div class="card">
-    <h2>สถานะรายบ้าน</h2>
-    <div class="row"><input id="q" placeholder="ค้นหาบ้านเลขที่ เช่น 448/12"><select id="zf"><option value="">ทุกซอย</option></select></div>
-    <p style="font-size:13px;color:var(--mute)">สีเขียว = ชำระแล้ว, สีแดง = ค้างถึงเดือนปัจจุบัน, สีเทา = ยังไม่ถึงกำหนด (ม.ค.–ธ.ค.)</p>
-    <div class="scroll"><table id="houses"></table></div>
-  </div>
-</main>
-<script>
-const TH=["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
-const f=n=>Number(n||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
-const f0=n=>Number(n||0).toLocaleString('th-TH',{maximumFractionDigits:0});
-let HOUSES=[];
-function bars(el,arr,cls){const mx=Math.max(...arr,1);
- el.className='chart '+(cls||'');
- el.innerHTML=arr.map((v,i)=>`<div title="${f(v)}"><span style="height:${Math.round(v/mx*120)}px"></span>${TH[i]}<br>${f0(v)}</div>`).join('');}
-async function load(){
- const [s,h]=await Promise.all([fetch('/api/dashboard').then(r=>r.json()),fetch('/api/houses').then(r=>r.json())]);
- HOUSES=h;render(s);renderHouses();
-}
-function render(s){
- document.getElementById('fy').textContent='ปี '+s.fiscal_year;
- const b=s.balance;
- const k=(t,v,c)=>`<div class="card kpi"><small>${t}</small><b class="${c||''}">${f(v)}</b></div>`;
- document.getElementById('kpis').innerHTML=
-  k('เงินคงเหลือรวมทั้งหมด',b.total,'pos')+k('คงเหลือในบัญชีธนาคาร',b.bank)+k('เงินสำรองจ่าย (เงินสด)',b.reserve)+
-  k('รับจากสมาชิกรวม',b.received,'pos')+k('ค่าใช้จ่ายรวม',b.expenses,'neg')+k('ยอดยกมาปีก่อน',b.opening)+
-  `<div class="card kpi"><small>จ่ายแล้วทั้งปี (เทียบยอดเต็มปี)</small><b>${s.year_collected_pct}%</b></div>`;
- bars(document.getElementById('monthly'),s.monthly);
- let t=`<tr><th class="l">ซอย</th><th>บ้าน</th>`+[1,2,3,4].map(i=>`<th>งวด ${i}</th>`).join('')+`<th>รับแล้ว</th></tr>`;
- let tot=[0,0,0,0],th=0;
- s.zones.forEach(z=>{th+=z.houses;t+=`<tr><td class="l">${z.zone}</td><td>${z.houses}</td>`+z.periods.map((p,i)=>{tot[i]+=p.paid;return `<td>${p.paid}/${p.paid+p.unpaid} (${p.pct}%)<div class="bar"><i style="width:${p.pct}%"></i></div></td>`}).join('')+`<td>${f0(z.collected)}</td></tr>`});
- t+=`<tr><th class="l">รวม</th><th>${th}</th>`+tot.map(x=>`<th>${x}/${th} (${(100*x/th).toFixed(1)}%)</th>`).join('')+`<th>${f0(b.received)}</th></tr>`;
- document.getElementById('zones').innerHTML=t;
- const mx=Math.max(...s.expenses_by_category.map(c=>c.amount),1);
- document.getElementById('cats').innerHTML=s.expenses_by_category.map(c=>`<div style="margin:8px 0"><div style="display:flex;justify-content:space-between"><span>${c.name}</span><b>${f(c.amount)}</b></div><div class="bar"><i style="width:${c.amount/mx*100}%;background:var(--y)"></i></div></div>`).join('');
- document.getElementById('recent').innerHTML='<tr><th class="l">วันที่</th><th class="l">รายการ</th><th>บาท</th></tr>'+s.recent_expenses.map(e=>`<tr><td class="l">${e.date}</td><td class="l">${e.description}</td><td>${f(e.amount)}</td></tr>`).join('');
- const zf=document.getElementById('zf');
- if(zf.options.length==1) s.zones.forEach(z=>zf.add(new Option(z.zone,z.zone)));
- document.getElementById('dot').classList.add('on');
- document.getElementById('live').textContent='เรียลไทม์ · อัปเดต '+s.as_of.slice(11,19);
- window.CM=s.current_month;
-}
-function renderHouses(){
- const q=document.getElementById('q').value.trim(),z=document.getElementById('zf').value,cm=window.CM||0;
- const rows=HOUSES.filter(h=>(!q||h.house_no.includes(q))&&(!z||h.zone==z));
- document.getElementById('houses').innerHTML='<tr><th class="l">บ้านเลขที่</th><th class="l">ซอย</th><th class="l">เจ้าของ</th><th class="l">ม.ค. → ธ.ค.</th><th>จ่ายแล้ว</th><th>ค้าง</th></tr>'+
-  rows.map(h=>`<tr><td class="l">${h.house_no}</td><td class="l">${h.zone}</td><td class="l">${h.name}</td><td class="l"><div class="chips">${h.months.map((m,i)=>`<span class="chip ${m?'p':(i<cm?'o':'')}" title="${TH[i]}"></span>`).join('')}</div></td><td>${h.paid_count}</td><td class="${h.overdue?'neg':''}">${h.overdue}</td></tr>`).join('');
-}
-document.getElementById('q').oninput=renderHouses;document.getElementById('zf').onchange=renderHouses;
-load();
-const es=new EventSource('/api/stream');
-es.addEventListener('update',()=>load());
-es.onerror=()=>{document.getElementById('dot').classList.remove('on');document.getElementById('live').textContent='เชื่อมต่อใหม่...'};
-</script>
+
+  <main class="main-wrapper">
+
+    <!-- ==================== TAB 1: แดชบอร์ดภาพรวม ==================== -->
+    <div id="tab-dashboard" class="tab-content">
+      <!-- 4 Top Stat Cards (Image 1) -->
+      <div class="grid-4" id="stat-cards">
+        <!-- เงินคงเหลือสุทธิ (รวม) -->
+        <div class="stat-card theme-green">
+          <div class="stat-header">
+            <span class="stat-title">เงินคงเหลือสุทธิ (รวม)</span>
+            <span class="stat-icon">👛</span>
+          </div>
+          <div class="stat-amount" id="val-total">฿0.00</div>
+          <div class="stat-footer">
+            <span>ธ.กรุงเทพ: <b id="val-bank">฿0.00</b></span>
+            <span>เงินสด: <b id="val-reserve">฿0.00</b></span>
+          </div>
+        </div>
+
+        <!-- รายรับจากสมาชิกทั้งปี -->
+        <div class="stat-card theme-blue">
+          <div class="stat-header">
+            <span class="stat-title">รายรับจากสมาชิกทั้งปี</span>
+            <span class="stat-icon">📥</span>
+          </div>
+          <div class="stat-amount" id="val-received">฿0.00</div>
+          <div class="stat-footer">
+            <span>รวมทั้งหมด: <b id="val-houses">162 หลังคาเรือน</b></span>
+            <span><b>4 งวดเต็ม</b></span>
+          </div>
+        </div>
+
+        <!-- ค่าใช้จ่ายสะสมปี 2569 -->
+        <div class="stat-card theme-red">
+          <div class="stat-header">
+            <span class="stat-title">ค่าใช้จ่ายสะสมปี 2569</span>
+            <span class="stat-icon">🛡️</span>
+          </div>
+          <div class="stat-amount" id="val-expenses">฿0.00</div>
+          <div class="stat-footer">
+            <span>รปภ. ประจำเดือน: <b>฿25,000</b></span>
+            <span>ความปลอดภัย 24 ชม.</span>
+          </div>
+        </div>
+
+        <!-- ยอดยกมาจากปี 2568 -->
+        <div class="stat-card theme-purple">
+          <div class="stat-header">
+            <span class="stat-title">ยอดยกมาจากปี 2568</span>
+            <span class="stat-icon">🐷</span>
+          </div>
+          <div class="stat-amount" id="val-opening">฿0.00</div>
+          <div class="stat-footer">
+            <span>ณ วันที่ 24 ม.ค. 2569</span>
+            <span>เงินสนับสนุน: <b id="val-interest">฿168.39</b></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: ความคืบหน้าการจัดเก็บเงินตามงวด (Image 1) -->
+      <div class="content-section">
+        <div class="section-header">
+          <div class="section-title">
+            <span>☑️</span> ความคืบหน้าการจัดเก็บเงินตามงวด (ปี 2569)
+          </div>
+          <span class="section-badge" id="badge-collected-rate">จัดเก็บแล้ว 0%</span>
+        </div>
+        <div class="period-grid" id="period-cards-container">
+          <!-- Dynamically filled by renderPeriodCards -->
+        </div>
+      </div>
+
+      <!-- Section: 2 Charts Side by Side (Image 1) -->
+      <div class="grid-2">
+        <!-- Chart 1: อัตราการชำระเงินแยกตามซอย (%) -->
+        <div class="content-section">
+          <div class="section-header">
+            <div>
+              <div class="section-title">อัตราการชำระเงินแยกตามซอย (%)</div>
+              <p style="font-size: 12px; color: var(--ink-light);">เปรียบเทียบสัดส่วนบ้านที่ชำระเงินของแต่ละซอย (ซอย 1 - 10 และสายหลัก)</p>
+            </div>
+            <span class="section-badge">11 โซน / 162 หลัง</span>
+          </div>
+          <div class="chart-box">
+            <canvas id="chart-zones"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart 2: สัดส่วนการใช้งบประมาณ -->
+        <div class="content-section">
+          <div class="section-header">
+            <div>
+              <div class="section-title">สัดส่วนการใช้งบประมาณ</div>
+              <p style="font-size: 12px; color: var(--ink-light);">จำแนกตามวัตถุประสงค์เพื่อประโยชน์ชุมชน</p>
+            </div>
+          </div>
+          <div class="chart-box" style="display:flex; justify-content:center; align-items:center;">
+            <canvas id="chart-expenses" style="max-height: 250px;"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 2: ตรวจสอบสถานะบ้านของฉัน (Image 2) ==================== -->
+    <div id="tab-search-house" class="tab-content hidden">
+      <!-- Gradient Hero Search Card -->
+      <div class="hero-search-card">
+        <span class="hero-pill">บริการลูกบ้านหมู่บ้าน</span>
+        <h2>ตรวจสอบสถานะการชำระเงินประจำบ้าน</h2>
+        <p>พิมพ์บ้านเลขที่ เช่น 444/3, 443/1, 445/8, 447/5 เพื่อตรวจยอดค้างชำระและประวัติรายเดือน</p>
+        <div class="search-input-group">
+          <span style="font-size: 20px; padding: 8px 8px 8px 14px;">🏠</span>
+          <input type="text" id="house-search-input" placeholder="พิมพ์บ้านเลขที่ เช่น 444/3...">
+          <button class="btn-search" id="btn-search-trigger">
+            <span>🔍</span> ค้นหา
+          </button>
+        </div>
+      </div>
+
+      <!-- Search Result Display Card -->
+      <div id="search-result-box"></div>
+
+      <!-- Quick Directory of All Houses -->
+      <div class="content-section">
+        <div class="section-header">
+          <div class="section-title">ทะเบียนและสถานะการชำระทุกหลังคาเรือน (162 หลัง)</div>
+          <div style="display: flex; gap: 8px;">
+            <select id="zone-filter-select" class="form-control" style="width: auto; padding: 6px 12px;">
+              <option value="">ทุกซอย (11 โซน)</option>
+            </select>
+          </div>
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="table-statement" id="houses-table">
+            <!-- Rendered by JS -->
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 3: สรุปงบการเงิน (Image 3) ==================== -->
+    <div id="tab-statement" class="tab-content hidden">
+      <div class="content-section" style="background: transparent; border: none; box-shadow: none; padding: 0 0 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h2 style="font-size: 20px; font-weight: 700;">📑 รายงานสรุปงบการเงินประจำปี 2569 (ฉบับประชาชน)</h2>
+            <p style="font-size: 13px; color: var(--ink-light);" id="stmt-as-of-header">ข้อมูลสรุปการรับ-จ่ายเงินของกองทุนพัฒนาหมู่บ้าน</p>
+          </div>
+          <button onclick="window.print()" class="btn-search btn-print-hide" style="background: #2563eb;">
+            <span>🖨️</span> พิมพ์ / บันทึก PDF
+          </button>
+        </div>
+      </div>
+
+      <!-- Official Paper Statement Card (Image 3) -->
+      <div class="paper-statement">
+        <div class="statement-title-area">
+          <h2>รายงานสรุปการรับ-จ่ายเงินของกองทุนพัฒนาหมู่บ้าน ปี 2569</h2>
+          <p>
+            ข้อมูลปรับปรุง Real-time ณ <span id="stmt-date-txt">-</span>
+            <span style="display: inline-block; background: #dcfce7; color: #166534; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; margin-left: 6px;">ปัจจุบัน</span>
+          </p>
+        </div>
+
+        <table class="table-statement">
+          <thead>
+            <tr>
+              <th style="width: 15%;" class="c">ว/ด/ป</th>
+              <th style="width: 60%;">รายการ</th>
+              <th style="width: 25%;" class="r">จำนวนเงิน (บาท)</th>
+            </tr>
+          </thead>
+          <tbody id="statement-tbody">
+            <!-- Filled dynamically -->
+          </tbody>
+        </table>
+
+        <!-- Signatures Area (Image 3) -->
+        <div class="signatures-area">
+          <div class="sig-block">
+            <div class="sig-line"></div>
+            <div><b>(นางราตรี แย้มวจี / น.ส.วีระออ สุวรรณสิทธิ์)</b></div>
+            <div style="color: #64748b; font-size: 12px;">เหรัญญิกผู้จัดทำบัญชี</div>
+          </div>
+          <div class="sig-block">
+            <div class="sig-line"></div>
+            <div><b>(นายสุนทร คำสุข)</b></div>
+            <div style="color: #64748b; font-size: 12px;">ประธานกรรมการกองทุนพัฒนาหมู่บ้าน</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 4: คณะกรรมการ ==================== -->
+    <div id="tab-committee" class="tab-content hidden">
+      <div class="content-section">
+        <div class="section-header">
+          <div class="section-title">👥 คณะกรรมการกองทุนพัฒนาหมู่บ้าน ปี 2569</div>
+        </div>
+        <div class="grid-4">
+          <div class="stat-card" style="text-align: center; padding: 24px;">
+            <div style="font-size: 40px; margin-bottom: 12px;">👔</div>
+            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 4px;">นายสุนทร คำสุข</h3>
+            <p style="font-size: 13px; color: #2563eb; font-weight: 600; margin-bottom: 8px;">ประธานกรรมการ</p>
+            <p style="font-size: 12px; color: var(--ink-light);">กำกับดูแลการดำเนินงานของกองทุนและความปลอดภัย</p>
+          </div>
+          <div class="stat-card" style="text-align: center; padding: 24px;">
+            <div style="font-size: 40px; margin-bottom: 12px;">💼</div>
+            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 4px;">นางราตรี แย้มวจี</h3>
+            <p style="font-size: 13px; color: #059669; font-weight: 600; margin-bottom: 8px;">เหรัญญิก</p>
+            <p style="font-size: 12px; color: var(--ink-light);">บริหารจัดการการเงินและจัดทำบัญชีรายรับ-รายจ่าย</p>
+          </div>
+          <div class="stat-card" style="text-align: center; padding: 24px;">
+            <div style="font-size: 40px; margin-bottom: 12px;">📝</div>
+            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 4px;">น.ส.วีระออ สุวรรณสิทธิ์</h3>
+            <p style="font-size: 13px; color: #059669; font-weight: 600; margin-bottom: 8px;">ผู้ช่วยเหรัญญิก</p>
+            <p style="font-size: 12px; color: var(--ink-light);">ตรวจสอบการรับชำระเงินและเอกสารหลักฐานสลิปโอน</p>
+          </div>
+          <div class="stat-card" style="text-align: center; padding: 24px;">
+            <div style="font-size: 40px; margin-bottom: 12px;">🛡️</div>
+            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 4px;">นายพิเชษฐ์ มิ่งแก้ว</h3>
+            <p style="font-size: 13px; color: #d97706; font-weight: 600; margin-bottom: 8px;">ฝ่ายดูแลความปลอดภัย & สาธารณูปโภค</p>
+            <p style="font-size: 12px; color: var(--ink-light);">รปภ. ตรวจตรา 24 ชม. และบำรุงรักษาสวน/เกาะกลาง</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 5: ข้อมูลสาธารณะ ==================== -->
+    <div id="tab-public-info" class="tab-content hidden">
+      <div class="grid-2">
+        <div class="content-section">
+          <div class="section-title" style="margin-bottom: 16px;">🏦 ช่องทางการชำระเงินเข้ากองทุน</div>
+          <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 18px; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+              <span style="font-size: 28px;">🏧</span>
+              <div>
+                <b style="font-size: 16px; color: #1e40af;">ธนาคารกรุงเทพ (BBL)</b>
+                <div style="font-size: 13px; color: #475569;">บัญชีกองทุนพัฒนาหมู่บ้าน</div>
+              </div>
+            </div>
+            <p style="font-size: 13px; color: #334155;">
+              หลังโอนเงิน กรุณาส่งสลิปหลักฐานแจ้งเจ้าหน้าที่หรือเหรัญญิกเพื่อบันทึกและออกใบเสร็จรับเงิน
+            </p>
+          </div>
+          <div class="section-title" style="font-size: 15px; margin-bottom: 12px;">📋 อัตราค่าบำรุงกองทุนประจำปี 2569</div>
+          <ul style="font-size: 14px; color: #334155; padding-left: 20px; line-height: 1.8;">
+            <li><b>บ้านในซอย 1 ถึง 10:</b> เดือนละ 300 บาท (งวดละ 900 บาท / ทั้งปี 3,600 บาท)</li>
+            <li><b>บ้านติดถนนสายหลัก:</b> เดือนละ 100 บาท (งวดละ 300 บาท / ทั้งปี 1,200 บาท)</li>
+          </ul>
+        </div>
+
+        <div class="content-section">
+          <div class="section-title" style="margin-bottom: 16px;">📅 กำหนดการจัดเก็บเงิน 4 งวด</div>
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="border-left: 4px solid #10b981; padding: 8px 14px; background: #f8fafc;">
+              <b>งวดที่ 1 (ม.ค. - มี.ค.)</b>: กำหนดชำระภายในเดือนมีนาคม
+            </div>
+            <div style="border-left: 4px solid #3b82f6; padding: 8px 14px; background: #f8fafc;">
+              <b>งวดที่ 2 (เม.ย. - มิ.ย.)</b>: กำหนดชำระภายในเดือนมิถุนายน
+            </div>
+            <div style="border-left: 4px solid #8b5cf6; padding: 8px 14px; background: #f8fafc;">
+              <b>งวดที่ 3 (ก.ค. - ก.ย.)</b>: กำหนดชำระภายในเดือนกันยายน
+            </div>
+            <div style="border-left: 4px solid #f59e0b; padding: 8px 14px; background: #f8fafc;">
+              <b>งวดที่ 4 (ต.ค. - ธ.ค.)</b>: กำหนดชำระภายในเดือนธันวาคม
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+    const fmt = n => Number(n || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fmt0 = n => Number(n || 0).toLocaleString('th-TH', { maximumFractionDigits: 0 });
+
+    let DASH_DATA = null;
+    let HOUSES_DATA = [];
+    let chartZonesInstance = null;
+    let chartExpensesInstance = null;
+
+    // Tab Navigation
+    document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.nav-tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+
+        btn.classList.add('active');
+        const targetTab = document.getElementById('tab-' + btn.dataset.tab);
+        if (targetTab) targetTab.classList.remove('hidden');
+      });
+    });
+
+    async function loadData() {
+      try {
+        const [dashRes, housesRes] = await Promise.all([
+          fetch('/api/dashboard').then(r => r.json()),
+          fetch('/api/houses').then(r => r.json())
+        ]);
+        DASH_DATA = dashRes;
+        HOUSES_DATA = housesRes;
+
+        renderDashboard(dashRes);
+        renderHousesTable(housesRes);
+        renderFinancialStatement(dashRes);
+      } catch (err) {
+        console.error("Fetch data error:", err);
+      }
+    }
+
+    function renderDashboard(data) {
+      document.getElementById('nav-year').textContent = 'ปี ' + data.fiscal_year;
+      const bal = data.balance;
+
+      // 4 Main Stats
+      document.getElementById('val-total').textContent = '฿' + fmt(bal.total);
+      document.getElementById('val-bank').textContent = '฿' + fmt(bal.bank);
+      document.getElementById('val-reserve').textContent = '฿' + fmt(bal.reserve);
+      document.getElementById('val-received').textContent = '฿' + fmt(bal.received);
+      document.getElementById('val-houses').textContent = data.houses_total + ' หลังคาเรือน';
+      document.getElementById('val-expenses').textContent = '฿' + fmt(bal.expenses);
+      document.getElementById('val-opening').textContent = '฿' + fmt(bal.opening);
+      document.getElementById('val-interest').textContent = '฿' + fmt(bal.other_income);
+      document.getElementById('badge-collected-rate').textContent = 'จัดเก็บแล้ว ' + data.year_collected_pct + '%';
+
+      // 4 Period Progress Cards
+      renderPeriodCards(data.period_cards);
+
+      // Render Charts
+      renderZoneChart(data.zone_chart);
+      renderExpensesChart(data.budget_breakdown);
+
+      // Zone filter dropdown in Tab 2
+      const zSel = document.getElementById('zone-filter-select');
+      if (zSel && zSel.options.length <= 1) {
+        data.zones.forEach(z => {
+          const opt = document.createElement('option');
+          opt.value = z.zone;
+          opt.textContent = z.zone;
+          zSel.appendChild(opt);
+        });
+      }
+    }
+
+    function renderPeriodCards(cards) {
+      const container = document.getElementById('period-cards-container');
+      if (!container || !cards) return;
+
+      container.innerHTML = cards.map(c => `
+        <div class="period-card">
+          <div class="period-top">
+            <span class="period-name">${c.name}</span>
+            <span class="period-pct" style="color: ${c.color}">${c.pct}%</span>
+          </div>
+          <div class="period-amt">฿${fmt0(c.amount)}</div>
+          <div class="progress-track">
+            <div class="progress-fill" style="width: ${c.pct}%; background: ${c.color};"></div>
+          </div>
+          <div class="period-foot">
+            <span>ชำระแล้ว ${c.paid_houses} หลัง</span>
+            <span>ค้าง ${c.unpaid_houses} หลัง</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderZoneChart(zoneChart) {
+      const ctx = document.getElementById('chart-zones');
+      if (!ctx || !zoneChart) return;
+
+      const labels = zoneChart.map(z => z.zone);
+      const p1Data = zoneChart.map(z => z.p1_pct);
+      const p4Data = zoneChart.map(z => z.p4_pct);
+
+      if (chartZonesInstance) chartZonesInstance.destroy();
+
+      chartZonesInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'ชำระงวดที่ 1 (%)',
+              data: p1Data,
+              backgroundColor: '#2563eb',
+              borderRadius: 4
+            },
+            {
+              label: 'ชำระงวดที่ 4 (%)',
+              data: p4Data,
+              backgroundColor: '#93c5fd',
+              borderRadius: 4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              ticks: { callback: v => v + '%' }
+            }
+          },
+          plugins: {
+            legend: { position: 'top' }
+          }
+        }
+      });
+    }
+
+    function renderExpensesChart(breakdown) {
+      const ctx = document.getElementById('chart-expenses');
+      if (!ctx || !breakdown) return;
+
+      const labels = breakdown.map(b => b.name);
+      const values = breakdown.map(b => b.amount);
+      const colors = ['#2563eb', '#10b981', '#f59e0b', '#64748b', '#8b5cf6'];
+
+      if (chartExpensesInstance) chartExpensesInstance.destroy();
+
+      chartExpensesInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: values,
+            backgroundColor: colors.slice(0, values.length),
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { boxWidth: 12, font: { size: 11 } }
+            }
+          },
+          cutout: '68%'
+        }
+      });
+    }
+
+    // ==================== Search House Feature (Image 2) ====================
+    function doSearchHouse() {
+      const q = document.getElementById('house-search-input').value.trim();
+      const resultBox = document.getElementById('search-result-box');
+      if (!q) {
+        resultBox.innerHTML = '';
+        return;
+      }
+
+      const match = HOUSES_DATA.find(h => h.house_no.toLowerCase() === q.toLowerCase()) ||
+                    HOUSES_DATA.find(h => h.house_no.toLowerCase().includes(q.toLowerCase()));
+
+      if (!match) {
+        resultBox.innerHTML = `
+          <div class="content-section" style="text-align: center; color: var(--danger);">
+            <p>❌ ไม่พบข้อมูลบ้านเลขที่ "${q}" กรุณาตรวจสอบเลขที่บ้านอีกครั้ง</p>
+          </div>
+        `;
+        return;
+      }
+
+      const cm = DASH_DATA ? DASH_DATA.current_month : 10;
+      resultBox.innerHTML = `
+        <div class="house-detail-card">
+          <div class="house-detail-header">
+            <div>
+              <h3 style="font-size: 20px; font-weight: 700; color: #0f172a;">บ้านเลขที่ ${match.house_no}</h3>
+              <p style="font-size: 13px; color: #64748b;">${match.zone} · เจ้าของ/ผู้พักอาศัย: <b>${match.owner}</b></p>
+            </div>
+            <div class="house-badges">
+              <span class="badge-tag" style="background: #e0f2fe; color: #0369a1;">อัตรา ${match.rate} บ./เดือน</span>
+              <span class="badge-tag ${match.overdue_count === 0 ? 'alert-success' : 'alert-error'}">
+                ${match.overdue_count === 0 ? '✅ ชำระครบตามกำหนด' : '⚠️ ค้างชำระ ' + match.overdue_count + ' เดือน (฿' + fmt(match.overdue_amount) + ')'}
+              </span>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px;">
+            <div style="background: #f8fafc; padding: 12px; border-radius: 8px;">
+              <small style="color: #64748b;">ชำระแล้วทั้งปี</small>
+              <div style="font-size: 18px; font-weight: 700; color: #059669;">฿${fmt(match.paid_amount)} (${match.paid_count}/12 เดือน)</div>
+            </div>
+            <div style="background: #f8fafc; padding: 12px; border-radius: 8px;">
+              <small style="color: #64748b;">ยอดค้างถึงปัจจุบัน</small>
+              <div style="font-size: 18px; font-weight: 700; color: ${match.overdue_amount > 0 ? '#dc2626' : '#059669'};">
+                ฿${fmt(match.overdue_amount)}
+              </div>
+            </div>
+          </div>
+
+          <div style="font-size: 13px; font-weight: 600; margin-bottom: 8px;">ประวัติการชำระเงินรายเดือน (ม.ค. - ธ.ค. 2569):</div>
+          <div class="month-chips">
+            ${match.months.map((paid, idx) => {
+              const isPast = idx < cm;
+              let cls = paid ? 'paid' : (isPast ? 'overdue' : 'pending');
+              let statusTxt = paid ? 'ชำระแล้ว' : (isPast ? 'ค้างชำระ' : 'ยังไม่ถึง');
+              return `
+                <div class="m-chip ${cls}">
+                  <span>${MONTHS_TH[idx]}</span>
+                  <span style="font-size: 10px;">${statusTxt}</span>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    document.getElementById('btn-search-trigger').onclick = doSearchHouse;
+    document.getElementById('house-search-input').onkeydown = e => { if (e.key === 'Enter') doSearchHouse(); };
+
+    function renderHousesTable(houses) {
+      const zVal = document.getElementById('zone-filter-select').value;
+      const filtered = zVal ? houses.filter(h => h.zone === zVal) : houses;
+
+      let html = `
+        <thead>
+          <tr>
+            <th class="c">บ้านเลขที่</th>
+            <th>ซอย / โซน</th>
+            <th>เจ้าของ (ตัวย่อ)</th>
+            <th class="c">งวด 1</th>
+            <th class="c">งวด 2</th>
+            <th class="c">งวด 3</th>
+            <th class="c">งวด 4</th>
+            <th class="r">จ่ายแล้ว</th>
+            <th class="r">ค้างชำระ</th>
+          </tr>
+        </thead>
+        <tbody>
+      `;
+
+      html += filtered.map(h => `
+        <tr style="cursor: pointer;" onclick="document.getElementById('house-search-input').value='${h.house_no}'; doSearchHouse(); window.scrollTo({top: 100, behavior: 'smooth'});">
+          <td class="c"><b>${h.house_no}</b></td>
+          <td>${h.zone}</td>
+          <td>${h.owner}</td>
+          <td class="c">${h.quarters[0].is_full ? '🟢 ครบ' : (h.quarters[0].paid_count > 0 ? '🟡 ' + h.quarters[0].paid_count + '/3' : '⚪')}</td>
+          <td class="c">${h.quarters[1].is_full ? '🟢 ครบ' : (h.quarters[1].paid_count > 0 ? '🟡 ' + h.quarters[1].paid_count + '/3' : '⚪')}</td>
+          <td class="c">${h.quarters[2].is_full ? '🟢 ครบ' : (h.quarters[2].paid_count > 0 ? '🟡 ' + h.quarters[2].paid_count + '/3' : '⚪')}</td>
+          <td class="c">${h.quarters[3].is_full ? '🟢 ครบ' : (h.quarters[3].paid_count > 0 ? '🟡 ' + h.quarters[3].paid_count + '/3' : '⚪')}</td>
+          <td class="r" style="color: #059669; font-weight: 600;">฿${fmt0(h.paid_amount)}</td>
+          <td class="r" style="color: ${h.overdue_amount > 0 ? '#dc2626' : '#64748b'}; font-weight: 600;">
+            ${h.overdue_amount > 0 ? '฿' + fmt0(h.overdue_amount) : '-'}
+          </td>
+        </tr>
+      `).join('');
+
+      html += '</tbody>';
+      document.getElementById('houses-table').innerHTML = html;
+    }
+
+    document.getElementById('zone-filter-select').onchange = () => renderHousesTable(HOUSES_DATA);
+
+    // ==================== Financial Statement (Image 3) ====================
+    function renderFinancialStatement(data) {
+      if (!data || !data.statement) return;
+      document.getElementById('stmt-date-txt').textContent = data.as_of_thai;
+      document.getElementById('stmt-as-of-header').textContent = 'ข้อมูลสรุปการรับ-จ่ายเงินของกองทุนพัฒนาหมู่บ้าน ณ ' + data.as_of_thai;
+
+      const tbody = document.getElementById('statement-tbody');
+      tbody.innerHTML = data.statement.map(row => {
+        let trClass = '';
+        if (row.highlight === 'blue') trClass = 'tr-highlight-blue';
+        else if (row.highlight === 'red') trClass = 'tr-highlight-red';
+        else if (row.highlight === 'green') trClass = 'tr-highlight-green';
+
+        return `
+          <tr class="${trClass}">
+            <td class="c">${row.date}</td>
+            <td>${row.title}</td>
+            <td class="r">${fmt(row.amount)}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Realtime SSE stream
+    loadData();
+    const es = new EventSource('/api/stream');
+    es.addEventListener('update', () => loadData());
+    es.onerror = () => {
+      document.getElementById('live-dot').style.background = '#f59e0b';
+      document.getElementById('live-status').textContent = 'กำลังเชื่อมต่อใหม่...';
+    };
+    es.onopen = () => {
+      document.getElementById('live-dot').style.background = '#10b981';
+      document.getElementById('live-status').textContent = 'ข้อมูลแบบเรียลไทม์';
+    };
+  </script>
 </body>
 </html>

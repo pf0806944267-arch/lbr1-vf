@@ -1,141 +1,713 @@
 <!doctype html>
 <html lang="th">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>เจ้าหน้าที่ - กองทุนพัฒนาหมู่บ้าน</title>
-<link rel="stylesheet" href="/static/style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ระบบงานเจ้าหน้าที่และกรรมการ - กองทุนพัฒนาหมู่บ้าน</title>
+  <link rel="stylesheet" href="/static/style.css">
 </head>
-<body>
-<header><h1>เจ้าหน้าที่กองทุน</h1><div><span id="who"></span> <a href="/">ดู Dashboard</a> <a href="#" id="logout" class="hidden">ออกจากระบบ</a></div></header>
-<main>
-<div id="login" class="card" style="max-width:380px;margin:30px auto">
-  <h2>เข้าสู่ระบบ</h2>
-  <label>ชื่อผู้ใช้</label><input id="u" autocomplete="username">
-  <label>รหัสผ่าน</label><input id="p" type="password" autocomplete="current-password">
-  <div id="lmsg"></div><br><button id="lbtn">เข้าสู่ระบบ</button>
-</div>
-<div id="app" class="hidden">
-  <div class="tabs" id="tabs">
-    <button data-t="pay" class="on">บันทึกการชำระเงิน</button>
-    <button data-t="exp">บันทึกค่าใช้จ่าย</button>
-    <button data-t="recent">รายการล่าสุด</button>
-    <button data-t="users" class="admin hidden">ผู้ใช้ระบบ</button>
-  </div>
-  <div id="msg"></div>
+<body style="background: #f1f5f9;">
 
-  <div class="card tab" id="t-pay">
-    <h2>บันทึกการชำระเงิน</h2>
-    <label>ค้นหาบ้านเลขที่</label><input id="hq" placeholder="พิมพ์บ้านเลขที่/ชื่อ">
-    <label>เลือกบ้าน</label><select id="house" size="6"></select>
-    <label>เลือกเดือนที่ชำระ (เดือนที่จ่ายแล้วจะเลือกไม่ได้)</label><div class="months" id="months"></div>
-    <div class="row">
-      <div><label>วันที่ชำระ</label><input type="date" id="pdate"></div>
-      <div><label>ช่องทาง</label><select id="chan"><option value="transfer">โอนเงิน</option><option value="cash">เงินสด</option></select></div>
-      <div><label>เวลาโอน (ถ้ามี)</label><input id="ptime" placeholder="เช่น 14:30"></div>
+  <!-- Login Modal / Card if not logged in -->
+  <div id="login-container" class="main-wrapper" style="max-width: 420px; margin: 60px auto;">
+    <div class="form-card" style="text-align: center;">
+      <div style="font-size: 40px; margin-bottom: 8px;">🔐</div>
+      <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 4px;">เข้าสู่ระบบเจ้าหน้าที่</h2>
+      <p style="font-size: 13px; color: var(--ink-light); margin-bottom: 20px;">กองทุนพัฒนาหมู่บ้าน ปี 2569</p>
+
+      <div id="login-alert"></div>
+
+      <div class="form-group" style="text-align: left;">
+        <label class="form-label">ชื่อผู้ใช้</label>
+        <input type="text" id="input-username" class="form-control" placeholder="admin หรือ staff">
+      </div>
+      <div class="form-group" style="text-align: left;">
+        <label class="form-label">รหัสผ่าน</label>
+        <input type="password" id="input-password" class="form-control" placeholder="••••••••">
+      </div>
+      <button class="btn-primary-green" id="btn-login-submit" style="margin-top: 10px;">
+        เข้าสู่ระบบ
+      </button>
+      <div style="margin-top: 16px;">
+        <a href="/" style="font-size: 13px; color: #2563eb; text-decoration: none;">← กลับไปหน้าประชาชน</a>
+      </div>
     </div>
-    <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="slip" style="width:auto"> มีสลิปการโอน</label>
-    <label>หมายเหตุ</label><input id="pnote">
-    <div id="ptotal" style="margin:10px 0;font-weight:700"></div>
-    <button id="psave">บันทึกการชำระ</button>
   </div>
 
-  <div class="card tab hidden" id="t-exp">
-    <h2>บันทึกค่าใช้จ่าย</h2>
-    <div class="row">
-      <div><label>วันที่</label><input type="date" id="edate"></div>
-      <div><label>จำนวนเงิน (บาท)</label><input id="eamt" inputmode="decimal"></div>
-      <div><label>หมวด</label><select id="ecat"></select></div>
-      <div><label>จ่ายจาก</label><select id="esrc"><option value="bank">บัญชีธนาคาร</option><option value="reserve">เงินสำรองจ่าย (เงินสด)</option></select></div>
+  <!-- Staff App Interface (Image 4 & 5) -->
+  <div id="staff-app" class="hidden">
+    <!-- Top Bar (Image 4) -->
+    <header class="staff-topbar">
+      <div class="nav-container">
+        <div class="brand">
+          <div class="brand-icon" style="background: rgba(16, 185, 129, 0.2); color: #10b981;">🛡️</div>
+          <div>
+            <h1 style="font-size: 17px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px;">
+              ระบบงานเจ้าหน้าที่และกรรมการ
+              <span style="font-size: 11px; background: #2563eb; color: #fff; padding: 2px 8px; border-radius: 4px; font-weight: 600;">STAFF ONLY</span>
+            </h1>
+            <p style="font-size: 12px; color: #94a3b8;">กองทุนพัฒนาหมู่บ้าน ปี 2569</p>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <!-- User info badge -->
+          <div style="background: rgba(255,255,255,0.08); padding: 6px 14px; border-radius: 20px; font-size: 13px; display: flex; align-items: center; gap: 8px;">
+            <span class="live-dot" style="width: 8px; height: 8px;"></span>
+            <span id="staff-display-name">เจ้าหน้าที่กองทุน</span>
+          </div>
+          <a href="/" class="btn-search" style="padding: 7px 14px; font-size: 13px; background: rgba(255,255,255,0.12); text-decoration: none;">
+            <span>↗</span> ดูหน้าประชาชน
+          </a>
+          <button id="btn-logout" style="background: #dc2626; color: #fff; border: none; padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+            ⏻ ออกจากระบบ
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Sub Navigation Menu (Images 4 & 5) -->
+    <div class="staff-subnav">
+      <div class="staff-menu">
+        <button class="staff-menu-btn active" data-tab="pay">
+          <span>💵 1.</span> บันทึกรับชำระเงิน
+        </button>
+        <button class="staff-menu-btn" data-tab="exp">
+          <span>🔴 2.</span> บันทึกรายจ่ายกองทุน
+        </button>
+        <button class="staff-menu-btn" data-tab="members">
+          <span>👥 3.</span> ทะเบียนสมาชิก 162 หลัง
+        </button>
+        <button class="staff-menu-btn" data-tab="receipts">
+          <span>📄 4.</span> ออกเอกสารทางการ PDF
+        </button>
+        <button class="staff-menu-btn" data-tab="history">
+          <span>⏱️ 5.</span> ประวัติการทำรายการ
+        </button>
+        <button class="staff-menu-btn" data-tab="sheets">
+          <span>☁️ 6.</span> Google Drive & Sheets
+        </button>
+      </div>
     </div>
-    <label>รายการ</label><input id="edesc">
-    <label>ผู้เบิก / จ่ายให้</label><input id="epayee">
-    <br><button id="esave">บันทึกค่าใช้จ่าย</button>
+
+    <!-- Main Container -->
+    <main class="main-wrapper" style="margin-top: 24px;">
+      <div id="staff-alert-box"></div>
+
+      <!-- ==================== TAB 1: บันทึกรับชำระเงิน (Image 4) ==================== -->
+      <div id="view-pay" class="staff-view">
+        <div class="grid-2">
+          <!-- Form Left Column (Image 4) -->
+          <div class="form-card">
+            <span class="form-badge">เคาน์เตอร์การเงิน</span>
+            <h2 class="form-title">บันทึกรับชำระเงินค่ากองทุนพัฒนาหมู่บ้าน</h2>
+            <p class="form-subtitle">บันทึกรับเงิน ออกใบเสร็จรับเงิน (E-Receipt) และอัปเดตระบบเรียลไทม์</p>
+
+            <div class="form-group">
+              <label class="form-label">เลือกลูกบ้าน / บ้านเลขที่ *</label>
+              <select id="sel-pay-house" class="form-control">
+                <option value="">-- ค้นหาหรือเลือกลูกบ้าน (162 หลัง) --</option>
+              </select>
+            </div>
+
+            <!-- 4 Period Selection Cards (Image 4) -->
+            <div class="form-group">
+              <label class="form-label">เลือกงวดที่ต้องการชำระเงิน *</label>
+              <div class="period-selector-grid" id="period-selector-container">
+                <div class="period-check-card" data-q="1" onclick="toggleQuarter(1)">
+                  <div style="font-weight: 700; font-size: 14px;">งวดที่ 1</div>
+                  <div style="font-size: 11px; color: #64748b;">ม.ค. - มี.ค.</div>
+                </div>
+                <div class="period-check-card" data-q="2" onclick="toggleQuarter(2)">
+                  <div style="font-weight: 700; font-size: 14px;">งวดที่ 2</div>
+                  <div style="font-size: 11px; color: #64748b;">เม.ย. - มิ.ย.</div>
+                </div>
+                <div class="period-check-card" data-q="3" onclick="toggleQuarter(3)">
+                  <div style="font-weight: 700; font-size: 14px;">งวดที่ 3</div>
+                  <div style="font-size: 11px; color: #64748b;">ก.ค. - ก.ย.</div>
+                </div>
+                <div class="period-check-card" data-q="4" onclick="toggleQuarter(4)">
+                  <div style="font-weight: 700; font-size: 14px;">งวดที่ 4</div>
+                  <div style="font-size: 11px; color: #64748b;">ต.ค. - ธ.ค.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid-2" style="margin-bottom: 0;">
+              <div class="form-group">
+                <label class="form-label">ช่องทางการชำระ *</label>
+                <select id="sel-pay-channel" class="form-control">
+                  <option value="transfer">โอนเงินเข้าบัญชี (ธนาคารกรุงเทพ)</option>
+                  <option value="cash">เงินสด</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">ยอดเงินที่คำนวณได้ (บาท) *</label>
+                <input type="text" id="input-pay-amount" class="form-control" style="font-size: 18px; font-weight: 700; color: #059669; background: #f8fafc;" value="0.00" readonly>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">หมายเหตุ หรือข้อมูลสลิป</label>
+              <input type="text" id="input-pay-note" class="form-control" placeholder="เช่น เวลาโอน 14.30 น. หรือ ชำระแทนโดยคุณ...">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">วันที่ชำระเงิน</label>
+              <input type="date" id="input-pay-date" class="form-control">
+            </div>
+
+            <button class="btn-primary-green" id="btn-submit-payment">
+              <span>💳</span> บันทึกรับเงิน & ออกใบเสร็จ E-Receipt ทันที
+            </button>
+          </div>
+
+          <!-- Right Column (Image 4) -->
+          <div style="display: flex; flex-direction: column; gap: 20px;">
+            <!-- Criteria Summary Card -->
+            <div class="content-section" style="margin-bottom: 0;">
+              <div class="section-title" style="font-size: 15px; margin-bottom: 14px;">
+                <span>ℹ️</span> สรุปเกณฑ์การจัดเก็บประจำปี 2569
+              </div>
+              <div style="font-size: 14px; line-height: 2;">
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px;">
+                  <span style="color: #64748b;">ซอย 1 ถึง 10:</span>
+                  <b>300 บาท/เดือน (900 บาท/งวด)</b>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding: 6px 0;">
+                  <span style="color: #64748b;">สายหลัก:</span>
+                  <b>100 บาท/เดือน (300 บาท/งวด)</b>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding-top: 6px;">
+                  <span style="color: #64748b;">ผู้รับเงินและลงนามในใบเสร็จ:</span>
+                  <b style="color: #059669;">นางราตรี แย้มวจี (เหรัญญิก)</b>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recent Payments Feed -->
+            <div class="content-section" style="margin-bottom: 0; flex: 1;">
+              <div class="section-title" style="font-size: 15px; margin-bottom: 14px;">
+                <span>⏱️</span> รายการรับเงินล่าสุดในระบบ
+              </div>
+              <div id="recent-payments-feed" style="font-size: 13px; max-height: 340px; overflow-y: auto;">
+                <!-- Filled dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 2: บันทึกรายจ่ายกองทุน (Image 5) ==================== -->
+      <div id="view-exp" class="staff-view hidden">
+        <div style="max-width: 720px; margin: 0 auto;">
+          <div class="form-card">
+            <span class="form-badge" style="background: #fee2e2; color: #b91c1c;">การเบิกจ่าย</span>
+            <h2 class="form-title">บันทึกรายจ่ายกองทุนพัฒนาหมู่บ้าน</h2>
+            <p class="form-subtitle">บันทึกค่า รปภ. สาธารณูปโภค ค่าซ่อมแซม และค่าอุปกรณ์</p>
+
+            <div class="form-group">
+              <label class="form-label">รายการค่าใช้จ่าย *</label>
+              <input type="text" id="input-exp-desc" class="form-control" placeholder="เช่น ค่า รปภ. ประจำเดือน, ค่าไฟฟ้าอาคารอเนกประสงค์">
+            </div>
+
+            <div class="grid-2" style="margin-bottom: 0;">
+              <div class="form-group">
+                <label class="form-label">จำนวนเงิน (บาท) *</label>
+                <input type="number" step="0.01" id="input-exp-amount" class="form-control" placeholder="0.00">
+              </div>
+              <div class="form-group">
+                <label class="form-label">ผู้รับเงิน / หน่วยงาน *</label>
+                <input type="text" id="input-exp-payee" class="form-control" placeholder="เช่น บริษัท รปภ., การไฟฟ้าส่วนภูมิภาค">
+              </div>
+            </div>
+
+            <div class="grid-2" style="margin-bottom: 0;">
+              <div class="form-group">
+                <label class="form-label">หมวดหมู่ค่าใช้จ่าย *</label>
+                <select id="sel-exp-cat" class="form-control">
+                  <option value="C01">ค่ารักษาความปลอดภัย (รปภ.)</option>
+                  <option value="C04">บำรุงรักษา & ซ่อมแซม</option>
+                  <option value="C02">สาธารณูปโภค (ไฟ/น้ำ)</option>
+                  <option value="C03">ค่าบริการธนาคาร SMS</option>
+                  <option value="C05">กิจกรรม/พิธีชุมชน</option>
+                  <option value="C99">อื่นๆ</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">จ่ายจากแหล่งเงิน *</label>
+                <select id="sel-exp-src" class="form-control">
+                  <option value="bank">บัญชีธนาคาร (ธนาคารกรุงเทพ)</option>
+                  <option value="reserve">เงินสำรองจ่าย (เงินสด)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">วันที่จ่าย</label>
+              <input type="date" id="input-exp-date" class="form-control">
+            </div>
+
+            <button class="btn-primary-dark" id="btn-submit-expense" style="margin-top: 10px;">
+              <span>✔️</span> ยืนยันบันทึกรายจ่าย
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 3: ทะเบียนสมาชิก 162 หลัง ==================== -->
+      <div id="view-members" class="staff-view hidden">
+        <div class="content-section">
+          <div class="section-header">
+            <div class="section-title">👥 ทะเบียนลูกบ้านและสมาชิก 162 หลังคาเรือน</div>
+            <input type="text" id="staff-members-search" class="form-control" style="width: 250px;" placeholder="ค้นหาบ้าน หรือ ชื่อ...">
+          </div>
+          <div style="overflow-x: auto;">
+            <table class="table-statement" id="staff-members-table"></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 4: ออกเอกสารทางการ PDF / ใบเสร็จ ==================== -->
+      <div id="view-receipts" class="staff-view hidden">
+        <div class="content-section" style="max-width: 680px; margin: 0 auto;">
+          <div class="section-header">
+            <div class="section-title">📄 ใบเสร็จรับเงินอิเล็กทรอนิกส์ (E-Receipt)</div>
+            <button onclick="window.print()" class="btn-search btn-print-hide">🖨️ พิมพ์ใบเสร็จ</button>
+          </div>
+          <div id="receipt-preview-box" style="border: 2px dashed #cbd5e1; border-radius: 12px; padding: 30px; background: #fff;">
+            <div style="text-align: center; margin-bottom: 20px;">
+              <h2 style="font-size: 20px;">ใบเสร็จรับเงินกองทุนพัฒนาหมู่บ้าน ปี 2569</h2>
+              <p style="font-size: 13px; color: #64748b;">(เอกสารหลักฐานการรับชำระเงินตามระเบียบกองทุน)</p>
+            </div>
+            <div id="receipt-content-body">
+              <p style="color: #64748b; text-align: center;">เมื่อบันทึกรับเงินที่หน้า "1. บันทึกรับชำระเงิน" ใบเสร็จจะปรากฏที่นี่ทันทีเพื่อพิมพ์หรือบันทึก PDF</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 5: ประวัติการทำรายการ ==================== -->
+      <div id="view-history" class="staff-view hidden">
+        <div class="content-section">
+          <div class="section-title" style="margin-bottom: 16px;">⏱️ ประวัติการทำรายการรายรับและรายจ่ายล่าสุด</div>
+          <div class="grid-2">
+            <div>
+              <h4 style="margin-bottom: 10px;">📥 ประวัติรับเงินล่าสุด</h4>
+              <div style="overflow-x: auto;"><table class="table-statement" id="hist-pays-table"></table></div>
+            </div>
+            <div>
+              <h4 style="margin-bottom: 10px;">📤 ประวัติรายจ่ายล่าสุด</h4>
+              <div style="overflow-x: auto;"><table class="table-statement" id="hist-exps-table"></table></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 6: Google Drive & Sheets ==================== -->
+      <div id="view-sheets" class="staff-view hidden">
+        <div class="content-section" style="max-width: 680px; margin: 0 auto; text-align: center; padding: 40px;">
+          <div style="font-size: 48px; margin-bottom: 12px;">📊</div>
+          <h2 style="font-size: 22px; font-weight: 700; margin-bottom: 8px;">ฐานข้อมูล Google Sheet</h2>
+          <p style="font-size: 14px; color: #64748b; margin-bottom: 24px;">
+            ข้อมูลทั้งหมด (15 ตาราง) ซิงก์เชื่อมโยงกับ Google Sheet แบบเรียลไทม์ 2 ทาง
+          </p>
+          <a href="https://docs.google.com/spreadsheets/d/1-81A6uLjqa68rxtjmfontC6BKtVCYXYqlK82OpEaSMw/edit" target="_blank" class="btn-primary-green" style="display: inline-flex; width: auto; padding: 12px 28px; text-decoration: none;">
+            <span>↗</span> เปิด Google Sheet ของโครงการ
+          </a>
+        </div>
+      </div>
+
+    </main>
   </div>
 
-  <div class="card tab hidden" id="t-recent"><h2>รายการล่าสุด</h2><div class="scroll"><table id="rp"></table></div><br><div class="scroll"><table id="re"></table></div></div>
+  <script>
+    const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+    const fmt = n => Number(n || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fmt0 = n => Number(n || 0).toLocaleString('th-TH', { maximumFractionDigits: 0 });
 
-  <div class="card tab hidden" id="t-users">
-    <h2>เพิ่มผู้ใช้</h2>
-    <div class="row"><div><label>ชื่อผู้ใช้</label><input id="nu"></div><div><label>รหัสผ่าน (≥ 8 ตัว)</label><input id="np" type="password"></div>
-    <div><label>สิทธิ์</label><select id="nr"><option value="staff">เจ้าหน้าที่</option><option value="admin">ผู้ดูแลระบบ</option></select></div></div>
-    <br><button id="usave">เพิ่มผู้ใช้</button><br><br><table id="ul"></table>
-  </div>
-</div>
-</main>
-<script>
-const TH=["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
-const $=id=>document.getElementById(id);
-const f=n=>Number(n||0).toLocaleString('th-TH',{minimumFractionDigits:2});
-let T=sessionStorage.getItem('tok'),ROLE=sessionStorage.getItem('role'),HOUSES=[];
-async function api(path,method='GET',body){
- const r=await fetch(path,{method,headers:{'Content-Type':'application/json',...(T?{Authorization:'Bearer '+T}:{})},body:body?JSON.stringify(body):undefined});
- const j=await r.json().catch(()=>({}));
- if(r.status==401&&T){logout();}
- if(!r.ok)throw new Error(j.error||'เกิดข้อผิดพลาด');return j;
-}
-function say(t,ok=true){$('msg').innerHTML=`<div class="msg ${ok?'ok':'err'}">${t}</div>`;window.scrollTo(0,0);setTimeout(()=>$('msg').innerHTML='',6000)}
-function logout(){sessionStorage.clear();T=null;location.reload()}
-$('logout').onclick=e=>{e.preventDefault();logout()};
-$('lbtn').onclick=async()=>{try{const j=await api('/api/login','POST',{username:$('u').value,password:$('p').value});
- sessionStorage.setItem('tok',j.token);sessionStorage.setItem('role',j.role);sessionStorage.setItem('who',j.username);location.reload()}
- catch(e){$('lmsg').innerHTML=`<div class="msg err">${e.message}</div>`}};
-$('p').onkeydown=e=>{if(e.key=='Enter')$('lbtn').click()};
-document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{
- document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x==b));
- document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('hidden',x.id!='t-'+b.dataset.t));
- if(b.dataset.t=='recent')loadRecent();if(b.dataset.t=='users')loadUsers();});
-function today(){return new Date(Date.now()+7*3600e3).toISOString().slice(0,10)}
-async function init(){
- if(!T){return}
- $('login').classList.add('hidden');$('app').classList.remove('hidden');$('logout').classList.remove('hidden');
- $('who').textContent=sessionStorage.getItem('who')+' ('+(ROLE=='admin'?'ผู้ดูแล':'เจ้าหน้าที่')+')';
- if(ROLE=='admin')document.querySelectorAll('.admin').forEach(x=>x.classList.remove('hidden'));
- $('pdate').value=today();$('edate').value=today();
- const cats=await api('/api/staff/categories');$('ecat').innerHTML=cats.map(c=>`<option value="${c.category_id}">${c.name}</option>`).join('');
- await loadHouses();
-}
-async function loadHouses(){HOUSES=await api('/api/staff/houses');drawHouses();}
-function drawHouses(){
- const q=$('hq').value.trim();const cur=$('house').value;
- $('house').innerHTML=HOUSES.filter(h=>!q||h.house_no.includes(q)||h.name.includes(q)||h.zone.includes(q))
-  .map(h=>`<option value="${h.house_id}">${h.house_no} · ${h.zone} · ${h.name} (ค้าง ${h.overdue})</option>`).join('');
- if(cur)$('house').value=cur;drawMonths();
-}
-function drawMonths(){
- const h=HOUSES.find(x=>x.house_id==$('house').value);
- $('months').innerHTML=TH.map((m,i)=>`<label class="${h&&h.months[i]?'paid':''}"><input type="checkbox" value="${i+1}" ${h&&h.months[i]?'disabled checked':''}>${m}</label>`).join('');
- $('months').querySelectorAll('input').forEach(x=>x.onchange=total);total();
-}
-function total(){const n=[...$('months').querySelectorAll('input:not(:disabled):checked')].length;
- const h=HOUSES.find(x=>x.house_id==$('house').value);const rate=h&&h.zone=='สายหลัก'?100:300;
- $('ptotal').textContent=n?`${n} เดือน × ${rate} = ${f(n*rate)} บาท`:''}
-$('hq').oninput=drawHouses;$('house').onchange=drawMonths;
-$('psave').onclick=async()=>{
- const months=[...$('months').querySelectorAll('input:not(:disabled):checked')].map(x=>+x.value);
- if(!$('house').value||!months.length)return say('เลือกบ้านและเดือนก่อน',false);
- if(!confirm('ยืนยันบันทึกการชำระ '+months.length+' เดือน?'))return;
- try{$('psave').disabled=true;await api('/api/staff/payments','POST',{house_id:$('house').value,months,paid_date:$('pdate').value,channel:$('chan').value,transfer_time:$('ptime').value,has_slip:$('slip').checked,note:$('pnote').value});
-  say('บันทึกการชำระเงินเรียบร้อย');$('pnote').value='';$('ptime').value='';await loadHouses()}
- catch(e){say(e.message,false)}finally{$('psave').disabled=false}};
-$('esave').onclick=async()=>{
- try{$('esave').disabled=true;const j=await api('/api/staff/expenses','POST',{expense_date:$('edate').value,amount:$('eamt').value,category_id:$('ecat').value,source:$('esrc').value,description:$('edesc').value,payee:$('epayee').value});
-  say('บันทึกค่าใช้จ่ายเลขที่ '+j.expense.doc_no+' เรียบร้อย');$('eamt').value='';$('edesc').value='';$('epayee').value=''}
- catch(e){say(e.message,false)}finally{$('esave').disabled=false}};
-async function loadRecent(){
- const j=await api('/api/staff/recent');const adm=ROLE=='admin';
- $('rp').innerHTML='<tr><th class="l">รหัส</th><th class="l">บ้าน</th><th>เดือน</th><th>บาท</th><th class="l">วันที่</th><th class="l">ช่องทาง</th>'+(adm?'<th></th>':'')+'</tr>'+
-  j.payments.map(p=>`<tr><td class="l">${p.payment_id}</td><td class="l">${p.house_no}</td><td>${TH[p.month-1]||''}</td><td>${f(p.amount)}</td><td class="l">${p.paid_date}</td><td class="l">${p.channel=='cash'?'เงินสด':'โอน'}</td>${adm?`<td><button class="del" onclick="del('payments','${p.payment_id}')">ลบ</button></td>`:''}</tr>`).join('');
- $('re').innerHTML='<tr><th class="l">เลขที่</th><th class="l">วันที่</th><th class="l">รายการ</th><th>บาท</th>'+(adm?'<th></th>':'')+'</tr>'+
-  j.expenses.map(e=>`<tr><td class="l">${e.doc_no}</td><td class="l">${e.expense_date}</td><td class="l">${e.description}</td><td>${f(e.amount)}</td>${adm?`<td><button class="del" onclick="del('expenses','${e.expense_id}')">ลบ</button></td>`:''}</tr>`).join('');
-}
-async function del(t,id){if(!confirm('ลบรายการ '+id+' ? (ลงบันทึก audit log)'))return;
- try{await api(`/api/admin/${t}/${id}`,'DELETE');say('ลบแล้ว');loadRecent();loadHouses()}catch(e){say(e.message,false)}}
-async function loadUsers(){const u=await api('/api/admin/users');
- $('ul').innerHTML='<tr><th class="l">ผู้ใช้</th><th class="l">สิทธิ์</th></tr>'+u.map(x=>`<tr><td class="l">${x.username}</td><td class="l">${x.role}</td></tr>`).join('')}
-$('usave').onclick=async()=>{try{await api('/api/admin/users','POST',{username:$('nu').value,password:$('np').value,role:$('nr').value});
- say('เพิ่มผู้ใช้แล้ว');$('nu').value='';$('np').value='';loadUsers()}catch(e){say(e.message,false)}};
-init();
-</script>
+    let TOKEN = sessionStorage.getItem('token');
+    let USER_INFO = null;
+    let HOUSES = [];
+    let SELECTED_QUARTERS = new Set();
+
+    function todayStr() {
+      const d = new Date(Date.now() + 7 * 3600e3);
+      return d.toISOString().slice(0, 10);
+    }
+
+    async function apiCall(endpoint, method = 'GET', body = null) {
+      const headers = { 'Content-Type': 'application/json' };
+      if (TOKEN) headers['Authorization'] = 'Bearer ' + TOKEN;
+      const res = await fetch(endpoint, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : null
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 401 && TOKEN) {
+        logout();
+      }
+      if (!res.ok) throw new Error(data.error || 'เกิดข้อผิดพลาด');
+      return data;
+    }
+
+    function showAlert(msg, isSuccess = true) {
+      const box = document.getElementById('staff-alert-box');
+      if (!box) return;
+      box.innerHTML = `<div class="alert ${isSuccess ? 'alert-success' : 'alert-error'}">${isSuccess ? '✅' : '❌'} ${msg}</div>`;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => box.innerHTML = '', 6000);
+    }
+
+    function logout() {
+      sessionStorage.clear();
+      TOKEN = null;
+      location.reload();
+    }
+    document.getElementById('btn-logout').onclick = logout;
+
+    // Login Submission
+    document.getElementById('btn-login-submit').onclick = async () => {
+      const u = document.getElementById('input-username').value.trim();
+      const p = document.getElementById('input-password').value;
+      const alertEl = document.getElementById('login-alert');
+      try {
+        const res = await apiCall('/api/login', 'POST', { username: u, password: p });
+        sessionStorage.setItem('token', res.token);
+        sessionStorage.setItem('username', res.username);
+        sessionStorage.setItem('role', res.role);
+        location.reload();
+      } catch (err) {
+        alertEl.innerHTML = `<div class="alert alert-error">${err.message}</div>`;
+      }
+    };
+    document.getElementById('input-password').onkeydown = e => { if (e.key === 'Enter') document.getElementById('btn-login-submit').click(); };
+
+    // Tab Navigation
+    document.querySelectorAll('.staff-menu-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.staff-menu-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.staff-view').forEach(v => v.classList.add('hidden'));
+
+        btn.classList.add('active');
+        const view = document.getElementById('view-' + btn.dataset.tab);
+        if (view) view.classList.remove('hidden');
+
+        if (btn.dataset.tab === 'history') loadHistory();
+      });
+    });
+
+    async function initStaff() {
+      if (!TOKEN) {
+        document.getElementById('login-container').classList.remove('hidden');
+        document.getElementById('staff-app').classList.add('hidden');
+        return;
+      }
+
+      document.getElementById('login-container').classList.add('hidden');
+      document.getElementById('staff-app').classList.remove('hidden');
+
+      const uName = sessionStorage.getItem('username') || 'เจ้าหน้าที่';
+      const uRole = sessionStorage.getItem('role') === 'admin' ? 'ผู้ดูแลระบบ / ประธานกรรมการ' : 'เจ้าหน้าที่การเงิน';
+      document.getElementById('staff-display-name').textContent = `${uName} (${uRole})`;
+
+      document.getElementById('input-pay-date').value = todayStr();
+      document.getElementById('input-exp-date').value = todayStr();
+
+      await loadHouses();
+      loadRecentPayments();
+    }
+
+    async function loadHouses() {
+      try {
+        HOUSES = await apiCall('/api/staff/houses');
+        populateHouseDropdown(HOUSES);
+        renderStaffMembersTable(HOUSES);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function populateHouseDropdown(houses) {
+      const sel = document.getElementById('sel-pay-house');
+      sel.innerHTML = '<option value="">-- ค้นหาหรือเลือกลูกบ้าน (162 หลัง) --</option>' +
+        houses.map(h => `<option value="${h.house_id}">${h.house_no} · ${h.zone} · ${h.owner_full} (ค้าง ${h.overdue_count} ด.)</option>`).join('');
+    }
+
+    function toggleQuarter(q) {
+      const card = document.querySelector(`.period-check-card[data-q="${q}"]`);
+      if (card.classList.contains('paid-already')) return;
+
+      if (SELECTED_QUARTERS.has(q)) {
+        SELECTED_QUARTERS.delete(q);
+        card.classList.remove('selected');
+      } else {
+        SELECTED_QUARTERS.add(q);
+        card.classList.add('selected');
+      }
+      calcPaymentAmount();
+    }
+
+    document.getElementById('sel-pay-house').onchange = () => {
+      const hid = document.getElementById('sel-pay-house').value;
+      const h = HOUSES.find(x => x.house_id === hid);
+      SELECTED_QUARTERS.clear();
+
+      document.querySelectorAll('.period-check-card').forEach(c => {
+        c.classList.remove('selected', 'paid-already');
+      });
+
+      if (h) {
+        h.quarters.forEach(q => {
+          const card = document.querySelector(`.period-check-card[data-q="${q.period}"]`);
+          if (q.is_full) {
+            card.classList.add('paid-already');
+          }
+        });
+      }
+      calcPaymentAmount();
+    };
+
+    function calcPaymentAmount() {
+      const hid = document.getElementById('sel-pay-house').value;
+      const h = HOUSES.find(x => x.house_id === hid);
+      const ratePerQuarter = h ? (h.rate * 3) : 900;
+      const totalAmt = SELECTED_QUARTERS.size * ratePerQuarter;
+      document.getElementById('input-pay-amount').value = fmt(totalAmt);
+    }
+
+    // Submit Payment
+    document.getElementById('btn-submit-payment').onclick = async () => {
+      const hid = document.getElementById('sel-pay-house').value;
+      if (!hid) return showAlert('กรุณาเลือกลูกบ้าน / บ้านเลขที่', false);
+      if (SELECTED_QUARTERS.size === 0) return showAlert('กรุณาเลือกงวดที่ต้องการชำระ', false);
+
+      const months = [];
+      SELECTED_QUARTERS.forEach(q => {
+        months.push((q - 1) * 3 + 1, (q - 1) * 3 + 2, (q - 1) * 3 + 3);
+      });
+
+      const body = {
+        house_id: hid,
+        months: months,
+        paid_date: document.getElementById('input-pay-date').value,
+        channel: document.getElementById('sel-pay-channel').value,
+        note: document.getElementById('input-pay-note').value,
+        has_slip: true
+      };
+
+      try {
+        document.getElementById('btn-submit-payment').disabled = true;
+        const res = await apiCall('/api/staff/payments', 'POST', body);
+        showAlert('บันทึกการรับชำระเงินสำเร็จ ออกใบเสร็จเรียบร้อย!');
+
+        // Generate E-Receipt in Tab 4
+        renderReceipt(hid, months, body);
+
+        // Reset Form
+        SELECTED_QUARTERS.clear();
+        document.getElementById('input-pay-note').value = '';
+        await loadHouses();
+        document.getElementById('sel-pay-house').value = hid;
+        document.getElementById('sel-pay-house').dispatchEvent(new Event('change'));
+        loadRecentPayments();
+      } catch (err) {
+        showAlert(err.message, false);
+      } finally {
+        document.getElementById('btn-submit-payment').disabled = false;
+      }
+    };
+
+    function renderReceipt(hid, months, data) {
+      const h = HOUSES.find(x => x.house_id === hid);
+      const total = months.length * (h ? h.rate : 300);
+      const quartersTxt = Array.from(SELECTED_QUARTERS).map(q => 'งวดที่ ' + q).join(', ');
+
+      document.getElementById('receipt-content-body').innerHTML = `
+        <div style="font-size: 14px; line-height: 2;">
+          <div style="display:flex; justify-content:space-between;">
+            <span>เลขที่ใบเสร็จ: <b>REC-${Date.now().toString().slice(-6)}</b></span>
+            <span>วันที่: <b>${data.paid_date}</b></span>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <span>ได้รับเงินจาก: <b>${h ? h.owner_full : '-'}</b></span>
+            <span>บ้านเลขที่: <b>${h ? h.house_no : '-'} (${h ? h.zone : ''})</b></span>
+          </div>
+          <div style="border-top: 1px solid #e2e8f0; margin: 12px 0;"></div>
+          <div style="display:flex; justify-content:space-between;">
+            <span>รายการชำระ:</span>
+            <span>ค่าบำรุงกองทุนพัฒนาหมู่บ้าน ปี 2569 (${quartersTxt})</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size: 18px; font-weight: 700; color: #059669; margin: 10px 0;">
+            <span>จำนวนเงินรวมทั้งสิ้น:</span>
+            <span>฿${fmt(total)} บาท</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size: 13px; color: #64748b;">
+            <span>ช่องทาง: ${data.channel === 'transfer' ? 'โอนเงิน (ธนาคารกรุงเทพ)' : 'เงินสด'}</span>
+            <span>หมายเหตุ: ${data.note || '-'}</span>
+          </div>
+          <div class="signatures-area" style="margin-top: 40px;">
+            <div class="sig-block">
+              <div class="sig-line"></div>
+              <div><b>(นางราตรี แย้มวจี)</b></div>
+              <div style="font-size: 12px; color: #64748b;">เหรัญญิก ผู้รับเงิน</div>
+            </div>
+            <div class="sig-block">
+              <div class="sig-line"></div>
+              <div><b>(นายสุนทร คำสุข)</b></div>
+              <div style="font-size: 12px; color: #64748b;">ประธานกรรมการกองทุน</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Submit Expense (Image 5)
+    document.getElementById('btn-submit-expense').onclick = async () => {
+      const desc = document.getElementById('input-exp-desc').value.trim();
+      const amt = document.getElementById('input-exp-amount').value;
+      const payee = document.getElementById('input-exp-payee').value.trim();
+      const cat = document.getElementById('sel-exp-cat').value;
+      const src = document.getElementById('sel-exp-src').value;
+      const dte = document.getElementById('input-exp-date').value;
+
+      if (!desc || !amt || Number(amt) <= 0) {
+        return showAlert('กรุณากรอกรายการและจำนวนเงินที่ถูกต้อง', false);
+      }
+
+      try {
+        document.getElementById('btn-submit-expense').disabled = true;
+        const res = await apiCall('/api/staff/expenses', 'POST', {
+          description: desc,
+          amount: amt,
+          payee: payee,
+          category_id: cat,
+          source: src,
+          expense_date: dte
+        });
+        showAlert(`บันทึกรายจ่ายเลขที่ ${res.expense.doc_no} เรียบร้อย!`);
+        document.getElementById('input-exp-desc').value = '';
+        document.getElementById('input-exp-amount').value = '';
+        document.getElementById('input-exp-payee').value = '';
+      } catch (err) {
+        showAlert(err.message, false);
+      } finally {
+        document.getElementById('btn-submit-expense').disabled = false;
+      }
+    };
+
+    async function loadRecentPayments() {
+      try {
+        const data = await apiCall('/api/staff/recent');
+        const feed = document.getElementById('recent-payments-feed');
+        if (!feed) return;
+
+        feed.innerHTML = data.payments.slice(0, 10).map(p => `
+          <div style="border-bottom: 1px solid #f1f5f9; padding: 8px 0; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <b>บ้าน ${p.house_no}</b> (เดือน ${MONTHS_TH[p.month - 1]})
+              <div style="color: #64748b; font-size: 11px;">${p.paid_date} · ${p.channel === 'transfer' ? 'โอน' : 'เงินสด'}</div>
+            </div>
+            <div style="color: #059669; font-weight: 700;">+฿${fmt0(p.amount)}</div>
+          </div>
+        `).join('') || '<p style="color:#64748b;">ยังไม่มีรายการล่าสุด</p>';
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function renderStaffMembersTable(houses) {
+      const q = document.getElementById('staff-members-search')?.value.trim() || '';
+      const list = q ? houses.filter(h => h.house_no.includes(q) || h.owner_full.includes(q) || h.zone.includes(q)) : houses;
+
+      let html = `
+        <thead>
+          <tr>
+            <th>บ้านเลขที่</th>
+            <th>ซอย</th>
+            <th>ชื่อเจ้าของ</th>
+            <th>งวด 1</th>
+            <th>งวด 2</th>
+            <th>งวด 3</th>
+            <th>งวด 4</th>
+            <th class="r">ยอดชำระแล้ว</th>
+            <th class="r">ยอดค้าง</th>
+            <th>จัดการ</th>
+          </tr>
+        </thead>
+        <tbody>
+      `;
+      html += list.map(h => `
+        <tr>
+          <td><b>${h.house_no}</b></td>
+          <td>${h.zone}</td>
+          <td>${h.owner_full}</td>
+          <td>${h.quarters[0].is_full ? '🟢' : '⚪'}</td>
+          <td>${h.quarters[1].is_full ? '🟢' : '⚪'}</td>
+          <td>${h.quarters[2].is_full ? '🟢' : '⚪'}</td>
+          <td>${h.quarters[3].is_full ? '🟢' : '⚪'}</td>
+          <td class="r" style="color: #059669; font-weight: 600;">฿${fmt0(h.paid_amount)}</td>
+          <td class="r" style="color: ${h.overdue_amount > 0 ? '#dc2626' : '#64748b'}; font-weight: 600;">
+            ${h.overdue_amount > 0 ? '฿' + fmt0(h.overdue_amount) : '-'}
+          </td>
+          <td>
+            <button class="btn-search" style="padding: 4px 10px; font-size: 12px; background: #059669;"
+              onclick="document.querySelector('.staff-menu-btn[data-tab=\\'pay\\']').click(); document.getElementById('sel-pay-house').value='${h.house_id}'; document.getElementById('sel-pay-house').dispatchEvent(new Event('change'));">
+              ชำระเงิน
+            </button>
+          </td>
+        </tr>
+      `).join('');
+      html += '</tbody>';
+      document.getElementById('staff-members-table').innerHTML = html;
+    }
+
+    document.getElementById('staff-members-search')?.addEventListener('input', () => renderStaffMembersTable(HOUSES));
+
+    async function loadHistory() {
+      const data = await apiCall('/api/staff/recent');
+      const isAdmin = sessionStorage.getItem('role') === 'admin';
+
+      document.getElementById('hist-pays-table').innerHTML = `
+        <thead><tr><th>รหัส</th><th>บ้าน</th><th>เดือน</th><th>บาท</th><th>วันที่</th>${isAdmin ? '<th>ลบ</th>' : ''}</tr></thead>
+        <tbody>` + data.payments.map(p => `
+          <tr>
+            <td>${p.payment_id}</td>
+            <td><b>${p.house_no}</b></td>
+            <td>${MONTHS_TH[p.month - 1]}</td>
+            <td class="r">${fmt(p.amount)}</td>
+            <td>${p.paid_date}</td>
+            ${isAdmin ? `<td><button class="del" onclick="deleteRecord('payments', '${p.payment_id}')">ลบ</button></td>` : ''}
+          </tr>
+        `).join('') + `</tbody>`;
+
+      document.getElementById('hist-exps-table').innerHTML = `
+        <thead><tr><th>เลขที่</th><th>รายการ</th><th>บาท</th><th>วันที่</th>${isAdmin ? '<th>ลบ</th>' : ''}</tr></thead>
+        <tbody>` + data.expenses.map(e => `
+          <tr>
+            <td>${e.doc_no}</td>
+            <td>${e.description}</td>
+            <td class="r">${fmt(e.amount)}</td>
+            <td>${e.expense_date}</td>
+            ${isAdmin ? `<td><button class="del" onclick="deleteRecord('expenses', '${e.expense_id}')">ลบ</button></td>` : ''}
+          </tr>
+        `).join('') + `</tbody>`;
+    }
+
+    async function deleteRecord(table, id) {
+      if (!confirm(`ยืนยันการลบรายการ ${id}? (จะบันทึกลง audit log)`)) return;
+      try {
+        await apiCall(`/api/admin/${table}/${id}`, 'DELETE');
+        showAlert('ลบรายการสำเร็จ');
+        loadHistory();
+        loadHouses();
+      } catch (err) {
+        showAlert(err.message, false);
+      }
+    }
+
+    initStaff();
+  </script>
 </body>
 </html>
