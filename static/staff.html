@@ -200,7 +200,8 @@
 
       <!-- ==================== TAB 2: บันทึกรายจ่ายกองทุน (Image 3) ==================== -->
       <div id="view-exp" class="staff-view hidden">
-        <div style="max-width: 720px; margin: 0 auto;">
+        <div class="grid-2">
+          <!-- Left: Expense Form -->
           <div class="form-card">
             <span class="form-badge" style="background: #fee2e2; color: #b91c1c;">การเบิกจ่าย</span>
             <h2 class="form-title">บันทึกรายจ่ายกองทุนพัฒนาหมู่บ้าน</h2>
@@ -252,6 +253,16 @@
               <span>✔️</span> ยืนยันบันทึกรายจ่าย
             </button>
           </div>
+
+          <!-- Right: Recent Expenses Feed -->
+          <div class="content-section" style="margin-bottom: 0;">
+            <div class="section-title" style="font-size: 15px; margin-bottom: 14px;">
+              <span>⏱️</span> รายการรายจ่ายล่าสุดในระบบ
+            </div>
+            <div id="recent-expenses-feed" style="font-size: 13px; max-height: 480px; overflow-y: auto;">
+              <!-- Filled dynamically by loadRecentExpenses -->
+            </div>
+          </div>
         </div>
       </div>
 
@@ -263,7 +274,7 @@
               <div class="section-title">ทะเบียนสมาชิกและประวัติการชำระ (162 หลังคาเรือน)</div>
               <p style="font-size: 13px; color: #64748b;">จัดการข้อมูลลูกบ้าน ตรวจสอบรายซอย และพิมพ์ใบเสร็จย้อนหลัง</p>
             </div>
-            <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <div class="members-filter-group" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
               <!-- Filter by Zone -->
               <select id="staff-filter-zone" class="form-control" style="width: auto;">
                 <option value="">ทุกซอย (162 หลัง)</option>
@@ -283,7 +294,8 @@
               </button>
             </div>
           </div>
-          <div style="overflow-x: auto;">
+          <div class="table-responsive">
+            <div class="mobile-scroll-hint">👉 เลื่อนตารางซ้าย-ขวา เพื่อดูยอดชำระและประวัติงวด</div>
             <table class="table-statement" id="staff-members-table"></table>
           </div>
         </div>
@@ -324,7 +336,7 @@
                 </div>
               </div>
               <button class="btn-search" style="width: 100%; justify-content: center;" onclick="generateOfficialReceipt()">
-                <span>🖨️</span> ดูตัวอย่าง & พิมพ์ใบเสร็จ PDF
+                <span>🖨️</span> พิมพ์ใบเสร็จ PDF
               </button>
             </div>
 
@@ -336,7 +348,7 @@
                 <div class="doc-card-desc">งบดุลสรุปยอดเงินและเงินฝากธนาคาร พร้อมลายเซ็นประธานและเหรัญญิก</div>
               </div>
               <button class="btn-primary-green" style="margin-top: 40px;" onclick="generateFinancialReport()">
-                <span>🖨️</span> ดูตัวอย่าง & พิมพ์งบดุล PDF
+                <span>🖨️</span> พิมพ์งบดุล PDF
               </button>
             </div>
 
@@ -348,7 +360,7 @@
                 <div class="doc-card-desc">บัญชีรายชื่อบ้านที่ค้างชำระเงิน สำหรับคณะกรรมการลงพื้นที่</div>
               </div>
               <button style="background: #dc2626; color: #fff; border: none; border-radius: 8px; padding: 10px; font-weight: 600; width: 100%; margin-top: 40px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="generateOverdueReport()">
-                <span>🖨️</span> ดูตัวอย่าง & พิมพ์รายชื่อค้างชำระ PDF
+                <span>🖨️</span> พิมพ์รายชื่อค้างชำระ PDF
               </button>
             </div>
           </div>
@@ -356,7 +368,7 @@
           <!-- Document Print Preview Area -->
           <div id="pdf-preview-box" class="hidden" style="margin-top: 30px; border-top: 2px solid #e2e8f0; padding-top: 24px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;" class="no-print">
-              <h3 style="font-size: 16px;">ตัวอย่างเอกสารก่อนพิมพ์</h3>
+              <h3 style="font-size: 16px;">เอกสารสำหรับพิมพ์ (Print Preview)</h3>
               <div style="display: flex; gap: 8px;">
                 <button onclick="printActiveDoc()" class="btn-search">🖨️ สั่งพิมพ์เอกสารนี้</button>
                 <button onclick="document.getElementById('pdf-preview-box').classList.add('hidden')" style="padding: 6px 12px; background: #e2e8f0; border: none; border-radius: 6px; cursor: pointer;">ปิด</button>
@@ -550,6 +562,7 @@
 
       await loadHouses();
       loadRecentPayments();
+      loadRecentExpenses();
       fetchDashboard();
     }
 
@@ -713,6 +726,7 @@
         document.getElementById('input-exp-desc').value = '';
         document.getElementById('input-exp-amount').value = '';
         document.getElementById('input-exp-payee').value = '';
+        loadRecentExpenses();
       } catch (err) {
         showAlert(err.message, false);
       } finally {
@@ -720,21 +734,111 @@
       }
     };
 
+    async function deletePayment(payId, houseNo, amount) {
+      if (!confirm(`⚠️ ยืนยันการลบรายการรับชำระเงิน?\n\nรหัสรายการ: ${payId}\nบ้านเลขที่: ${houseNo}\nจำนวนเงิน: ฿${fmt(amount)}\n\n(เมื่อลบแล้ว ยอดชำระของบ้านนี้จะถูกคำนวณใหม่และย้อนกลับเป็นค้างชำระทันที)`)) {
+        return;
+      }
+      try {
+        await apiCall(`/api/admin/payments/${payId}`, 'DELETE');
+        showAlert(`ลบรายการรับเงินรหัส ${payId} สำเร็จ`);
+        await loadHouses();
+        loadRecentPayments();
+        if (typeof loadAuditHistory === 'function') loadAuditHistory();
+      } catch (err) {
+        showAlert(err.message || 'ไม่สามารถลบรายการได้', false);
+      }
+    }
+
+    async function deleteExpense(expId, desc, amount) {
+      if (!confirm(`⚠️ ยืนยันการลบรายการรายจ่าย?\n\nรหัสรายการ: ${expId}\nรายการ: ${desc}\nจำนวนเงิน: ฿${fmt(amount)}\n\n(เมื่อลบแล้ว ยอดค่าใช้จ่ายสะสมและยอดคงเหลือสุทธิจะถูกคำนวณใหม่ทันที)`)) {
+        return;
+      }
+      try {
+        await apiCall(`/api/admin/expenses/${expId}`, 'DELETE');
+        showAlert(`ลบรายการรายจ่ายรหัส ${expId} สำเร็จ`);
+        loadRecentExpenses();
+        if (typeof loadAuditHistory === 'function') loadAuditHistory();
+      } catch (err) {
+        showAlert(err.message || 'ไม่สามารถลบรายการได้', false);
+      }
+    }
+
     async function loadRecentPayments() {
       try {
         const data = await apiCall('/api/staff/recent');
         const feed = document.getElementById('recent-payments-feed');
         if (!feed) return;
+        const isAdmin = sessionStorage.getItem('role') === 'admin';
 
-        feed.innerHTML = data.payments.slice(0, 10).map(p => `
-          <div style="border-bottom: 1px solid #f1f5f9; padding: 8px 0; display:flex; justify-content:space-between; align-items:center;">
-            <div>
-              <b>บ้าน ${p.house_no}</b> (เดือน ${MONTHS_TH[p.month - 1]})
-              <div style="color: #64748b; font-size: 11px;">${p.paid_date} · ${p.channel === 'transfer' ? 'โอน' : 'เงินสด'}</div>
+        if (!data.payments || data.payments.length === 0) {
+          feed.innerHTML = '<p style="color:#64748b; padding: 10px 0;">ยังไม่มีรายการล่าสุด</p>';
+          return;
+        }
+
+        feed.innerHTML = data.payments.slice(0, 15).map(p => {
+          const delBtn = isAdmin ? `
+            <button onclick="deletePayment('${p.payment_id}', '${p.house_no}', ${p.amount})" class="btn-del-record" title="ลบรายการรับเงินนี้ (เฉพาะผู้ดูแลระบบ)">
+              🗑️ ลบ
+            </button>
+          ` : '';
+
+          return `
+            <div style="border-bottom: 1px solid #f1f5f9; padding: 8px 0; display:flex; justify-content:space-between; align-items:center; gap: 8px;">
+              <div style="flex: 1; min-width: 0;">
+                <div><b>บ้าน ${p.house_no}</b> (งวดเดือน ${MONTHS_TH[p.month - 1]})</div>
+                <div style="color: #64748b; font-size: 11px;">
+                  <span>${p.paid_date}</span> · <span>${p.channel === 'transfer' ? 'โอน' : 'เงินสด'}</span>
+                  <span style="color:#94a3b8; font-family: monospace;"> (${p.payment_id})</span>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                <span style="color: #059669; font-weight: 700;">+฿${fmt0(p.amount)}</span>
+                ${delBtn}
+              </div>
             </div>
-            <div style="color: #059669; font-weight: 700;">+฿${fmt0(p.amount)}</div>
-          </div>
-        `).join('') || '<p style="color:#64748b;">ยังไม่มีรายการล่าสุด</p>';
+          `;
+        }).join('');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function loadRecentExpenses() {
+      try {
+        const data = await apiCall('/api/staff/recent');
+        const feed = document.getElementById('recent-expenses-feed');
+        if (!feed) return;
+        const isAdmin = sessionStorage.getItem('role') === 'admin';
+
+        if (!data.expenses || data.expenses.length === 0) {
+          feed.innerHTML = '<p style="color:#64748b; padding: 10px 0;">ยังไม่มีรายการรายจ่ายล่าสุด</p>';
+          return;
+        }
+
+        feed.innerHTML = data.expenses.slice(0, 15).map(e => {
+          const delBtn = isAdmin ? `
+            <button onclick="deleteExpense('${e.expense_id}', '${(e.description || '').replace(/'/g, "\\'")}', ${e.amount})" class="btn-del-record" title="ลบรายการรายจ่ายนี้ (เฉพาะผู้ดูแลระบบ)">
+              🗑️ ลบ
+            </button>
+          ` : '';
+
+          return `
+            <div style="border-bottom: 1px solid #f1f5f9; padding: 10px 0; display:flex; justify-content:space-between; align-items:center; gap: 8px;">
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-weight: 600; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${e.description}</div>
+                <div style="color: #64748b; font-size: 11px; margin-top: 2px;">
+                  <span>${e.expense_date}</span> · <span>ผู้รับ: ${e.payee || '-'}</span>
+                  ${e.doc_no ? ` · <span style="color:#2563eb; font-weight:600;">ใบสำคัญ ${e.doc_no}</span>` : ''}
+                  <span style="color:#94a3b8; font-family: monospace;"> (${e.expense_id})</span>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                <span style="color: #dc2626; font-weight: 700;">-฿${fmt(e.amount)}</span>
+                ${delBtn}
+              </div>
+            </div>
+          `;
+        }).join('');
       } catch (err) {
         console.error(err);
       }

@@ -979,7 +979,7 @@ h1, h2, h3, h4, h5, h6 {
   }
   .table-statement {
     font-size: 12px;
-    min-width: 460px;
+    min-width: 620px;
   }
   .table-statement th,
   .table-statement td {
@@ -1445,6 +1445,90 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .hidden { display: none !important; }
+
+/* Circle Dots for Quarters Status */
+.circle-dot {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  vertical-align: middle;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+.circle-dot.dot-green {
+  background-color: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+}
+.circle-dot.dot-gray {
+  background-color: #cbd5e1;
+}
+.circle-dot.dot-yellow {
+  background-color: #f59e0b;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+}
+
+/* Delete Record Button for Admin */
+.btn-del-record {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+.btn-del-record:hover {
+  background: #dc2626;
+  color: #fff;
+  border-color: #dc2626;
+}
+
+/* Mobile Scroll Hint */
+.mobile-scroll-hint {
+  display: none;
+  font-size: 12px;
+  color: #64748b;
+  background: #f1f5f9;
+  border: 1px dashed #cbd5e1;
+  padding: 6px 12px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  text-align: center;
+  font-weight: 500;
+}
+@media (max-width: 768px) {
+  .mobile-scroll-hint {
+    display: block;
+  }
+}
+
+/* Mobile Layout Polish */
+@media (max-width: 640px) {
+  .main-wrapper {
+    padding: 0 10px 30px;
+    margin: 12px auto;
+  }
+  .content-section {
+    padding: 14px 12px;
+    border-radius: 12px;
+  }
+  .form-card {
+    padding: 16px 12px;
+  }
+  .doc-card {
+    padding: 16px 14px;
+  }
+  .staff-topbar {
+    padding: 10px 12px;
+  }
+}
 
 /* ---------------- Print styles for PDF / print button ---------------- */
 @media print {

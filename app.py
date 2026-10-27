@@ -699,7 +699,10 @@ def api_admin_delete(table, rid):
         old = next((r for r in rows if r.get(keys[table]) == rid), None)
         if not old:
             return jsonify(error="ไม่พบรายการ"), 404
-        sheet_post(action="delete", table=table, idCol=keys[table], id=rid)
+        try:
+            sheet_post(action="delete", table=table, idCol=keys[table], id=rid)
+        except Exception as e:
+            print(f"sheet delete warning: {e}")
         rows.remove(old)
         audit(request.user, "delete", table, rid, old=json.dumps(old, ensure_ascii=False))
 

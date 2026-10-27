@@ -45,24 +45,6 @@
     </div>
   </header>
 
-  <!-- Announcement Ticker -->
-  <div class="announcement-bar">
-    <div class="announce-container">
-      <div>
-        <span class="announce-tag">ประชาสัมพันธ์</span>
-        <span>กองทุนพัฒนาหมู่บ้าน ปี 2569 จัดเก็บงวดที่ 1-4 เพื่อบำรุงรักษา ความปลอดภัย (รปภ.) และสาธารณูปโภค</span>
-      </div>
-      <div class="announce-info">
-        <div class="live-indicator">
-          <span class="live-dot" id="live-dot"></span>
-          <span id="live-status">ข้อมูลแบบเรียลไทม์</span>
-        </div>
-        <span>📞 ติดต่อคณะกรรมการ</span>
-        <span>🏦 โอนเงินผ่าน ธ.กรุงเทพ</span>
-      </div>
-    </div>
-  </div>
-
   <main class="main-wrapper">
 
     <!-- ==================== TAB 1: แดชบอร์ดภาพรวม ==================== -->
@@ -196,9 +178,16 @@
           </div>
         </div>
         <div class="table-responsive">
+          <div class="mobile-scroll-hint">👉 เลื่อนตารางซ้าย-ขวา เพื่อดูข้อมูลงวด 1-4 และยอดค้างชำระ</div>
           <table class="table-statement" id="houses-table">
             <!-- Rendered by JS -->
           </table>
+        </div>
+        <div class="quarter-legend" style="display: flex; gap: 16px; font-size: 12px; color: #64748b; margin-top: 12px; align-items: center; flex-wrap: wrap;">
+          <span style="font-weight: 600; color: #334155;">สัญลักษณ์สถานะงวด:</span>
+          <span style="display: inline-flex; align-items: center; gap: 6px;"><span class="circle-dot dot-green"></span> ชำระแล้ว</span>
+          <span style="display: inline-flex; align-items: center; gap: 6px;"><span class="circle-dot dot-gray"></span> ยังไม่ชำระ</span>
+          <span style="display: inline-flex; align-items: center; gap: 6px;"><span class="circle-dot dot-yellow"></span> ชำระบางส่วน</span>
         </div>
       </div>
     </div>
@@ -591,6 +580,16 @@
     document.getElementById('btn-search-trigger').onclick = doSearchHouse;
     document.getElementById('house-search-input').onkeydown = e => { if (e.key === 'Enter') doSearchHouse(); };
 
+    function renderQuarterDot(q) {
+      if (q.is_full) {
+        return '<span class="circle-dot dot-green" title="ชำระครบงวด"></span>';
+      } else if (q.paid_count > 0) {
+        return '<span class="circle-dot dot-yellow" title="ชำระบางส่วน (' + q.paid_count + '/3 เดือน)"></span>';
+      } else {
+        return '<span class="circle-dot dot-gray" title="ยังไม่ชำระ"></span>';
+      }
+    }
+
     function renderHousesTable(houses) {
       const zVal = document.getElementById('zone-filter-select').value;
       const filtered = zVal ? houses.filter(h => h.zone === zVal) : houses;
@@ -617,10 +616,10 @@
           <td class="c"><b>${h.house_no}</b></td>
           <td>${h.zone}</td>
           <td>${h.owner}</td>
-          <td class="c">${h.quarters[0].is_full ? '🟢 ครบ' : (h.quarters[0].paid_count > 0 ? '🟡 ' + h.quarters[0].paid_count + '/3' : '⚪')}</td>
-          <td class="c">${h.quarters[1].is_full ? '🟢 ครบ' : (h.quarters[1].paid_count > 0 ? '🟡 ' + h.quarters[1].paid_count + '/3' : '⚪')}</td>
-          <td class="c">${h.quarters[2].is_full ? '🟢 ครบ' : (h.quarters[2].paid_count > 0 ? '🟡 ' + h.quarters[2].paid_count + '/3' : '⚪')}</td>
-          <td class="c">${h.quarters[3].is_full ? '🟢 ครบ' : (h.quarters[3].paid_count > 0 ? '🟡 ' + h.quarters[3].paid_count + '/3' : '⚪')}</td>
+          <td class="c">${renderQuarterDot(h.quarters[0])}</td>
+          <td class="c">${renderQuarterDot(h.quarters[1])}</td>
+          <td class="c">${renderQuarterDot(h.quarters[2])}</td>
+          <td class="c">${renderQuarterDot(h.quarters[3])}</td>
           <td class="r" style="color: #059669; font-weight: 600;">฿${fmt0(h.paid_amount)}</td>
           <td class="r" style="color: ${h.overdue_amount > 0 ? '#dc2626' : '#64748b'}; font-weight: 600;">
             ${h.overdue_amount > 0 ? '฿' + fmt0(h.overdue_amount) : '-'}
