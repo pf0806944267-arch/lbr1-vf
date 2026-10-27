@@ -15,7 +15,7 @@ from datetime import datetime
 
 PORT = int(os.environ.get("PORT", 8000))
 DB_FILE = "village_fund.db"
-DEFAULT_WEBHOOK = "https://script.google.com/macros/s/AKfycbxdXzn8UZsA0TeYKuzcbU3IEL2ixyJjPTu4RRFjMB5axjPURET3HipvnpQP5i6Hkyi4/exec"
+DEFAULT_WEBHOOK = "https://script.google.com/macros/s/AKfycbxdM2IOyIF_TMkMtovm0ryi28FoiWQpsGDlQeTES9-Fvj2PQtpv1zqZJPx_V52AHfcW/exec"
 GOOGLE_SHEET_WEBHOOK_URL = os.environ.get("GOOGLE_SHEET_WEBHOOK_URL", DEFAULT_WEBHOOK)
 GOOGLE_SPREADSHEET_ID = os.environ.get("GOOGLE_SPREADSHEET_ID", "1ovw2jq_v3uISdJOSEwBxAu3SD2FkahjQobHf_3c_FKw")
 _last_sheet_pull_time = 0
