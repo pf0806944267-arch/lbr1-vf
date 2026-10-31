@@ -78,14 +78,17 @@
         <button class="staff-menu-btn" data-tab="exp">
           <span>🔴 2.</span> บันทึกรายจ่ายกองทุน
         </button>
+        <button class="staff-menu-btn" data-tab="inc">
+          <span>💰 3.</span> บันทึกรายได้อื่น
+        </button>
         <button class="staff-menu-btn" data-tab="members">
-          <span>👥 3.</span> ทะเบียนสมาชิก 162 หลัง
+          <span>👥 4.</span> ทะเบียนสมาชิก 162 หลัง
         </button>
         <button class="staff-menu-btn" data-tab="receipts">
-          <span>📄 4.</span> ออกเอกสารทางการ PDF
+          <span>📄 5.</span> ออกเอกสารทางการ PDF
         </button>
         <button class="staff-menu-btn" data-tab="history">
-          <span>⏱️ 5.</span> ประวัติการทำรายการ
+          <span>⏱️ 6.</span> ประวัติการทำรายการ
         </button>
       </div>
     </div>
@@ -266,7 +269,52 @@
         </div>
       </div>
 
-      <!-- ==================== TAB 3: ทะเบียนสมาชิก 162 หลัง (Image 2) ==================== -->
+      <!-- ==================== TAB 3: บันทึกรายได้อื่น ==================== -->
+      <div id="view-inc" class="staff-view hidden">
+        <div class="grid-2">
+          <div class="form-card">
+            <span class="form-badge" style="background: #dcfce7; color: #166534;">รายได้กองทุน</span>
+            <h2 class="form-title">บันทึกรายได้อื่นของกองทุน</h2>
+            <p class="form-subtitle">เงินบริจาค ดอกเบี้ยเงินฝาก เงินสนับสนุน และรายได้ทางอื่นๆ (รวมเข้ายอดเงินกองทุนทันที)</p>
+
+            <div class="form-group">
+              <label class="form-label">ประเภทรายได้ *</label>
+              <select id="sel-inc-type" class="form-control">
+                <option value="donation">เงินบริจาค</option>
+                <option value="interest">ดอกเบี้ยเงินฝาก</option>
+                <option value="support">เงินสนับสนุน</option>
+                <option value="other">รายได้ทางอื่นๆ</option>
+              </select>
+            </div>
+            <div class="grid-2" style="margin-bottom: 0;">
+              <div class="form-group">
+                <label class="form-label">จำนวนเงิน (บาท) *</label>
+                <input type="number" step="0.01" id="input-inc-amount" class="form-control" placeholder="0.00">
+              </div>
+              <div class="form-group">
+                <label class="form-label">วันที่ได้รับ *</label>
+                <input type="date" id="input-inc-date" class="form-control">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">รายละเอียด / ผู้บริจาค / แหล่งที่มา</label>
+              <input type="text" id="input-inc-note" class="form-control" placeholder="เช่น คุณสมชาย บริจาคสมทบทุน, ดอกเบี้ยออมทรัพย์ ธ.กรุงเทพ">
+            </div>
+            <button class="btn-primary-green" id="btn-submit-income" style="margin-top: 10px;">
+              <span>✔️</span> ยืนยันบันทึกรายได้
+            </button>
+          </div>
+
+          <div class="content-section" style="margin-bottom: 0;">
+            <div class="section-title" style="font-size: 15px; margin-bottom: 14px;">
+              <span>⏱️</span> รายได้อื่นล่าสุด <span id="inc-total-badge" style="margin-left:auto; color:#059669; font-weight:700;"></span>
+            </div>
+            <div id="recent-income-feed" style="font-size: 13px; max-height: 480px; overflow-y: auto;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 4: ทะเบียนสมาชิก 162 หลัง (Image 2) ==================== -->
       <div id="view-members" class="staff-view hidden">
         <div class="content-section">
           <div class="section-header">
@@ -558,6 +606,7 @@
         if (view) view.classList.remove('hidden');
 
         if (btn.dataset.tab === 'history') loadAuditHistory();
+        if (btn.dataset.tab === 'inc') loadRecentIncome();
       });
     });
 
@@ -577,6 +626,7 @@
 
       document.getElementById('input-pay-date').value = todayStr();
       document.getElementById('input-exp-date').value = todayStr();
+      document.getElementById('input-inc-date').value = todayStr();
 
       await loadHouses();
       loadRecentPayments();
@@ -751,6 +801,78 @@
         document.getElementById('btn-submit-expense').disabled = false;
       }
     };
+
+    const INCOME_TYPE_TH = {donation: 'เงินบริจาค', interest: 'ดอกเบี้ยเงินฝาก', support: 'เงินสนับสนุน', other: 'รายได้ทางอื่นๆ'};
+
+    document.getElementById('btn-submit-income').onclick = async () => {
+      const amt = document.getElementById('input-inc-amount').value;
+      const dte = document.getElementById('input-inc-date').value;
+      if (!amt || Number(amt) <= 0 || !dte) {
+        return showAlert('กรุณากรอกจำนวนเงินและวันที่ให้ถูกต้อง', false);
+      }
+      const btn = document.getElementById('btn-submit-income');
+      try {
+        btn.disabled = true;
+        const res = await apiCall('/api/staff/income', 'POST', {
+          type: document.getElementById('sel-inc-type').value,
+          amount: amt,
+          date: dte,
+          note: document.getElementById('input-inc-note').value.trim()
+        });
+        showAlert(`บันทึกรายได้ ${res.income.income_id} เรียบร้อย!`);
+        document.getElementById('input-inc-amount').value = '';
+        document.getElementById('input-inc-note').value = '';
+        loadRecentIncome();
+      } catch (err) {
+        showAlert(err.message, false);
+      } finally {
+        btn.disabled = false;
+      }
+    };
+
+    async function deleteIncome(id, amount) {
+      if (!confirm(`⚠️ ยืนยันการลบรายได้?\n\nรหัสรายการ: ${id}\nจำนวนเงิน: ฿${fmt(amount)}`)) return;
+      try {
+        await apiCall(`/api/admin/other_income/${id}`, 'DELETE');
+        showAlert(`ลบรายได้รหัส ${id} สำเร็จ`);
+        loadRecentIncome();
+        if (typeof loadAuditHistory === 'function') loadAuditHistory();
+      } catch (err) {
+        showAlert(err.message || 'ไม่สามารถลบรายการได้', false);
+      }
+    }
+
+    async function loadRecentIncome() {
+      try {
+        const data = await apiCall('/api/staff/recent');
+        const feed = document.getElementById('recent-income-feed');
+        if (!feed) return;
+        const isAdmin = sessionStorage.getItem('role') === 'admin';
+        const list = data.incomes || [];
+        document.getElementById('inc-total-badge').textContent =
+          list.length ? 'รวม ฿' + fmt(list.reduce((s, i) => s + Number(i.amount || 0), 0)) : '';
+        if (!list.length) {
+          feed.innerHTML = '<p style="color:#64748b; padding: 10px 0;">ยังไม่มีรายการรายได้อื่น</p>';
+          return;
+        }
+        feed.innerHTML = list.slice(0, 30).map(i => `
+          <div style="border-bottom: 1px solid #f1f5f9; padding: 10px 0; display:flex; justify-content:space-between; align-items:center; gap: 8px;">
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-weight: 600; color: #0f172a;">${INCOME_TYPE_TH[i.type] || i.type}</div>
+              <div style="color: #64748b; font-size: 11px; margin-top: 2px;">
+                <span>${i.date}</span>${i.note ? ' · <span>' + i.note + '</span>' : ''}
+                <span style="color:#94a3b8; font-family: monospace;"> (${i.income_id})</span>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+              <span style="color: #059669; font-weight: 700;">+฿${fmt(i.amount)}</span>
+              ${isAdmin ? `<button onclick="deleteIncome('${i.income_id}', ${Number(i.amount)})" class="btn-del-record">🗑️ ลบ</button>` : ''}
+            </div>
+          </div>`).join('');
+      } catch (err) {
+        console.error(err);
+      }
+    }
 
     async function deletePayment(payId, houseNo, amount) {
       if (!confirm(`⚠️ ยืนยันการลบรายการรับชำระเงิน?\n\nรหัสรายการ: ${payId}\nบ้านเลขที่: ${houseNo}\nจำนวนเงิน: ฿${fmt(amount)}\n\n(เมื่อลบแล้ว ยอดชำระของบ้านนี้จะถูกคำนวณใหม่และย้อนกลับเป็นค้างชำระทันที)`)) {

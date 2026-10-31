@@ -115,6 +115,10 @@ def append_to_csv(table, row):
         print(f"append_to_csv error {table}: {e}")
 
 
+INCOME_TYPES = {"donation": "เงินบริจาค", "interest": "ดอกเบี้ยเงินฝาก",
+                "support": "เงินสนับสนุน", "other": "รายได้ทางอื่นๆ"}
+
+
 def num(v, default=0.0):
     try:
         return float(str(v).replace(",", ""))
@@ -223,6 +227,10 @@ def summary():
     paid_amount = {dd["due_id"]: num(paid_by_due[dd["due_id"]]["amount_paid"]) for dd in dues if dd["due_id"] in paid_by_due}
     received = sum(paid_amount.values())
     other_income = sum(num(x["amount"]) for x in d.get("other_income", []))
+    income_by_type = {t: 0.0 for t in INCOME_TYPES}
+    for x in d.get("other_income", []):
+        t = x.get("type") if x.get("type") in INCOME_TYPES else "other"
+        income_by_type[t] += num(x["amount"])
     exp_total = sum(num(e["amount"]) for e in d.get("expenses", []))
     reserve_in = sum(num(r["amount"]) for r in d.get("reserve_transactions", []) if r.get("type") == "in")
     reserve_out = sum(num(r["amount"]) for r in d.get("reserve_transactions", []) if r.get("type") == "out")
@@ -332,7 +340,9 @@ def summary():
         {"date": "-", "title": f"รับเงินจากสมาชิก งวดที่ 3 (ก.ค. - ก.ย. 69) [ชำระแล้ว {period_cards[2]['paid_houses']}/{len(houses)} หลัง]", "amount": periods[2], "type": "income"},
         {"date": "-", "title": f"รับเงินจากสมาชิก งวดที่ 4 (ต.ค. - ธ.ค. 69) [ชำระแล้ว {period_cards[3]['paid_houses']}/{len(houses)} หลัง]", "amount": periods[3], "type": "income"},
         {"date": "-", "title": f"รวมรับเงินจากสมาชิกทั้ง 4 งวด ({len(houses)} หลังคาเรือน)", "amount": received, "type": "total_received", "highlight": "blue"},
-        {"date": "-", "title": "เงินสนับสนุน", "amount": other_income, "type": "income"},
+        *[{"date": "-", "title": f"รายได้อื่น: {INCOME_TYPES.get(t, t)}", "amount": a, "type": "income"}
+          for t, a in income_by_type.items() if a],
+        {"date": "-", "title": "รวมรายได้อื่น (บริจาค/ดอกเบี้ย/เงินสนับสนุน/อื่นๆ)", "amount": other_income, "type": "total_received", "highlight": "blue"},
         {"date": "-", "title": "รวมค่าใช้จ่ายตั้งแต่ ม.ค. 2569 - ปัจจุบัน", "amount": exp_total, "type": "total_expense", "highlight": "red"},
         {"date": "-", "title": "เงินสำรองคงเหลือ (เงินสดในมือ)", "amount": reserve_bal, "type": "reserve"},
         {"date": "-", "title": "เงินคงเหลือในสมุดบัญชีธนาคาร (ธนาคารกรุงเทพ)", "amount": bank_bal, "type": "bank"},
@@ -348,6 +358,7 @@ def summary():
             "opening": opening,
             "received": received,
             "other_income": other_income,
+            "other_income_by_type": {t: round(a, 2) for t, a in income_by_type.items()},
             "expenses": exp_total,
             "total": round(total, 2),
             "reserve": round(reserve_bal, 2),
@@ -595,7 +606,8 @@ def api_staff_recent():
         })
     exps = sorted(d.get("expenses", []), key=lambda e: e.get("expense_id", ""), reverse=True)[:100]
     audit_logs = list(reversed(d.get("audit_log", [])))
-    return jsonify(payments=pays, expenses=exps, audit_logs=audit_logs)
+    incs = sorted(d.get("other_income", []), key=lambda i: i.get("income_id", ""), reverse=True)[:100]
+    return jsonify(payments=pays, expenses=exps, incomes=incs, audit_logs=audit_logs)
 
 
 @app.post("/api/staff/payments")
@@ -688,11 +700,43 @@ def api_add_expense():
     return jsonify(ok=True, expense=row)
 
 
+@app.post("/api/staff/income")
+@require()
+def api_add_income():
+    b = request.get_json(force=True)
+    d = store.data
+    amount = num(b.get("amount"), -1)
+    itype = b.get("type")
+    if amount <= 0 or itype not in INCOME_TYPES or not re.match(r"\d{4}-\d{2}-\d{2}$", b.get("date", "")):
+        return jsonify(error="กรุณากรอกประเภท จำนวนเงิน และวันที่ให้ถูกต้อง"), 400
+
+    with store.write_lock:
+        row = {
+            "income_id": next_id("I", d.get("other_income", []), "income_id", 3),
+            "date": b["date"],
+            "type": itype,
+            "amount": amount,
+            "note": b.get("note", ""),
+        }
+        sheet_post(action="append", table="other_income", row=row)
+        d.setdefault("other_income", []).append(row)
+        append_to_csv("other_income", row)
+        audit(request.user, "create", "other_income", row["income_id"], new=json.dumps(row, ensure_ascii=False))
+
+        with store.cond:
+            store.version += 1
+            store.digest = json.dumps(d, sort_keys=True, ensure_ascii=False)
+            store.cond.notify_all()
+
+    threading.Thread(target=store.refresh, daemon=True).start()
+    return jsonify(ok=True, income=row)
+
+
 # ---------------------------------------------------------------- Routes: Admin
 @app.delete("/api/admin/<table>/<rid>")
 @require("admin")
 def api_admin_delete(table, rid):
-    keys = {"payments": "payment_id", "expenses": "expense_id"}
+    keys = {"payments": "payment_id", "expenses": "expense_id", "other_income": "income_id"}
     if table not in keys:
         return jsonify(error="ไม่รองรับตารางนี้"), 400
     with store.write_lock:
@@ -703,20 +747,24 @@ def api_admin_delete(table, rid):
         try:
             sheet_post(action="delete", table=table, idCol=keys[table], id=rid)
         except Exception as e:
-            print(f"sheet delete warning: {e}")
+            # "not found" = ไม่มีในชีตอยู่แล้ว ถือว่าลบสำเร็จ; อย่างอื่นต้องแจ้งผู้ใช้
+            # (ไม่เช่นนั้นข้อมูลจะกลับมาเองตอนซิงก์จากชีต)
+            if "not found" not in str(e):
+                print(f"sheet delete error: {e}")
+                return jsonify(error=f"ลบในชีตไม่สำเร็จ ({e}) ข้อมูลยังไม่ถูกลบ"), 502
         rows.remove(old)
         audit(request.user, "delete", table, rid, old=json.dumps(old, ensure_ascii=False))
 
         # Re-write the table CSV
         p = os.path.join(ROOT, "data", table + ".csv")
         try:
-            if rows:
-                header = list(rows[0].keys())
-                with open(p, "w", encoding="utf-8-sig", newline="") as f:
-                    w = csv.writer(f)
-                    w.writerow(header)
-                    for r in rows:
-                        w.writerow([r.get(h, "") for h in header])
+            header = list(rows[0].keys()) if rows else (
+                list(old.keys()))  # ตารางว่างหลังลบ ยังต้องเขียนไฟล์ทับ
+            with open(p, "w", encoding="utf-8-sig", newline="") as f:
+                w = csv.writer(f)
+                w.writerow(header)
+                for r in rows:
+                    w.writerow([r.get(h, "") for h in header])
         except Exception as e:
             print(f"rewrite csv error: {e}")
 
