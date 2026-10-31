@@ -228,13 +228,28 @@ def summary():
     received = sum(paid_amount.values())
     other_income = sum(num(x["amount"]) for x in d.get("other_income", []))
     income_by_type = {t: 0.0 for t in INCOME_TYPES}
+    cash_income = 0.0
     for x in d.get("other_income", []):
         t = x.get("type") if x.get("type") in INCOME_TYPES else "other"
         income_by_type[t] += num(x["amount"])
+        if x.get("channel") == "cash":  # ไม่มีค่า/ข้อมูลเก่า = โอนเข้าธนาคาร
+            cash_income += num(x["amount"])
     exp_total = sum(num(e["amount"]) for e in d.get("expenses", []))
-    reserve_in = sum(num(r["amount"]) for r in d.get("reserve_transactions", []) if r.get("type") == "in")
-    reserve_out = sum(num(r["amount"]) for r in d.get("reserve_transactions", []) if r.get("type") == "out")
-    reserve_bal = reserve_in - reserve_out
+    # --- เงินสำรอง (เงินสดในมือ) คำนวณอัตโนมัติ ---
+    # สมุดเงินสำรองเดิม (reserve_transactions) ใช้เป็นฐาน: in = รับเงินสำรองจากธนาคาร, out = จ่ายจากเงินสำรอง
+    # ข้ามรายการ out ที่อ้างรายจ่ายซึ่งถูกลบไปแล้ว
+    expense_by_id = {e.get("expense_id"): e for e in d.get("expenses", [])}
+    ledger = d.get("reserve_transactions", [])
+    ledger_exp_ids = {r.get("expense_id") for r in ledger if r.get("type") == "out" and r.get("expense_id")}
+    reserve_in = sum(num(r["amount"]) for r in ledger if r.get("type") == "in")
+    reserve_out = sum(num(r["amount"]) for r in ledger if r.get("type") == "out"
+                      and (not r.get("expense_id") or r.get("expense_id") in expense_by_id))
+    # รายจ่ายใหม่ที่จ่ายจากเงินสำรอง และยังไม่มีในสมุดเงินสำรอง
+    reserve_out += sum(num(e["amount"]) for e in d.get("expenses", [])
+                       if e.get("source") == "reserve" and e.get("expense_id") not in ledger_exp_ids)
+    # รับชำระค่าสมาชิกเป็นเงินสด
+    cash_payments = sum(num(p.get("amount_paid")) for p in paid_by_due.values() if p.get("channel") == "cash")
+    reserve_bal = reserve_in - reserve_out + cash_income + cash_payments
     total = opening + received + other_income - exp_total
     bank_bal = total - reserve_bal
 
@@ -709,6 +724,8 @@ def api_add_income():
     itype = b.get("type")
     if amount <= 0 or itype not in INCOME_TYPES or not re.match(r"\d{4}-\d{2}-\d{2}$", b.get("date", "")):
         return jsonify(error="กรุณากรอกประเภท จำนวนเงิน และวันที่ให้ถูกต้อง"), 400
+    if b.get("channel") not in ("cash", "transfer"):
+        return jsonify(error="กรุณาเลือกช่องทางรับเงิน (เงินสด / โอนเข้าธนาคาร)"), 400
 
     with store.write_lock:
         row = {
@@ -717,6 +734,7 @@ def api_add_income():
             "type": itype,
             "amount": amount,
             "note": b.get("note", ""),
+            "channel": b["channel"],
         }
         sheet_post(action="append", table="other_income", row=row)
         d.setdefault("other_income", []).append(row)

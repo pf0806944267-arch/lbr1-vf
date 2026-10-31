@@ -71,6 +71,10 @@ function doPost(e) {
     }
     var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
     if (b.action === 'append') {
+      // ถ้า row มี field ใหม่ที่ชีตยังไม่มีคอลัมน์ ให้เพิ่มหัวคอลัมน์ต่อท้ายอัตโนมัติ (เช่น channel)
+      Object.keys(b.row).forEach(function (k) {
+        if (head.indexOf(k) < 0) { head.push(k); sh.getRange(1, head.length).setNumberFormat('@').setValue(k); }
+      });
       // เขียนเป็นข้อความเสมอ (กัน 3/69 หรือ 448/12 ถูกแปลงเป็นวันที่)
       var rowVals = head.map(function (h) { return b.row[h] === undefined ? '' : String(b.row[h]); });
       sh.getRange(sh.getLastRow() + 1, 1, 1, head.length).setNumberFormat('@').setValues([rowVals]);

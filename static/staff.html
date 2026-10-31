@@ -288,13 +288,20 @@
             </div>
             <div class="grid-2" style="margin-bottom: 0;">
               <div class="form-group">
+                <label class="form-label">ช่องทางรับเงิน *</label>
+                <select id="sel-inc-channel" class="form-control">
+                  <option value="transfer">โอนเข้าบัญชีธนาคารกรุงเทพ</option>
+                  <option value="cash">เงินสด (เข้าเงินสำรองในมือ)</option>
+                </select>
+              </div>
+              <div class="form-group">
                 <label class="form-label">จำนวนเงิน (บาท) *</label>
                 <input type="number" step="0.01" id="input-inc-amount" class="form-control" placeholder="0.00">
               </div>
-              <div class="form-group">
-                <label class="form-label">วันที่ได้รับ *</label>
-                <input type="date" id="input-inc-date" class="form-control">
-              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">วันที่ได้รับ *</label>
+              <input type="date" id="input-inc-date" class="form-control">
             </div>
             <div class="form-group">
               <label class="form-label">รายละเอียด / ผู้บริจาค / แหล่งที่มา</label>
@@ -815,6 +822,7 @@
         btn.disabled = true;
         const res = await apiCall('/api/staff/income', 'POST', {
           type: document.getElementById('sel-inc-type').value,
+          channel: document.getElementById('sel-inc-channel').value,
           amount: amt,
           date: dte,
           note: document.getElementById('input-inc-note').value.trim()
@@ -858,7 +866,8 @@
         feed.innerHTML = list.slice(0, 30).map(i => `
           <div style="border-bottom: 1px solid #f1f5f9; padding: 10px 0; display:flex; justify-content:space-between; align-items:center; gap: 8px;">
             <div style="flex: 1; min-width: 0;">
-              <div style="font-weight: 600; color: #0f172a;">${INCOME_TYPE_TH[i.type] || i.type}</div>
+              <div style="font-weight: 600; color: #0f172a;">${INCOME_TYPE_TH[i.type] || i.type}
+                <span style="font-size:11px; font-weight:600; padding:1px 8px; border-radius:10px; margin-left:6px; ${i.channel === 'cash' ? 'background:#fef3c7; color:#92400e;' : 'background:#dbeafe; color:#1e40af;'}">${i.channel === 'cash' ? 'เงินสด' : 'โอนธนาคาร'}</span></div>
               <div style="color: #64748b; font-size: 11px; margin-top: 2px;">
                 <span>${i.date}</span>${i.note ? ' · <span>' + i.note + '</span>' : ''}
                 <span style="color:#94a3b8; font-family: monospace;"> (${i.income_id})</span>
