@@ -467,12 +467,30 @@
       </div>
 
     </main>
+
+  <footer class="site-footer">
+    <div>© Copyright 2026 กองทุนหมู่บ้านลพบุรีราเมศร์ 1 · พัฒนาระบบโดย <b>Mathman BM</b></div>
+    <div class="visit-stats" id="visit-stats"></div>
+  </footer>
   </div>
 
   <script>
     const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
     const fmt = n => Number(n || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const fmt0 = n => Number(n || 0).toLocaleString('th-TH', { maximumFractionDigits: 0 });
+
+
+    function renderVisits(s) {
+      const el = document.getElementById('visit-stats');
+      if (!el || !s) return;
+      const n = v => Number(v || 0).toLocaleString('th-TH');
+      el.innerHTML =
+        `<span class="visit-chip">👁️ วันนี้ <b>${n(s.today_views)}</b> ครั้ง</span>` +
+        `<span class="visit-chip">👤 ผู้เข้าชมวันนี้ <b>${n(s.today_visitors)}</b> คน</span>` +
+        `<span class="visit-chip">📊 ทั้งหมด <b>${n(s.total_views)}</b> ครั้ง / <b>${n(s.total_visitors)}</b> คน</span>`;
+    }
+
+    fetch('/api/visits').then(r => r.json()).then(renderVisits).catch(() => {});
 
     let TOKEN = sessionStorage.getItem('token');
     let HOUSES = [];

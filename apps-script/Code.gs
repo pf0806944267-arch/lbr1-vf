@@ -9,7 +9,7 @@
 
 var TABLES = ['fiscal_years', 'zones', 'fee_rates', 'houses', 'members', 'house_members',
   'dues', 'payments', 'bank_ref', 'expense_categories', 'expenses',
-  'reserve_transactions', 'other_income', 'users', 'audit_log'];
+  'reserve_transactions', 'other_income', 'users', 'audit_log', 'site_stats'];
 
 function json_(o) {
   return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
@@ -63,6 +63,20 @@ function doPost(e) {
     var b = JSON.parse(e.postData.contents);
     if (!checkKey_(b.key)) return json_({ok: false, error: 'unauthorized'});
     var sh = sheet_(b.table);
+    if (b.action === 'incr') {
+      // บวกยอดสถิติรายวันแบบ atomic (อยู่ใน script lock) — ใช้กับตาราง site_stats (date, views, visitors)
+      if (sh.getLastColumn() === 0) sh.getRange(1, 1, 1, 3).setNumberFormat('@').setValues([['date', 'views', 'visitors']]);
+      var iv = sh.getDataRange().getValues();
+      for (var k = 1; k < iv.length; k++) {
+        var cell = iv[k][0] instanceof Date ? Utilities.formatDate(iv[k][0], 'Asia/Bangkok', 'yyyy-MM-dd') : String(iv[k][0]);
+        if (cell === String(b.date)) {
+          sh.getRange(k + 1, 2, 1, 2).setNumberFormat('@').setValues([[String((Number(iv[k][1]) || 0) + Number(b.views || 0)), String((Number(iv[k][2]) || 0) + Number(b.visitors || 0))]]);
+          return json_({ok: true});
+        }
+      }
+      sh.getRange(sh.getLastRow() + 1, 1, 1, 3).setNumberFormat('@').setValues([[String(b.date), String(Number(b.views || 0)), String(Number(b.visitors || 0))]]);
+      return json_({ok: true});
+    }
     if (b.action === 'replace') {
       sh.clear();
       var data = [b.header].concat(b.rows);
