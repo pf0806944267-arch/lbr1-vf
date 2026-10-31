@@ -180,7 +180,12 @@ h1, h2, h3, h4, h5, h6 {
     padding: 10px 14px;
   }
   .nav-container {
-    gap: 12px;
+    gap: 10px;
+    align-items: center;
+  }
+  .brand {
+    flex: 1;
+    min-width: 0;
   }
   .brand-icon {
     width: 38px;
@@ -194,9 +199,11 @@ h1, h2, h3, h4, h5, h6 {
     font-size: 11px;
   }
   .btn-staff-portal {
+    order: 2;
     padding: 6px 12px;
     font-size: 12px;
     border-radius: 8px;
+    flex-shrink: 0;
   }
   .nav-tabs {
     width: 100%;
@@ -216,6 +223,38 @@ h1, h2, h3, h4, h5, h6 {
     flex-shrink: 0;
     padding: 7px 12px;
     font-size: 13px;
+  }
+}
+
+@media (max-width: 768px) {
+  .top-navbar {
+    padding: 8px 12px;
+  }
+  .brand-text h1 {
+    font-size: 14px;
+  }
+  .brand-text p {
+    font-size: 10.5px;
+  }
+  /* ปุ่มระบบเจ้าหน้าที่เปลี่ยนเป็น icon 🔐 ขนาดกะทัดรัด อยู่มุมขวาบน */
+  .btn-staff-portal {
+    order: 2;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    box-shadow: 0 2px 8px rgba(5, 150, 105, 0.35);
+  }
+  .btn-staff-portal .btn-staff-text {
+    display: none;
+  }
+  .btn-staff-portal .btn-staff-icon {
+    font-size: 18px;
+    line-height: 1;
   }
 }
 
