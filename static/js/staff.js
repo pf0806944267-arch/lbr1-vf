@@ -875,7 +875,7 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
             <div class="sig-block" style="text-align: center; width: 220px;">
               <div class="sig-line" style="border-bottom: 1px dotted #64748b; height: 35px; margin-bottom: 8px;"></div>
               <div><b>(นายสุนทร คำสุข)</b></div>
-              <div style="color: #64748b; font-size: 12px; margin-top: 2px;">คณะทำงานกองทุนพัฒนาหมู่บ้าน<br> ลพบุรีราเมศวร์โครงการ 1</div>
+              <div style="color: #64748b; font-size: 12px; margin-top: 2px;">ประธานคณะทำงานกองทุนพัฒนาหมู่บ้าน<br>ลพบุรีราเมศวร์โครงการ 1</div>
             </div>
           </div>
         </div>
@@ -912,15 +912,15 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
           </tbody>
         </table>
         <div class="signatures-area" style="display: flex; justify-content: space-between; margin-top: 50px;">
-          <div class="sig-block">
+          <div class="sig-block" style="text-align: center; width: 220px;">
             <div class="sig-line"></div>
-            <div><b>(น.ส.วีระออ สุวรรณสิทธิ์/นางราตรี แย้มวจี )</b></div>
-            <div style="color: #64748b; font-size: 12px;">เหรัญญิกผู้จัดทำบัญชี</div>
+            <div><b>(น.ส.วีระออ สุวรรณสิทธิ์)</b></div>
+            <div style="color: #64748b; font-size: 12px; margin-top: 2px;">เหรัญญิก ผู้รับเงิน</div>
           </div>
-          <div class="sig-block">
+          <div class="sig-block" style="text-align: center; width: 220px;">
             <div class="sig-line"></div>
             <div><b>(นายสุนทร คำสุข)</b></div>
-            <div style="color: #64748b; font-size: 12px;">คณะทำงานกองทุนพัฒนาหมู่บ้าน<br>ลพบุรีราเมศวร์โครงการ 1 </div>
+            <div style="color: #64748b; font-size: 12px; margin-top: 2px;">ประธานคณะทำงานกองทุนพัฒนาหมู่บ้าน<br>ลพบุรีราเมศวร์โครงการ 1</div>
           </div>
         </div>
       `;
@@ -959,15 +959,15 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
           </tbody>
         </table>
         <div class="signatures-area" style="display: flex; justify-content: space-between; margin-top: 50px;">
-          <div class="sig-block">
-          <!--  <div class="sig-line"></div>
-            <div><b>(นางราตรี แย้มวจี)</b></div>
-            <div style="color: #64748b; font-size: 12px;">เหรัญญิกกองทุน</div>  -->
+          <div class="sig-block" style="text-align: center; width: 220px;">
+            <div class="sig-line"></div>
+            <div><b>(น.ส.วีระออ สุวรรณสิทธิ์)</b></div>
+            <div style="color: #64748b; font-size: 12px; margin-top: 2px;">เหรัญญิก ผู้รับเงิน</div>
           </div>
-          <div class="sig-block">
+          <div class="sig-block" style="text-align: center; width: 220px;">
             <div class="sig-line"></div>
             <div><b>(นายสุนทร คำสุข)</b></div>
-            <div style="color: #64748b; font-size: 12px;">คณะทำงานกองทุนพัฒนาหมู่บ้าน<br> ลพบุรีราเมศวร์โครงการ 1</div>
+            <div style="color: #64748b; font-size: 12px; margin-top: 2px;">ประธานคณะทำงานกองทุนพัฒนาหมู่บ้าน<br>ลพบุรีราเมศวร์โครงการ 1</div>
           </div>
         </div>
       `;
@@ -1612,13 +1612,13 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
             </div>
             <div style="text-align: center; width: 30%;">
               <p style="margin-bottom: 45px;">ลงชื่อ .....................................................</p>
-              <p style="font-weight: 600; margin: 0; font-size: 13px;">( นางราตรี แย้มวจี )</p>
-              <p style="font-size: 12px; color: #64748b; margin: 2px 0;">เหรัญญิกกองทุนพัฒนาหมู่บ้าน</p>
+              <p style="font-weight: 600; margin: 0; font-size: 13px;">(น.ส.วีระออ สุวรรณสิทธิ์)</p>
+              <p style="font-size: 12px; color: #64748b; margin: 2px 0;">เหรัญญิก ผู้รับเงิน</p>
             </div>
             <div style="text-align: center; width: 30%;">
               <p style="margin-bottom: 45px;">ลงชื่อ .....................................................</p>
-              <p style="font-weight: 600; margin: 0; font-size: 13px;">( ..................................................... )</p>
-              <p style="font-size: 12px; color: #64748b; margin: 2px 0;">ประธานกองทุนพัฒนาหมู่บ้าน</p>
+              <p style="font-weight: 600; margin: 0; font-size: 13px;">(นายสุนทร คำสุข)</p>
+              <p style="font-size: 12px; color: #64748b; margin: 2px 0;">ประธานคณะทำงานกองทุนพัฒนาหมู่บ้าน<br>ลพบุรีราเมศวร์โครงการ 1</p>
             </div>
           </div>
         </div>
