@@ -245,9 +245,11 @@ visits = Visits()
 
 
 def start_background():
-    threading.Thread(target=store.refresh, daemon=True).start()
-    bootstrap_admin()
-    threading.Thread(target=store.loop, daemon=True).start()
+    def init_and_loop():
+        store.refresh()
+        bootstrap_admin()
+        store.loop()
+    threading.Thread(target=init_and_loop, daemon=True).start()
     threading.Thread(target=visits.loop, daemon=True).start()
 
 
@@ -582,12 +584,13 @@ def audit(user, action, table, rid, old="", new=""):
 def bootstrap_admin():
     try:
         users = store.data.get("users", [])
-        if any(x.get("username") == os.environ.get("ADMIN_USERNAME", "admin") for x in users) or not os.environ.get("ADMIN_USERNAME"):
+        admin_user = os.environ.get("ADMIN_USERNAME", "admin")
+        if not admin_user or any(x.get("username") == admin_user for x in users):
             return
         row = {
             "user_id": next_id("U", users, "user_id", 3),
-            "username": os.environ["ADMIN_USERNAME"],
-            "password_hash": generate_password_hash(os.environ.get("ADMIN_PASSWORD", "admin1234")),
+            "username": admin_user,
+            "password_hash": generate_password_hash(os.environ.get("ADMIN_PASSWORD", "11111111")),
             "role": "admin",
             "active": "Y"
         }
@@ -675,8 +678,9 @@ def api_stream():
 def api_login():
     b = request.get_json(force=True)
     users = store.data.get("users", [])
-    u = next((x for x in users if x.get("username") == b.get("username") and x.get("active") == "Y"), None)
-    if not u or not check_password_hash(u.get("password_hash", ""), b.get("password", "")):
+    candidates = [x for x in users if x.get("username") == b.get("username") and x.get("active") == "Y"]
+    u = next((x for x in candidates if check_password_hash(x.get("password_hash", ""), b.get("password", ""))), None)
+    if not u:
         return jsonify(error="ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง"), 401
     return jsonify(token=make_token(u), username=u["username"], role=u["role"])
 
@@ -716,6 +720,83 @@ def api_staff_recent():
     audit_logs = list(reversed(d.get("audit_log", [])))
     incs = sorted(d.get("other_income", []), key=lambda i: i.get("income_id", ""), reverse=True)[:100]
     return jsonify(payments=pays, expenses=exps, incomes=incs, audit_logs=audit_logs)
+
+
+@app.get("/api/staff/reports/all")
+@require()
+def api_staff_reports_all():
+    d = store.data
+    dues = {x["due_id"]: x for x in d.get("dues", [])}
+    houses = {h["house_id"]: h for h in d.get("houses", [])}
+    zones = {z["zone_id"]: z.get("zone_name", "") for z in d.get("zones", [])}
+    categories = {c["category_id"]: c.get("name", "") for c in d.get("expense_categories", [])}
+    members = {m["member_id"]: m.get("full_name", "") for m in d.get("members", [])}
+    owners = {}
+    for hm in d.get("house_members", []):
+        owners.setdefault(hm["house_id"], []).append(members.get(hm["member_id"], ""))
+
+    pays = []
+    for p in sorted(d.get("payments", []), key=lambda x: (x.get("paid_date", ""), x.get("payment_id", "")), reverse=True):
+        du = dues.get(p.get("due_id"), {})
+        if du.get("year_be") and str(du.get("year_be")) != str(FY):
+            continue
+        h_id = du.get("house_id", "")
+        h = houses.get(h_id, {})
+        m = du.get("month", "")
+        q = ((int(m) - 1) // 3) + 1 if str(m).isdigit() else ""
+        pays.append({
+            "payment_id": p.get("payment_id"),
+            "due_id": p.get("due_id"),
+            "house_id": h_id,
+            "house_no": h.get("house_no", ""),
+            "zone_name": zones.get(h.get("zone_id"), ""),
+            "owner": ", ".join(filter(None, owners.get(h_id, []))) or "-",
+            "month": m,
+            "quarter": q,
+            "amount": num(p.get("amount_paid")),
+            "paid_date": p.get("paid_date"),
+            "channel": p.get("channel", "transfer"),
+            "has_slip": p.get("has_slip", ""),
+            "transfer_time": p.get("transfer_time", ""),
+            "recorded_by": p.get("recorded_by", ""),
+            "note": p.get("note", "")
+        })
+
+    exps = []
+    for e in sorted(d.get("expenses", []), key=lambda x: (x.get("expense_date", ""), x.get("expense_id", "")), reverse=True):
+        exps.append({
+            "expense_id": e.get("expense_id"),
+            "doc_no": e.get("doc_no", ""),
+            "expense_date": e.get("expense_date", ""),
+            "description": e.get("description", ""),
+            "amount": num(e.get("amount")),
+            "category_id": e.get("category_id", ""),
+            "category_name": categories.get(e.get("category_id"), "ทั่วไป"),
+            "payee": e.get("payee", ""),
+            "source": e.get("source", "bank"),
+            "status": e.get("status", "อนุมัติ"),
+            "recorded_by": e.get("recorded_by", "")
+        })
+
+    incs = []
+    for i in sorted(d.get("other_income", []), key=lambda x: (x.get("date", ""), x.get("income_id", "")), reverse=True):
+        incs.append({
+            "income_id": i.get("income_id"),
+            "date": i.get("date", ""),
+            "type": i.get("type", "other"),
+            "type_label": INCOME_TYPES.get(i.get("type"), i.get("type", "อื่นๆ")),
+            "amount": num(i.get("amount")),
+            "channel": i.get("channel", "transfer"),
+            "note": i.get("note", "")
+        })
+
+    return jsonify(
+        fiscal_year=FY,
+        payments=pays,
+        expenses=exps,
+        incomes=incs,
+        categories=d.get("expense_categories", [])
+    )
 
 
 @app.post("/api/staff/payments")

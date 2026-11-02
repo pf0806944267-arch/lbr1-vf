@@ -16,7 +16,8 @@
     <div class="form-card" style="text-align: center;">
       <div style="font-size: 40px; margin-bottom: 8px;">🔐</div>
       <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 4px;">เข้าสู่ระบบเจ้าหน้าที่</h2>
-      <p style="font-size: 13px; color: var(--ink-light); margin-bottom: 20px;">กองทุนพัฒนาหมู่บ้าน ปี 2569</p>
+      <p style="font-size: 13px; color: var(--ink-light); margin-bottom: 20px;">กองทุนพัฒนาหมู่บ้าน <br>กองทุนหมู่บ้าน ลพบุรีราเมศวร์ โครงการ 1  </p>
+      <p style="font-size: 13px; color: var(--ink-light); margin-bottom: 20px;"></p>
 
       <div id="login-alert"></div>
 
@@ -32,7 +33,7 @@
         เข้าสู่ระบบ
       </button>
       <div style="margin-top: 16px;">
-        <a href="/" style="font-size: 13px; color: #2563eb; text-decoration: none;">← กลับไปหน้าประชาชน</a>
+        <a href="/" style="font-size: 13px; color: #2563eb; text-decoration: none;">← กลับไปหน้าสมาชิก</a>
       </div>
     </div>
   </div>
@@ -60,7 +61,7 @@
             <span id="staff-display-name">เจ้าหน้าที่กองทุน</span>
           </div>
           <a href="/" class="btn-search" style="padding: 7px 14px; font-size: 13px; background: rgba(255,255,255,0.12); text-decoration: none;">
-            <span>↗</span> ดูหน้าประชาชน
+            <span>↗</span> กลับหน้าสมาชิก
           </a>
           <button id="btn-logout" style="background: #dc2626; color: #fff; border: none; padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
             ⏻ ออกจากระบบ
@@ -190,8 +191,11 @@
 
             <!-- Recent Payments Feed -->
             <div class="content-section" style="margin-bottom: 0; flex: 1;">
-              <div class="section-title" style="font-size: 15px; margin-bottom: 14px;">
-                <span>⏱️</span> รายการรับเงินล่าสุดในระบบ
+              <div class="section-title" style="font-size: 15px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                <div><span>⏱️</span> รายการรับเงินล่าสุดในระบบ</div>
+                <button type="button" class="btn-view-all" onclick="switchTab('all-payments')">
+                  <span>🔍 ดูทั้งหมด (ปี 2569)</span>
+                </button>
               </div>
               <div id="recent-payments-feed" style="font-size: 13px; max-height: 340px; overflow-y: auto;">
                 <!-- Filled dynamically -->
@@ -259,8 +263,11 @@
 
           <!-- Right: Recent Expenses Feed -->
           <div class="content-section" style="margin-bottom: 0;">
-            <div class="section-title" style="font-size: 15px; margin-bottom: 14px;">
-              <span>⏱️</span> รายการรายจ่ายล่าสุดในระบบ
+            <div class="section-title" style="font-size: 15px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+              <div><span>⏱️</span> รายการรายจ่ายล่าสุดในระบบ</div>
+              <button type="button" class="btn-view-all" onclick="switchTab('all-expenses')">
+                <span>🔍 ดูทั้งหมด (ปี 2569)</span>
+              </button>
             </div>
             <div id="recent-expenses-feed" style="font-size: 13px; max-height: 480px; overflow-y: auto;">
               <!-- Filled dynamically by loadRecentExpenses -->
@@ -313,8 +320,13 @@
           </div>
 
           <div class="content-section" style="margin-bottom: 0;">
-            <div class="section-title" style="font-size: 15px; margin-bottom: 14px;">
-              <span>⏱️</span> รายได้อื่นล่าสุด <span id="inc-total-badge" style="margin-left:auto; color:#059669; font-weight:700;"></span>
+            <div class="section-title" style="font-size: 15px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span>⏱️</span> รายได้อื่นล่าสุด <span id="inc-total-badge" style="color:#059669; font-weight:700;"></span>
+              </div>
+              <button type="button" class="btn-view-all" onclick="switchTab('all-income')">
+                <span>🔍 ดูทั้งหมด (ปี 69)</span>
+              </button>
             </div>
             <div id="recent-income-feed" style="font-size: 13px; max-height: 480px; overflow-y: auto;"></div>
           </div>
@@ -466,7 +478,256 @@
         </div>
       </div>
 
-    </main>
+      <!-- ==================== TAB 7: รายการรายรับ ปี 2569 ==================== -->
+      <div id="view-all-payments" class="staff-view hidden">
+        <div class="report-header-card">
+          <div class="report-title-box">
+            <h2><span>📊</span> รายการรายรับ ปี 2569</h2>
+            <p>สรุปการรับชำระเงินค่ากองทุนพัฒนาหมู่บ้าน ลพบุรีราเมศวร์ โครงการ 1 ประจำปี 2569 ทั้งหมด</p>
+          </div>
+          <div class="report-action-btns">
+            <button class="btn-print-report" onclick="printReport('payments')">
+              <span>🖨️</span> พิมพ์รายงาน
+            </button>
+            <button class="btn-excel" onclick="exportReportExcel('payments')">
+              <span>📥</span> ส่งออก Excel
+            </button>
+            <button type="button" class="btn-view-all" onclick="switchTab('pay')" style="background:#f1f5f9; color:#475569; border-color:#cbd5e1;">
+              <span>←</span> กลับหน้าบันทึก
+            </button>
+          </div>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="report-stats-grid">
+          <div class="report-stat-chip">
+            <div class="label">รวมยอดรับชำระทั้งหมด</div>
+            <div class="val" id="rep-pay-total" style="color: #059669;">฿0.00</div>
+          </div>
+          <div class="report-stat-chip">
+            <div class="label">จำนวนรายการรับชำระ</div>
+            <div class="val" id="rep-pay-count">0 รายการ</div>
+          </div>
+          <div class="report-stat-chip">
+            <div class="label">โอนเข้าบัญชีธนาคาร</div>
+            <div class="val" id="rep-pay-transfer" style="color: #2563eb;">฿0.00</div>
+          </div>
+          <div class="report-stat-chip">
+            <div class="label">รับชำระเป็นเงินสด</div>
+            <div class="val" id="rep-pay-cash" style="color: #d97706;">฿0.00</div>
+          </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="report-filter-bar">
+          <input type="text" id="filter-pay-search" class="form-control" style="width: 240px;" placeholder="ค้นหาบ้านเลขที่, สมาชิก, รหัส..." oninput="filterAllPayments()">
+          <select id="filter-pay-quarter" class="form-control" style="width: auto;" onchange="filterAllPayments()">
+            <option value="">ทุกงวด (งวด 1-4)</option>
+            <option value="1">งวดที่ 1 (ม.ค. - มี.ค.)</option>
+            <option value="2">งวดที่ 2 (เม.ย. - มิ.ย.)</option>
+            <option value="3">งวดที่ 3 (ก.ค. - ก.ย.)</option>
+            <option value="4">งวดที่ 4 (ต.ค. - ธ.ค.)</option>
+          </select>
+          <select id="filter-pay-channel" class="form-control" style="width: auto;" onchange="filterAllPayments()">
+            <option value="">ทุกช่องทาง (โอน/เงินสด)</option>
+            <option value="transfer">โอนเงินเข้าธนาคาร</option>
+            <option value="cash">เงินสด</option>
+          </select>
+          <button type="button" class="btn-view-all" onclick="resetPayFilter()" style="margin-left: auto;">
+            <span>🔄</span> รีเซ็ตตัวกรอง
+          </button>
+        </div>
+
+        <!-- Table Section -->
+        <div class="content-section" style="padding: 0; overflow: hidden;">
+          <div class="table-responsive">
+            <table class="table-statement" id="table-all-payments">
+              <thead>
+                <tr>
+                  <th style="width: 50px; text-align: center;">ลำดับ</th>
+                  <th style="width: 95px; text-align: center;">รหัสรายการ</th>
+                  <th style="width: 105px; text-align: center;">วันที่รับชำระ</th>
+                  <th style="width: 95px; text-align: center;">บ้านเลขที่</th>
+                  <th>สมาชิก / เจ้าของ</th>
+                  <th style="width: 110px; text-align: center;">งวด / เดือน</th>
+                  <th style="width: 110px; text-align: center;">ช่องทาง</th>
+                  <th style="width: 110px; text-align: right;">จำนวนเงิน</th>
+                  <th style="width: 95px; text-align: center;">ผู้บันทึก</th>
+                  <th>หมายเหตุ</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-all-payments">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 8: รายการรายจ่าย ปี 2569 ==================== -->
+      <div id="view-all-expenses" class="staff-view hidden">
+        <div class="report-header-card">
+          <div class="report-title-box">
+            <h2><span>🔴</span> รายการรายจ่าย ปี 2569</h2>
+            <p>สรุปการเบิกจ่ายงบประมาณและค่าใช้จ่ายของกองทุนพัฒนาหมู่บ้าน ปี 2569 ทั้งหมด</p>
+          </div>
+          <div class="report-action-btns">
+            <button class="btn-print-report" onclick="printReport('expenses')">
+              <span>🖨️</span> พิมพ์รายงาน
+            </button>
+            <button class="btn-excel" onclick="exportReportExcel('expenses')">
+              <span>📥</span> ส่งออก Excel
+            </button>
+            <button type="button" class="btn-view-all" onclick="switchTab('exp')" style="background:#f1f5f9; color:#475569; border-color:#cbd5e1;">
+              <span>←</span> กลับหน้าบันทึก
+            </button>
+          </div>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="report-stats-grid">
+          <div class="report-stat-chip">
+            <div class="label">รวมยอดรายจ่ายทั้งหมด</div>
+            <div class="val" id="rep-exp-total" style="color: #dc2626;">฿0.00</div>
+          </div>
+          <div class="report-stat-chip">
+            <div class="label">จำนวนรายการเบิกจ่าย</div>
+            <div class="val" id="rep-exp-count">0 รายการ</div>
+          </div>
+          <div class="report-stat-chip">
+            <div class="label">จ่ายจากบัญชีธนาคาร</div>
+            <div class="val" id="rep-exp-bank" style="color: #2563eb;">฿0.00</div>
+          </div>
+          <div class="report-stat-chip">
+            <div class="label">จ่ายจากเงินสำรอง (เงินสด)</div>
+            <div class="val" id="rep-exp-reserve" style="color: #d97706;">฿0.00</div>
+          </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="report-filter-bar">
+          <input type="text" id="filter-exp-search" class="form-control" style="width: 240px;" placeholder="ค้นหารายการ, ผู้รับเงิน, เลขที่..." oninput="filterAllExpenses()">
+          <select id="filter-exp-cat" class="form-control" style="width: auto;" onchange="filterAllExpenses()">
+            <option value="">ทุกหมวดหมู่ค่าใช้จ่าย</option>
+          </select>
+          <select id="filter-exp-source" class="form-control" style="width: auto;" onchange="filterAllExpenses()">
+            <option value="">ทุกแหล่งเงิน (ธนาคาร/เงินสด)</option>
+            <option value="bank">บัญชีธนาคารกรุงเทพ</option>
+            <option value="reserve">เงินสำรองจ่าย (เงินสด)</option>
+          </select>
+          <button type="button" class="btn-view-all" onclick="resetExpFilter()" style="margin-left: auto;">
+            <span>🔄</span> รีเซ็ตตัวกรอง
+          </button>
+        </div>
+
+        <!-- Table Section -->
+        <div class="content-section" style="padding: 0; overflow: hidden;">
+          <div class="table-responsive">
+            <table class="table-statement" id="table-all-expenses">
+              <thead>
+                <tr>
+                  <th style="width: 50px; text-align: center;">ลำดับ</th>
+                  <th style="width: 85px; text-align: center;">เลขที่</th>
+                  <th style="width: 105px; text-align: center;">วันที่จ่าย</th>
+                  <th>รายการค่าใช้จ่าย</th>
+                  <th style="width: 140px;">หมวดหมู่</th>
+                  <th style="width: 150px;">ผู้รับเงิน / หน่วยงาน</th>
+                  <th style="width: 120px; text-align: center;">แหล่งเงิน</th>
+                  <th style="width: 110px; text-align: right;">จำนวนเงิน</th>
+                  <th style="width: 90px; text-align: center;">สถานะ</th>
+                  <th style="width: 90px; text-align: center;">ผู้บันทึก</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-all-expenses">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 9: รายการรายได้อื่น ปี 69 ==================== -->
+      <div id="view-all-income" class="staff-view hidden">
+        <div class="report-header-card">
+          <div class="report-title-box">
+            <h2><span>💰</span> รายการรายได้อื่น ปี 69</h2>
+            <p>สรุปเงินบริจาค ดอกเบี้ยเงินฝาก เงินสนับสนุน และรายได้อื่นๆ ประจำปี 2569 ทั้งหมด</p>
+          </div>
+          <div class="report-action-btns">
+            <button class="btn-print-report" onclick="printReport('income')">
+              <span>🖨️</span> พิมพ์รายงาน
+            </button>
+            <button class="btn-excel" onclick="exportReportExcel('income')">
+              <span>📥</span> ส่งออก Excel
+            </button>
+            <button type="button" class="btn-view-all" onclick="switchTab('inc')" style="background:#f1f5f9; color:#475569; border-color:#cbd5e1;">
+              <span>←</span> กลับหน้าบันทึก
+            </button>
+          </div>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="report-stats-grid">
+          <div class="report-stat-chip">
+            <div class="label">รวมยอดรายได้อื่นทั้งหมด</div>
+            <div class="val" id="rep-inc-total" style="color: #059669;">฿0.00</div>
+          </div>
+          <div class="report-stat-chip">
+            <div class="label">จำนวนรายการ</div>
+            <div class="val" id="rep-inc-count">0 รายการ</div>
+          </div>
+          <div class="report-stat-chip">
+            <div class="label">โอนเข้าบัญชีธนาคาร</div>
+            <div class="val" id="rep-inc-transfer" style="color: #2563eb;">฿0.00</div>
+          </div>
+          <div class="report-stat-chip">
+            <div class="label">รับเป็นเงินสด</div>
+            <div class="val" id="rep-inc-cash" style="color: #d97706;">฿0.00</div>
+          </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="report-filter-bar">
+          <input type="text" id="filter-inc-search" class="form-control" style="width: 240px;" placeholder="ค้นหารายละเอียด, แหล่งที่มา..." oninput="filterAllIncome()">
+          <select id="filter-inc-type" class="form-control" style="width: auto;" onchange="filterAllIncome()">
+            <option value="">ทุกประเภทรายได้</option>
+            <option value="donation">เงินบริจาค</option>
+            <option value="interest">ดอกเบี้ยเงินฝาก</option>
+            <option value="support">เงินสนับสนุน</option>
+            <option value="other">รายได้ทางอื่นๆ</option>
+          </select>
+          <select id="filter-inc-channel" class="form-control" style="width: auto;" onchange="filterAllIncome()">
+            <option value="">ทุกช่องทาง (ธนาคาร/เงินสด)</option>
+            <option value="transfer">โอนเข้าบัญชีธนาคาร</option>
+            <option value="cash">เงินสด</option>
+          </select>
+          <button type="button" class="btn-view-all" onclick="resetIncFilter()" style="margin-left: auto;">
+            <span>🔄</span> รีเซ็ตตัวกรอง
+          </button>
+        </div>
+
+        <!-- Table Section -->
+        <div class="content-section" style="padding: 0; overflow: hidden;">
+          <div class="table-responsive">
+            <table class="table-statement" id="table-all-income">
+              <thead>
+                <tr>
+                  <th style="width: 50px; text-align: center;">ลำดับ</th>
+                  <th style="width: 95px; text-align: center;">รหัสรายการ</th>
+                  <th style="width: 105px; text-align: center;">วันที่ได้รับ</th>
+                  <th style="width: 140px;">ประเภทรายได้</th>
+                  <th>รายละเอียด / ผู้บริจาค / แหล่งที่มา</th>
+                  <th style="width: 130px; text-align: center;">ช่องทาง</th>
+                  <th style="width: 120px; text-align: right;">จำนวนเงิน</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-all-income">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
   <footer class="site-footer">
     <div>© Copyright 2026 กองทุนหมู่บ้านลพบุรีราเมศร์ 1 · พัฒนาระบบโดย <b>Mathman BM</b></div>
@@ -621,17 +882,32 @@
     document.getElementById('input-password').onkeydown = e => { if (e.key === 'Enter') document.getElementById('btn-login-submit').click(); };
 
     // Tab Navigation
+    function switchTab(tabName) {
+      const activeMenu = {
+        'all-payments': 'pay',
+        'all-expenses': 'exp',
+        'all-income': 'inc'
+      }[tabName] || tabName;
+
+      document.querySelectorAll('.staff-menu-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.tab === activeMenu);
+      });
+      document.querySelectorAll('.staff-view').forEach(v => v.classList.add('hidden'));
+
+      const view = document.getElementById('view-' + tabName);
+      if (view) view.classList.remove('hidden');
+
+      if (tabName === 'history') loadAuditHistory();
+      if (tabName === 'inc') loadRecentIncome();
+      if (tabName === 'all-payments') loadAllPaymentsReport();
+      if (tabName === 'all-expenses') loadAllExpensesReport();
+      if (tabName === 'all-income') loadAllIncomeReport();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
     document.querySelectorAll('.staff-menu-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.staff-menu-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.staff-view').forEach(v => v.classList.add('hidden'));
-
-        btn.classList.add('active');
-        const view = document.getElementById('view-' + btn.dataset.tab);
-        if (view) view.classList.remove('hidden');
-
-        if (btn.dataset.tab === 'history') loadAuditHistory();
-        if (btn.dataset.tab === 'inc') loadRecentIncome();
+        switchTab(btn.dataset.tab);
       });
     });
 
@@ -646,7 +922,7 @@
       document.getElementById('staff-app').classList.remove('hidden');
 
       const uName = sessionStorage.getItem('username') || 'นายสุนทร คำสุข';
-      const uRole = sessionStorage.getItem('role') === 'admin' ? 'ผู้ดูแลระบบ / ประธานกรรมการ' : 'เจ้าหน้าที่การเงิน';
+      const uRole = sessionStorage.getItem('role') === 'admin' ? 'ผู้ดูแลระบบ' : 'เจ้าหน้าที่การเงิน';
       document.getElementById('staff-display-name').textContent = `${uName} (${uRole})`;
 
       document.getElementById('input-pay-date').value = todayStr();
@@ -869,6 +1145,7 @@
     }
 
     async function loadRecentIncome() {
+      ALL_REPORTS_CACHE = null;
       try {
         const data = await apiCall('/api/staff/recent');
         const feed = document.getElementById('recent-income-feed');
@@ -931,6 +1208,7 @@
     }
 
     async function loadRecentPayments() {
+      ALL_REPORTS_CACHE = null;
       try {
         const data = await apiCall('/api/staff/recent');
         const feed = document.getElementById('recent-payments-feed');
@@ -971,6 +1249,7 @@
     }
 
     async function loadRecentExpenses() {
+      ALL_REPORTS_CACHE = null;
       try {
         const data = await apiCall('/api/staff/recent');
         const feed = document.getElementById('recent-expenses-feed');
@@ -1195,7 +1474,7 @@
               <div style="font-size: 38px;">🏛️</div>
               <div>
                 <h2 style="font-size: 22px; font-weight: 700; color: #0f172a; margin-bottom: 2px;">ใบเสร็จรับเงิน</h2>
-                <div style="font-size: 15px; font-weight: 600; color: #1e3a8a;">กองทุนพัฒนาหมู่บ้าน ประจำปี 2569</div>
+                <div style="font-size: 15px; font-weight: 600; color: #1e3a8a;">กองทุนหมู่บ้าน ลพบุรีราเมศวร์โครงการ 1 ประจำปี 2569</div>
                 <div style="font-size: 12px; color: #64748b;">เอกสารหลักฐานการรับเงินกองทุนตามระเบียบการเงินและบัญชี</div>
               </div>
             </div>
@@ -1233,16 +1512,16 @@
           <div class="signatures-area" style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 50px; padding: 0 20px;">
             <div class="sig-block" style="text-align: center; width: 220px;">
               <div class="sig-line" style="border-bottom: 1px dotted #64748b; height: 35px; margin-bottom: 8px;"></div>
-              <div><b>(นางราตรี แย้มวจี)</b></div>
+              <div><b>(น.ส.วีระออ สุวรรณสิทธิ์)</b></div>
               <div style="color: #64748b; font-size: 12px; margin-top: 2px;">เหรัญญิก ผู้รับเงิน</div>
             </div>
-            <div style="text-align: center; font-size: 11px; color: #94a3b8; max-width: 220px;">
+          <!--  <div style="text-align: center; font-size: 11px; color: #94a3b8; max-width: 220px;">
               ใบเสร็จรับเงินฉบับนี้ออกให้เฉพาะยอดที่ชำระจริง<br>สมบูรณ์เมื่อมีลายมือชื่อผู้รับเงินครบถ้วน
-            </div>
+            </div>-->
             <div class="sig-block" style="text-align: center; width: 220px;">
               <div class="sig-line" style="border-bottom: 1px dotted #64748b; height: 35px; margin-bottom: 8px;"></div>
               <div><b>(นายสุนทร คำสุข)</b></div>
-              <div style="color: #64748b; font-size: 12px; margin-top: 2px;">ประธานกรรมการกองทุนพัฒนาหมู่บ้าน</div>
+              <div style="color: #64748b; font-size: 12px; margin-top: 2px;">คณะทำงานกองทุนพัฒนาหมู่บ้าน<br> ลพบุรีราเมศวร์โครงการ 1</div>
             </div>
           </div>
         </div>
@@ -1281,13 +1560,13 @@
         <div class="signatures-area" style="display: flex; justify-content: space-between; margin-top: 50px;">
           <div class="sig-block">
             <div class="sig-line"></div>
-            <div><b>(นางราตรี แย้มวจี / น.ส.วีระออ สุวรรณสิทธิ์)</b></div>
+            <div><b>(น.ส.วีระออ สุวรรณสิทธิ์/นางราตรี แย้มวจี )</b></div>
             <div style="color: #64748b; font-size: 12px;">เหรัญญิกผู้จัดทำบัญชี</div>
           </div>
           <div class="sig-block">
             <div class="sig-line"></div>
             <div><b>(นายสุนทร คำสุข)</b></div>
-            <div style="color: #64748b; font-size: 12px;">ประธานกรรมการกองทุนพัฒนาหมู่บ้าน</div>
+            <div style="color: #64748b; font-size: 12px;">คณะทำงานกองทุนพัฒนาหมู่บ้าน<br>ลพบุรีราเมศวร์โครงการ 1 </div>
           </div>
         </div>
       `;
@@ -1327,14 +1606,14 @@
         </table>
         <div class="signatures-area" style="display: flex; justify-content: space-between; margin-top: 50px;">
           <div class="sig-block">
-            <div class="sig-line"></div>
+          <!--  <div class="sig-line"></div>
             <div><b>(นางราตรี แย้มวจี)</b></div>
-            <div style="color: #64748b; font-size: 12px;">เหรัญญิกกองทุน</div>
+            <div style="color: #64748b; font-size: 12px;">เหรัญญิกกองทุน</div>  -->
           </div>
           <div class="sig-block">
             <div class="sig-line"></div>
             <div><b>(นายสุนทร คำสุข)</b></div>
-            <div style="color: #64748b; font-size: 12px;">ประธานกรรมการกองทุน</div>
+            <div style="color: #64748b; font-size: 12px;">คณะทำงานกองทุนพัฒนาหมู่บ้าน<br> ลพบุรีราเมศวร์โครงการ 1</div>
           </div>
         </div>
       `;
@@ -1552,7 +1831,473 @@
       }
     }
 
+    // =========================================================================
+    // REPORTS & ALL TRANSACTIONS LOGIC (ปี 2569)
+    // =========================================================================
+    let ALL_REPORTS_CACHE = null;
+    let FILTERED_PAYMENTS = [];
+    let FILTERED_EXPENSES = [];
+    let FILTERED_INCOME = [];
+
+    async function fetchReportsData(force = false) {
+      if (!ALL_REPORTS_CACHE || force) {
+        try {
+          ALL_REPORTS_CACHE = await apiCall('/api/staff/reports/all');
+        } catch (e) {
+          console.error('Error fetching reports all:', e);
+          ALL_REPORTS_CACHE = { payments: [], expenses: [], incomes: [], categories: [] };
+        }
+      }
+      return ALL_REPORTS_CACHE;
+    }
+
+    // --- 1. รายการรายรับ ปี 2569 ---
+    async function loadAllPaymentsReport() {
+      const data = await fetchReportsData();
+      FILTERED_PAYMENTS = data.payments || [];
+      filterAllPayments();
+    }
+
+    function filterAllPayments() {
+      const all = (ALL_REPORTS_CACHE && ALL_REPORTS_CACHE.payments) || [];
+      const qVal = document.getElementById('filter-pay-quarter')?.value || '';
+      const cVal = document.getElementById('filter-pay-channel')?.value || '';
+      const sVal = (document.getElementById('filter-pay-search')?.value || '').trim().toLowerCase();
+
+      FILTERED_PAYMENTS = all.filter(p => {
+        if (qVal && String(p.quarter) !== String(qVal)) return false;
+        if (cVal && p.channel !== cVal) return false;
+        if (sVal) {
+          const text = `${p.payment_id} ${p.house_no} ${p.owner} ${p.recorded_by} ${p.note}`.toLowerCase();
+          if (!text.includes(sVal)) return false;
+        }
+        return true;
+      });
+
+      renderAllPaymentsTable();
+    }
+
+    function resetPayFilter() {
+      if (document.getElementById('filter-pay-search')) document.getElementById('filter-pay-search').value = '';
+      if (document.getElementById('filter-pay-quarter')) document.getElementById('filter-pay-quarter').value = '';
+      if (document.getElementById('filter-pay-channel')) document.getElementById('filter-pay-channel').value = '';
+      filterAllPayments();
+    }
+
+    function renderAllPaymentsTable() {
+      const tbody = document.getElementById('tbody-all-payments');
+      if (!tbody) return;
+
+      const total = FILTERED_PAYMENTS.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+      const count = FILTERED_PAYMENTS.length;
+      const transfer = FILTERED_PAYMENTS.filter(p => p.channel === 'transfer').reduce((sum, p) => sum + Number(p.amount || 0), 0);
+      const cash = FILTERED_PAYMENTS.filter(p => p.channel === 'cash').reduce((sum, p) => sum + Number(p.amount || 0), 0);
+
+      document.getElementById('rep-pay-total').textContent = '฿' + fmt(total);
+      document.getElementById('rep-pay-count').textContent = count.toLocaleString('th-TH') + ' รายการ';
+      document.getElementById('rep-pay-transfer').textContent = '฿' + fmt(transfer);
+      document.getElementById('rep-pay-cash').textContent = '฿' + fmt(cash);
+
+      if (!FILTERED_PAYMENTS.length) {
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: #64748b; padding: 30px;">ไม่พบข้อมูลรายการรายรับตามเงื่อนไขที่เลือก</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = FILTERED_PAYMENTS.map((p, idx) => {
+        const chBadge = p.channel === 'cash'
+          ? '<span style="background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">💵 เงินสด</span>'
+          : '<span style="background: #eff6ff; color: #1e40af; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">🏦 โอนเงิน</span>';
+        const qText = p.quarter ? `งวดที่ ${p.quarter} (${MONTHS_TH[parseInt(p.month)-1] || p.month})` : (p.month ? `ด.${p.month}` : '-');
+
+        return `
+          <tr>
+            <td style="text-align: center; color: #94a3b8;">${idx + 1}</td>
+            <td style="text-align: center; font-weight: 600; color: #2563eb;">${p.payment_id}</td>
+            <td style="text-align: center; font-size: 12px;">${p.paid_date || '-'}</td>
+            <td style="text-align: center; font-weight: 700;">${p.house_no || '-'}</td>
+            <td>${p.owner || '-'}</td>
+            <td style="text-align: center; font-size: 12px;">${qText}</td>
+            <td style="text-align: center;">${chBadge}</td>
+            <td style="text-align: right; font-weight: 700; color: #059669;">฿${fmt(p.amount)}</td>
+            <td style="text-align: center; font-size: 12px; color: #64748b;">${p.recorded_by || '-'}</td>
+            <td style="font-size: 12px; color: #64748b;">${p.note || '-'}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // --- 2. รายการรายจ่าย ปี 2569 ---
+    async function loadAllExpensesReport() {
+      const data = await fetchReportsData();
+      const catSel = document.getElementById('filter-exp-cat');
+      if (catSel && catSel.options.length <= 1 && data.categories) {
+        catSel.innerHTML = '<option value="">ทุกหมวดหมู่ค่าใช้จ่าย</option>' +
+          data.categories.map(c => `<option value="${c.category_id}">${c.name}</option>`).join('');
+      }
+      FILTERED_EXPENSES = data.expenses || [];
+      filterAllExpenses();
+    }
+
+    function filterAllExpenses() {
+      const all = (ALL_REPORTS_CACHE && ALL_REPORTS_CACHE.expenses) || [];
+      const catVal = document.getElementById('filter-exp-cat')?.value || '';
+      const srcVal = document.getElementById('filter-exp-source')?.value || '';
+      const sVal = (document.getElementById('filter-exp-search')?.value || '').trim().toLowerCase();
+
+      FILTERED_EXPENSES = all.filter(e => {
+        if (catVal && e.category_id !== catVal) return false;
+        if (srcVal && e.source !== srcVal) return false;
+        if (sVal) {
+          const text = `${e.doc_no} ${e.description} ${e.payee} ${e.expense_id} ${e.recorded_by}`.toLowerCase();
+          if (!text.includes(sVal)) return false;
+        }
+        return true;
+      });
+
+      renderAllExpensesTable();
+    }
+
+    function resetExpFilter() {
+      if (document.getElementById('filter-exp-search')) document.getElementById('filter-exp-search').value = '';
+      if (document.getElementById('filter-exp-cat')) document.getElementById('filter-exp-cat').value = '';
+      if (document.getElementById('filter-exp-source')) document.getElementById('filter-exp-source').value = '';
+      filterAllExpenses();
+    }
+
+    function renderAllExpensesTable() {
+      const tbody = document.getElementById('tbody-all-expenses');
+      if (!tbody) return;
+
+      const total = FILTERED_EXPENSES.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+      const count = FILTERED_EXPENSES.length;
+      const bank = FILTERED_EXPENSES.filter(e => e.source === 'bank').reduce((sum, e) => sum + Number(e.amount || 0), 0);
+      const reserve = FILTERED_EXPENSES.filter(e => e.source === 'reserve').reduce((sum, e) => sum + Number(e.amount || 0), 0);
+
+      document.getElementById('rep-exp-total').textContent = '฿' + fmt(total);
+      document.getElementById('rep-exp-count').textContent = count.toLocaleString('th-TH') + ' รายการ';
+      document.getElementById('rep-exp-bank').textContent = '฿' + fmt(bank);
+      document.getElementById('rep-exp-reserve').textContent = '฿' + fmt(reserve);
+
+      if (!FILTERED_EXPENSES.length) {
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: #64748b; padding: 30px;">ไม่พบข้อมูลรายการรายจ่ายตามเงื่อนไขที่เลือก</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = FILTERED_EXPENSES.map((e, idx) => {
+        const srcBadge = e.source === 'reserve'
+          ? '<span style="background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">💵 เงินสำรอง</span>'
+          : '<span style="background: #eff6ff; color: #1e40af; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">🏦 บัญชีธนาคาร</span>';
+
+        return `
+          <tr>
+            <td style="text-align: center; color: #94a3b8;">${idx + 1}</td>
+            <td style="text-align: center; font-weight: 700; color: #b91c1c;">${e.doc_no || e.expense_id}</td>
+            <td style="text-align: center; font-size: 12px;">${e.expense_date || '-'}</td>
+            <td style="font-weight: 600;">${e.description}</td>
+            <td><span style="font-size: 12px; color: #475569; background: #f1f5f9; padding: 2px 8px; border-radius: 4px;">${e.category_name}</span></td>
+            <td>${e.payee || '-'}</td>
+            <td style="text-align: center;">${srcBadge}</td>
+            <td style="text-align: right; font-weight: 700; color: #dc2626;">฿${fmt(e.amount)}</td>
+            <td style="text-align: center; font-size: 12px;"><span style="color: #059669; font-weight: 600;">${e.status || 'อนุมัติ'}</span></td>
+            <td style="text-align: center; font-size: 12px; color: #64748b;">${e.recorded_by || '-'}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // --- 3. รายการรายได้อื่น ปี 69 ---
+    async function loadAllIncomeReport() {
+      const data = await fetchReportsData();
+      FILTERED_INCOME = data.incomes || [];
+      filterAllIncome();
+    }
+
+    function filterAllIncome() {
+      const all = (ALL_REPORTS_CACHE && ALL_REPORTS_CACHE.incomes) || [];
+      const typeVal = document.getElementById('filter-inc-type')?.value || '';
+      const chVal = document.getElementById('filter-inc-channel')?.value || '';
+      const sVal = (document.getElementById('filter-inc-search')?.value || '').trim().toLowerCase();
+
+      FILTERED_INCOME = all.filter(i => {
+        if (typeVal && i.type !== typeVal) return false;
+        if (chVal && i.channel !== chVal) return false;
+        if (sVal) {
+          const text = `${i.income_id} ${i.type_label} ${i.note}`.toLowerCase();
+          if (!text.includes(sVal)) return false;
+        }
+        return true;
+      });
+
+      renderAllIncomeTable();
+    }
+
+    function resetIncFilter() {
+      if (document.getElementById('filter-inc-search')) document.getElementById('filter-inc-search').value = '';
+      if (document.getElementById('filter-inc-type')) document.getElementById('filter-inc-type').value = '';
+      if (document.getElementById('filter-inc-channel')) document.getElementById('filter-inc-channel').value = '';
+      filterAllIncome();
+    }
+
+    function renderAllIncomeTable() {
+      const tbody = document.getElementById('tbody-all-income');
+      if (!tbody) return;
+
+      const total = FILTERED_INCOME.reduce((sum, i) => sum + Number(i.amount || 0), 0);
+      const count = FILTERED_INCOME.length;
+      const transfer = FILTERED_INCOME.filter(i => i.channel === 'transfer').reduce((sum, i) => sum + Number(i.amount || 0), 0);
+      const cash = FILTERED_INCOME.filter(i => i.channel === 'cash').reduce((sum, i) => sum + Number(i.amount || 0), 0);
+
+      document.getElementById('rep-inc-total').textContent = '฿' + fmt(total);
+      document.getElementById('rep-inc-count').textContent = count.toLocaleString('th-TH') + ' รายการ';
+      document.getElementById('rep-inc-transfer').textContent = '฿' + fmt(transfer);
+      document.getElementById('rep-inc-cash').textContent = '฿' + fmt(cash);
+
+      if (!FILTERED_INCOME.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #64748b; padding: 30px;">ไม่พบข้อมูลรายการรายได้อื่นตามเงื่อนไขที่เลือก</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = FILTERED_INCOME.map((i, idx) => {
+        const chBadge = i.channel === 'cash'
+          ? '<span style="background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">💵 เงินสด</span>'
+          : '<span style="background: #eff6ff; color: #1e40af; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">🏦 บัญชีธนาคาร</span>';
+
+        return `
+          <tr>
+            <td style="text-align: center; color: #94a3b8;">${idx + 1}</td>
+            <td style="text-align: center; font-weight: 600; color: #059669;">${i.income_id}</td>
+            <td style="text-align: center; font-size: 12px;">${i.date || '-'}</td>
+            <td><span style="font-weight: 600; color: #0f172a;">${i.type_label}</span></td>
+            <td>${i.note || '-'}</td>
+            <td style="text-align: center;">${chBadge}</td>
+            <td style="text-align: right; font-weight: 700; color: #059669;">฿${fmt(i.amount)}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // --- 4. ฟังก์ชันพิมพ์รายงานทางการ (Official Print Report) ---
+    function printReport(type) {
+      const printArea = document.getElementById('printable-report-area');
+      if (!printArea) return;
+
+      const now = new Date();
+      const printTimeStr = `${formatThaiDate(todayStr())} เวลา ${now.toLocaleTimeString('th-TH')}`;
+
+      let title = '';
+      let tableHtml = '';
+      let summaryText = '';
+
+      if (type === 'payments') {
+        title = 'รายงานรายการรายรับค่ากองทุนพัฒนาหมู่บ้าน';
+        const total = FILTERED_PAYMENTS.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+        summaryText = `รวมรายการรับชำระทั้งสิ้น <b>${FILTERED_PAYMENTS.length.toLocaleString('th-TH')}</b> รายการ รวมเป็นเงินทั้งสิ้น <b>฿${fmt(total)}</b> (${thaiBaht(total)})`;
+
+        tableHtml = `
+          <table class="report-paper-table">
+            <thead>
+              <tr>
+                <th style="width: 40px;">ลำดับ</th>
+                <th style="width: 70px;">รหัส</th>
+                <th style="width: 80px;">วันที่</th>
+                <th style="width: 75px;">บ้านเลขที่</th>
+                <th>ชื่อ-สกุล สมาชิก</th>
+                <th style="width: 90px;">งวด/เดือน</th>
+                <th style="width: 70px;">ช่องทาง</th>
+                <th style="width: 90px; text-align: right;">จำนวนเงิน</th>
+                <th style="width: 70px;">ผู้บันทึก</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${FILTERED_PAYMENTS.map((p, idx) => `
+                <tr>
+                  <td style="text-align: center;">${idx + 1}</td>
+                  <td style="text-align: center; font-weight: 600;">${p.payment_id}</td>
+                  <td style="text-align: center;">${p.paid_date || '-'}</td>
+                  <td style="text-align: center; font-weight: 600;">${p.house_no}</td>
+                  <td>${p.owner}</td>
+                  <td style="text-align: center;">${p.quarter ? 'งวดที่ ' + p.quarter : (p.month || '-')}</td>
+                  <td style="text-align: center;">${p.channel === 'cash' ? 'เงินสด' : 'โอนเงิน'}</td>
+                  <td style="text-align: right; font-weight: 600;">฿${fmt(p.amount)}</td>
+                  <td style="text-align: center; font-size: 11px;">${p.recorded_by || '-'}</td>
+                </tr>
+              `).join('')}
+              <tr class="total-row">
+                <td colspan="7" style="text-align: right; font-weight: 700;">รวมยอดเงินรายรับทั้งสิ้น (${FILTERED_PAYMENTS.length} รายการ):</td>
+                <td style="text-align: right; font-weight: 700; color: #059669;">฿${fmt(total)}</td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        `;
+      } else if (type === 'expenses') {
+        title = 'รายงานรายการรายจ่ายกองทุนพัฒนาหมู่บ้าน';
+        const total = FILTERED_EXPENSES.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+        summaryText = `รวมรายการเบิกจ่ายทั้งสิ้น <b>${FILTERED_EXPENSES.length.toLocaleString('th-TH')}</b> รายการ รวมเป็นเงินทั้งสิ้น <b>฿${fmt(total)}</b> (${thaiBaht(total)})`;
+
+        tableHtml = `
+          <table class="report-paper-table">
+            <thead>
+              <tr>
+                <th style="width: 40px;">ลำดับ</th>
+                <th style="width: 70px;">เลขที่</th>
+                <th style="width: 80px;">วันที่จ่าย</th>
+                <th>รายการค่าใช้จ่าย</th>
+                <th style="width: 120px;">หมวดหมู่</th>
+                <th style="width: 120px;">ผู้รับเงิน / หน่วยงาน</th>
+                <th style="width: 85px;">แหล่งเงิน</th>
+                <th style="width: 90px; text-align: right;">จำนวนเงิน</th>
+                <th style="width: 65px;">สถานะ</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${FILTERED_EXPENSES.map((e, idx) => `
+                <tr>
+                  <td style="text-align: center;">${idx + 1}</td>
+                  <td style="text-align: center; font-weight: 600;">${e.doc_no || e.expense_id}</td>
+                  <td style="text-align: center;">${e.expense_date || '-'}</td>
+                  <td style="font-weight: 600;">${e.description}</td>
+                  <td>${e.category_name}</td>
+                  <td>${e.payee || '-'}</td>
+                  <td style="text-align: center;">${e.source === 'reserve' ? 'เงินสำรอง' : 'ธนาคาร'}</td>
+                  <td style="text-align: right; font-weight: 600;">฿${fmt(e.amount)}</td>
+                  <td style="text-align: center; font-size: 11px;">${e.status || 'อนุมัติ'}</td>
+                </tr>
+              `).join('')}
+              <tr class="total-row">
+                <td colspan="7" style="text-align: right; font-weight: 700;">รวมยอดเงินรายจ่ายทั้งสิ้น (${FILTERED_EXPENSES.length} รายการ):</td>
+                <td style="text-align: right; font-weight: 700; color: #dc2626;">฿${fmt(total)}</td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        `;
+      } else if (type === 'income') {
+        title = 'รายงานรายการรายได้อื่นกองทุนพัฒนาหมู่บ้าน';
+        const total = FILTERED_INCOME.reduce((sum, i) => sum + Number(i.amount || 0), 0);
+        summaryText = `รวมรายการรายได้อื่นทั้งสิ้น <b>${FILTERED_INCOME.length.toLocaleString('th-TH')}</b> รายการ รวมเป็นเงินทั้งสิ้น <b>฿${fmt(total)}</b> (${thaiBaht(total)})`;
+
+        tableHtml = `
+          <table class="report-paper-table">
+            <thead>
+              <tr>
+                <th style="width: 40px;">ลำดับ</th>
+                <th style="width: 75px;">รหัส</th>
+                <th style="width: 85px;">วันที่ได้รับ</th>
+                <th style="width: 120px;">ประเภทรายได้</th>
+                <th>รายละเอียด / ผู้บริจาค / แหล่งที่มา</th>
+                <th style="width: 90px;">ช่องทาง</th>
+                <th style="width: 100px; text-align: right;">จำนวนเงิน</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${FILTERED_INCOME.map((i, idx) => `
+                <tr>
+                  <td style="text-align: center;">${idx + 1}</td>
+                  <td style="text-align: center; font-weight: 600;">${i.income_id}</td>
+                  <td style="text-align: center;">${i.date || '-'}</td>
+                  <td style="font-weight: 600;">${i.type_label}</td>
+                  <td>${i.note || '-'}</td>
+                  <td style="text-align: center;">${i.channel === 'cash' ? 'เงินสด' : 'บัญชีธนาคาร'}</td>
+                  <td style="text-align: right; font-weight: 600;">฿${fmt(i.amount)}</td>
+                </tr>
+              `).join('')}
+              <tr class="total-row">
+                <td colspan="6" style="text-align: right; font-weight: 700;">รวมยอดเงินรายได้อื่นทั้งสิ้น (${FILTERED_INCOME.length} รายการ):</td>
+                <td style="text-align: right; font-weight: 700; color: #059669;">฿${fmt(total)}</td>
+              </tr>
+            </tbody>
+          </table>
+        `;
+      }
+
+      printArea.innerHTML = `
+        <div style="font-family: 'Sarabun', 'Prompt', sans-serif; color: #000; padding: 10px;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h2 style="font-size: 19px; margin: 0 0 4px 0; font-weight: 700;">กองทุนพัฒนาหมู่บ้าน ลพบุรีราเมศวร์ โครงการ 1</h2>
+            <p style="font-size: 13px; margin: 0 0 4px 0; color: #475569;">หมู่ที่ 2 ตำบลน้ำน้อย อำเภอหาดใหญ่ จังหวัดสงขลา</p>
+            <h3 style="font-size: 16px; margin: 6px 0; font-weight: 700; text-decoration: underline;">${title} ประจำปีงบประมาณ 2569</h3>
+            <p style="font-size: 12px; margin: 4px 0; color: #64748b;">พิมพ์ออกรายงาน ณ วันที่ ${printTimeStr}</p>
+          </div>
+
+          <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 8px 14px; border-radius: 6px; font-size: 12px; margin-bottom: 12px;">
+            ${summaryText}
+          </div>
+
+          ${tableHtml}
+
+          <!-- Signatures Block -->
+          <div style="display: flex; justify-content: space-between; margin-top: 45px; page-break-inside: avoid; break-inside: avoid;">
+            <div style="text-align: center; width: 30%;">
+              <p style="margin-bottom: 45px;">ลงชื่อ .....................................................</p>
+              <p style="font-weight: 600; margin: 0; font-size: 13px;">( ..................................................... )</p>
+              <p style="font-size: 12px; color: #64748b; margin: 2px 0;">ผู้จัดทำรายงาน / เจ้าหน้าที่การเงิน</p>
+            </div>
+            <div style="text-align: center; width: 30%;">
+              <p style="margin-bottom: 45px;">ลงชื่อ .....................................................</p>
+              <p style="font-weight: 600; margin: 0; font-size: 13px;">( นางราตรี แย้มวจี )</p>
+              <p style="font-size: 12px; color: #64748b; margin: 2px 0;">เหรัญญิกกองทุนพัฒนาหมู่บ้าน</p>
+            </div>
+            <div style="text-align: center; width: 30%;">
+              <p style="margin-bottom: 45px;">ลงชื่อ .....................................................</p>
+              <p style="font-weight: 600; margin: 0; font-size: 13px;">( ..................................................... )</p>
+              <p style="font-size: 12px; color: #64748b; margin: 2px 0;">ประธานกองทุนพัฒนาหมู่บ้าน</p>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.body.classList.add('printing-report');
+      window.print();
+      setTimeout(() => {
+        document.body.classList.remove('printing-report');
+      }, 1000);
+    }
+
+    // --- 5. ฟังก์ชันส่งออก Excel (CSV with BOM) ---
+    function exportReportExcel(type) {
+      let csv = '\uFEFF';
+      let filename = 'report_2569.csv';
+
+      if (type === 'payments') {
+        filename = 'รายรับ_ปี2569.csv';
+        csv += 'ลำดับ,รหัสรายการ,วันที่รับชำระ,บ้านเลขที่,สมาชิก/เจ้าของ,งวด/เดือน,ช่องทาง,จำนวนเงิน,ผู้บันทึก,หมายเหตุ\n';
+        FILTERED_PAYMENTS.forEach((p, idx) => {
+          const ch = p.channel === 'cash' ? 'เงินสด' : 'โอนเงิน';
+          const q = p.quarter ? `งวดที่ ${p.quarter}` : (p.month || '');
+          csv += `"${idx + 1}","${p.payment_id}","${p.paid_date || ''}","${p.house_no}","${p.owner}","${q}","${ch}",${p.amount},"${p.recorded_by || ''}","${p.note || ''}"\n`;
+        });
+      } else if (type === 'expenses') {
+        filename = 'รายจ่าย_ปี2569.csv';
+        csv += 'ลำดับ,เลขที่,วันที่จ่าย,รายการค่าใช้จ่าย,หมวดหมู่,ผู้รับเงิน/หน่วยงาน,แหล่งเงิน,จำนวนเงิน,สถานะ,ผู้บันทึก\n';
+        FILTERED_EXPENSES.forEach((e, idx) => {
+          const src = e.source === 'reserve' ? 'เงินสำรอง' : 'บัญชีธนาคาร';
+          csv += `"${idx + 1}","${e.doc_no || e.expense_id}","${e.expense_date || ''}","${e.description}","${e.category_name}","${e.payee || ''}","${src}",${e.amount},"${e.status || 'อนุมัติ'}","${e.recorded_by || ''}"\n`;
+        });
+      } else if (type === 'income') {
+        filename = 'รายได้อื่น_ปี69.csv';
+        csv += 'ลำดับ,รหัสรายการ,วันที่ได้รับ,ประเภทรายได้,รายละเอียด/แหล่งที่มา,ช่องทาง,จำนวนเงิน\n';
+        FILTERED_INCOME.forEach((i, idx) => {
+          const ch = i.channel === 'cash' ? 'เงินสด' : 'บัญชีธนาคาร';
+          csv += `"${idx + 1}","${i.income_id}","${i.date || ''}","${i.type_label}","${i.note || ''}","${ch}",${i.amount}\n`;
+        });
+      }
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
     initStaff();
   </script>
+
+  <!-- Printable Area for Official Reports -->
+  <div id="printable-report-area"></div>
 </body>
 </html>

@@ -1,0 +1,2 @@
+﻿user_id,username,password_hash,role,active
+U001,admin,scrypt:32768:8:1$qvc4SIXx2UsVnQYc$2bc61c6f5e17888904152a4a7bb779186ca092d9fead37790100a9fbae9dcfa7ee933267e0448ad29f8aa56f5c76001ed0f6596b0f813ebe0432ab2d98e91d70,admin,Y
