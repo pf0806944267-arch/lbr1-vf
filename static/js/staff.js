@@ -519,9 +519,15 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
       }
       try {
         await apiCall(`/api/admin/payments/${payId}`, 'DELETE');
-        showAlert(`ลบรายการรับเงินรหัส ${payId} สำเร็จ`);
+        showAlert(`ลบรายการรับเงินรหัส ${payId} เรียบร้อยแล้ว`);
+        ALL_REPORTS_CACHE = null;
         await loadHouses();
         loadRecentPayments();
+        const sel = document.getElementById('sel-pay-house');
+        if (sel && sel.value) sel.onchange();
+        if (typeof CURRENT_TAB !== 'undefined' && CURRENT_TAB === 'all-payments') {
+          loadAllPaymentsReport();
+        }
         if (typeof loadAuditHistory === 'function') loadAuditHistory();
       } catch (err) {
         showAlert(err.message || 'ไม่สามารถลบรายการได้', false);
@@ -1240,6 +1246,7 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
       const count = FILTERED_PAYMENTS.length;
       const transfer = FILTERED_PAYMENTS.filter(p => p.channel === 'transfer').reduce((sum, p) => sum + Number(p.amount || 0), 0);
       const cash = FILTERED_PAYMENTS.filter(p => p.channel === 'cash').reduce((sum, p) => sum + Number(p.amount || 0), 0);
+      const isAdmin = sessionStorage.getItem('role') === 'admin';
 
       document.getElementById('rep-pay-total').textContent = '฿' + fmt(total);
       document.getElementById('rep-pay-count').textContent = count.toLocaleString('th-TH') + ' รายการ';
@@ -1247,7 +1254,7 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
       document.getElementById('rep-pay-cash').textContent = '฿' + fmt(cash);
 
       if (!FILTERED_PAYMENTS.length) {
-        tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: #64748b; padding: 30px;">ไม่พบข้อมูลรายการรายรับตามเงื่อนไขที่เลือก</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; color: #64748b; padding: 30px;">ไม่พบข้อมูลรายการรายรับตามเงื่อนไขที่เลือก</td></tr>';
         return;
       }
 
@@ -1269,6 +1276,13 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
             <td style="text-align: right; font-weight: 700; color: #059669;">฿${fmt(p.amount)}</td>
             <td style="text-align: center; font-size: 12px; color: #64748b;">${p.recorded_by || '-'}</td>
             <td style="font-size: 12px; color: #64748b;">${p.note || '-'}</td>
+            <td style="text-align: center;">
+              ${isAdmin ? `
+                <button onclick="deletePayment('${p.payment_id}', '${p.house_no}', ${p.amount})" class="btn-del-record" style="padding: 2px 8px; font-size: 11px;" title="ลบรายการรับเงินนี้">
+                  🗑️ ลบ
+                </button>
+              ` : '-'}
+            </td>
           </tr>
         `;
       }).join('');

@@ -25,13 +25,14 @@ def api_admin_delete(table, rid):
         old = next((r for r in rows if r.get(keys[table]) == rid), None)
         if not old:
             return jsonify(error="ไม่พบรายการ"), 404
+        sheet_err = None
         try:
             sheet_post(action="delete", table=table, idCol=keys[table], id=rid)
         except Exception as e:
-            # "not found" = ไม่มีในชีตอยู่แล้ว ถือว่าลบสำเร็จ; อย่างอื่นต้องแจ้งผู้ใช้
+            sheet_err = str(e)
+            # ถ้าไม่มีในชีต ถือว่าลบสำเร็จ ถ้ามีข้อผิดพลาดเครือข่าย ให้บันทึกเตือนแต่ยอมให้ลบในระบบได้
             if "not found" not in str(e):
-                print(f"sheet delete error: {e}")
-                return jsonify(error=f"ลบในชีตไม่สำเร็จ ({e}) ข้อมูลยังไม่ถูกลบ"), 502
+                print(f"sheet delete warning {table}/{rid}: {e}")
         rows.remove(old)
         audit(request.user, "delete", table, rid, old=json.dumps(old, ensure_ascii=False))
 
