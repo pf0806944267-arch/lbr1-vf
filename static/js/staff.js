@@ -1604,18 +1604,13 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
           ${tableHtml}
 
           <!-- Signatures Block -->
-          <div style="display: flex; justify-content: space-between; margin-top: 45px; page-break-inside: avoid; break-inside: avoid;">
-            <div style="text-align: center; width: 30%;">
-              <p style="margin-bottom: 45px;">ลงชื่อ .....................................................</p>
-              <p style="font-weight: 600; margin: 0; font-size: 13px;">( ..................................................... )</p>
-              <p style="font-size: 12px; color: #64748b; margin: 2px 0;">ผู้จัดทำรายงาน / เจ้าหน้าที่การเงิน</p>
-            </div>
-            <div style="text-align: center; width: 30%;">
+          <div style="display: flex; justify-content: space-around; margin-top: 50px; page-break-inside: avoid; break-inside: avoid; padding: 0 40px;">
+            <div style="text-align: center; width: 260px;">
               <p style="margin-bottom: 45px;">ลงชื่อ .....................................................</p>
               <p style="font-weight: 600; margin: 0; font-size: 13px;">(น.ส.วีระออ สุวรรณสิทธิ์)</p>
               <p style="font-size: 12px; color: #64748b; margin: 2px 0;">เหรัญญิก ผู้รับเงิน</p>
             </div>
-            <div style="text-align: center; width: 30%;">
+            <div style="text-align: center; width: 260px;">
               <p style="margin-bottom: 45px;">ลงชื่อ .....................................................</p>
               <p style="font-weight: 600; margin: 0; font-size: 13px;">(นายสุนทร คำสุข)</p>
               <p style="font-size: 12px; color: #64748b; margin: 2px 0;">ประธานคณะทำงานกองทุนพัฒนาหมู่บ้าน<br>ลพบุรีราเมศวร์โครงการ 1</p>
