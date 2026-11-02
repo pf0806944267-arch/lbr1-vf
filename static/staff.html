@@ -196,7 +196,7 @@
 
           <!-- Right Column (Image 4) -->
           <div style="display: flex; flex-direction: column; gap: 20px;">
-            <!-- Criteria Summary Card & Report Link -->
+            <!-- Criteria Summary Card -->
             <div class="content-section" style="margin-bottom: 0;">
               <div class="section-title" style="font-size: 15px; margin-bottom: 14px;">
                 <span>ℹ️</span> สรุปเกณฑ์การจัดเก็บประจำปี 2569
@@ -215,10 +215,18 @@
                   <b style="color: #059669;">นางราตรี แย้มวจี (เหรัญญิก)</b>
                 </div>
               </div>
-              <div style="margin-top: 18px; border-top: 1px solid #f1f5f9; padding-top: 14px;">
-                <button type="button" class="btn-view-all" onclick="switchTab('all-payments')" style="width: 100%; justify-content: center; padding: 10px 16px; font-size: 13px;">
-                  <span>🔍 ดูรายงานประวัติการรับชำระเงินทั้งหมด (ปี 2569)</span>
+            </div>
+
+            <!-- Recent Payments Feed (กล่องรายการรับเงินล่าสุดในระบบ) -->
+            <div class="content-section" style="margin-bottom: 0; flex: 1;">
+              <div class="section-title" style="font-size: 15px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                <div><span>⏱️</span> รายการรับเงินล่าสุดในระบบ</div>
+                <button type="button" class="btn-view-all" onclick="switchTab('all-payments')">
+                  <span>🔍 ดูทั้งหมด (ปี 2569)</span>
                 </button>
+              </div>
+              <div id="recent-payments-feed" style="font-size: 13px; max-height: 340px; overflow-y: auto;">
+                <!-- Filled dynamically -->
               </div>
             </div>
           </div>

@@ -49,6 +49,8 @@ def api_staff_recent():
     pays = []
     for p in sorted(d.get("payments", []), key=lambda p: p.get("payment_id", ""), reverse=True)[:100]:
         du = dues.get(p.get("due_id"), {})
+        if not du or (du.get("year_be") and str(du.get("year_be")) != str(FY)):
+            continue
         pays.append({
             "payment_id": p.get("payment_id"),
             "house_no": houses.get(du.get("house_id"), ""),
