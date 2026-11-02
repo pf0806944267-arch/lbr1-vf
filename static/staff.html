@@ -556,6 +556,21 @@
             <option value="3">งวดที่ 3 (ก.ค. - ก.ย.)</option>
             <option value="4">งวดที่ 4 (ต.ค. - ธ.ค.)</option>
           </select>
+          <select id="filter-pay-month" class="form-control" style="width: auto;" onchange="filterAllPayments()">
+            <option value="">ทุกเดือน (ม.ค. - ธ.ค.)</option>
+            <option value="1">มกราคม (ม.ค.)</option>
+            <option value="2">กุมภาพันธ์ (ก.พ.)</option>
+            <option value="3">มีนาคม (มี.ค.)</option>
+            <option value="4">เมษายน (เม.ย.)</option>
+            <option value="5">พฤษภาคม (พ.ค.)</option>
+            <option value="6">มิถุนายน (มิ.ย.)</option>
+            <option value="7">กรกฎาคม (ก.ค.)</option>
+            <option value="8">สิงหาคม (ส.ค.)</option>
+            <option value="9">กันยายน (ก.ย.)</option>
+            <option value="10">ตุลาคม (ต.ค.)</option>
+            <option value="11">พฤศจิกายน (พ.ย.)</option>
+            <option value="12">ธันวาคม (ธ.ค.)</option>
+          </select>
           <select id="filter-pay-channel" class="form-control" style="width: auto;" onchange="filterAllPayments()">
             <option value="">ทุกช่องทาง (โอน/เงินสด)</option>
             <option value="transfer">โอนเงินเข้าธนาคาร</option>
@@ -635,7 +650,22 @@
 
         <!-- Filter Bar -->
         <div class="report-filter-bar">
-          <input type="text" id="filter-exp-search" class="form-control" style="width: 240px;" placeholder="ค้นหารายการ, ผู้รับเงิน, เลขที่..." oninput="filterAllExpenses()">
+          <input type="text" id="filter-exp-search" class="form-control" style="width: 220px;" placeholder="ค้นหารายการ, ผู้รับเงิน, เลขที่..." oninput="filterAllExpenses()">
+          <select id="filter-exp-month" class="form-control" style="width: auto;" onchange="filterAllExpenses()">
+            <option value="">ทุกเดือน (ม.ค. - ธ.ค.)</option>
+            <option value="1">มกราคม (ม.ค.)</option>
+            <option value="2">กุมภาพันธ์ (ก.พ.)</option>
+            <option value="3">มีนาคม (มี.ค.)</option>
+            <option value="4">เมษายน (เม.ย.)</option>
+            <option value="5">พฤษภาคม (พ.ค.)</option>
+            <option value="6">มิถุนายน (มิ.ย.)</option>
+            <option value="7">กรกฎาคม (ก.ค.)</option>
+            <option value="8">สิงหาคม (ส.ค.)</option>
+            <option value="9">กันยายน (ก.ย.)</option>
+            <option value="10">ตุลาคม (ต.ค.)</option>
+            <option value="11">พฤศจิกายน (พ.ย.)</option>
+            <option value="12">ธันวาคม (ธ.ค.)</option>
+          </select>
           <select id="filter-exp-cat" class="form-control" style="width: auto;" onchange="filterAllExpenses()">
             <option value="">ทุกหมวดหมู่ค่าใช้จ่าย</option>
           </select>
@@ -717,7 +747,22 @@
 
         <!-- Filter Bar -->
         <div class="report-filter-bar">
-          <input type="text" id="filter-inc-search" class="form-control" style="width: 240px;" placeholder="ค้นหารายละเอียด, แหล่งที่มา..." oninput="filterAllIncome()">
+          <input type="text" id="filter-inc-search" class="form-control" style="width: 220px;" placeholder="ค้นหารายละเอียด, แหล่งที่มา..." oninput="filterAllIncome()">
+          <select id="filter-inc-month" class="form-control" style="width: auto;" onchange="filterAllIncome()">
+            <option value="">ทุกเดือน (ม.ค. - ธ.ค.)</option>
+            <option value="1">มกราคม (ม.ค.)</option>
+            <option value="2">กุมภาพันธ์ (ก.พ.)</option>
+            <option value="3">มีนาคม (มี.ค.)</option>
+            <option value="4">เมษายน (เม.ย.)</option>
+            <option value="5">พฤษภาคม (พ.ค.)</option>
+            <option value="6">มิถุนายน (มิ.ย.)</option>
+            <option value="7">กรกฎาคม (ก.ค.)</option>
+            <option value="8">สิงหาคม (ส.ค.)</option>
+            <option value="9">กันยายน (ก.ย.)</option>
+            <option value="10">ตุลาคม (ต.ค.)</option>
+            <option value="11">พฤศจิกายน (พ.ย.)</option>
+            <option value="12">ธันวาคม (ธ.ค.)</option>
+          </select>
           <select id="filter-inc-type" class="form-control" style="width: auto;" onchange="filterAllIncome()">
             <option value="">ทุกประเภทรายได้</option>
             <option value="donation">เงินบริจาค</option>

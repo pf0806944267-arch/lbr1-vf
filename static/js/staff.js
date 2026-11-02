@@ -1215,11 +1215,13 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
     function filterAllPayments() {
       const all = (ALL_REPORTS_CACHE && ALL_REPORTS_CACHE.payments) || [];
       const qVal = document.getElementById('filter-pay-quarter')?.value || '';
+      const mVal = document.getElementById('filter-pay-month')?.value || '';
       const cVal = document.getElementById('filter-pay-channel')?.value || '';
       const sVal = (document.getElementById('filter-pay-search')?.value || '').trim().toLowerCase();
 
       FILTERED_PAYMENTS = all.filter(p => {
         if (qVal && String(p.quarter) !== String(qVal)) return false;
+        if (mVal && String(p.month) !== String(mVal)) return false;
         if (cVal && p.channel !== cVal) return false;
         if (sVal) {
           const text = `${p.payment_id} ${p.house_no} ${p.owner} ${p.recorded_by} ${p.note}`.toLowerCase();
@@ -1234,6 +1236,7 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
     function resetPayFilter() {
       if (document.getElementById('filter-pay-search')) document.getElementById('filter-pay-search').value = '';
       if (document.getElementById('filter-pay-quarter')) document.getElementById('filter-pay-quarter').value = '';
+      if (document.getElementById('filter-pay-month')) document.getElementById('filter-pay-month').value = '';
       if (document.getElementById('filter-pay-channel')) document.getElementById('filter-pay-channel').value = '';
       filterAllPayments();
     }
@@ -1302,11 +1305,16 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
 
     function filterAllExpenses() {
       const all = (ALL_REPORTS_CACHE && ALL_REPORTS_CACHE.expenses) || [];
+      const mVal = document.getElementById('filter-exp-month')?.value || '';
       const catVal = document.getElementById('filter-exp-cat')?.value || '';
       const srcVal = document.getElementById('filter-exp-source')?.value || '';
       const sVal = (document.getElementById('filter-exp-search')?.value || '').trim().toLowerCase();
 
       FILTERED_EXPENSES = all.filter(e => {
+        if (mVal) {
+          const expM = e.expense_date ? String(parseInt(e.expense_date.split('-')[1], 10)) : '';
+          if (expM !== String(mVal)) return false;
+        }
         if (catVal && e.category_id !== catVal) return false;
         if (srcVal && e.source !== srcVal) return false;
         if (sVal) {
@@ -1321,6 +1329,7 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
 
     function resetExpFilter() {
       if (document.getElementById('filter-exp-search')) document.getElementById('filter-exp-search').value = '';
+      if (document.getElementById('filter-exp-month')) document.getElementById('filter-exp-month').value = '';
       if (document.getElementById('filter-exp-cat')) document.getElementById('filter-exp-cat').value = '';
       if (document.getElementById('filter-exp-source')) document.getElementById('filter-exp-source').value = '';
       filterAllExpenses();
@@ -1376,11 +1385,16 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
 
     function filterAllIncome() {
       const all = (ALL_REPORTS_CACHE && ALL_REPORTS_CACHE.incomes) || [];
+      const mVal = document.getElementById('filter-inc-month')?.value || '';
       const typeVal = document.getElementById('filter-inc-type')?.value || '';
       const chVal = document.getElementById('filter-inc-channel')?.value || '';
       const sVal = (document.getElementById('filter-inc-search')?.value || '').trim().toLowerCase();
 
       FILTERED_INCOME = all.filter(i => {
+        if (mVal) {
+          const incM = i.date ? String(parseInt(i.date.split('-')[1], 10)) : '';
+          if (incM !== String(mVal)) return false;
+        }
         if (typeVal && i.type !== typeVal) return false;
         if (chVal && i.channel !== chVal) return false;
         if (sVal) {
@@ -1395,6 +1409,7 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
 
     function resetIncFilter() {
       if (document.getElementById('filter-inc-search')) document.getElementById('filter-inc-search').value = '';
+      if (document.getElementById('filter-inc-month')) document.getElementById('filter-inc-month').value = '';
       if (document.getElementById('filter-inc-type')) document.getElementById('filter-inc-type').value = '';
       if (document.getElementById('filter-inc-channel')) document.getElementById('filter-inc-channel').value = '';
       filterAllIncome();
