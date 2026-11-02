@@ -1302,30 +1302,77 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .period-check-card {
+  position: relative;
   border: 2px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 12px;
+  border-radius: 12px;
+  padding: 12px 10px 10px 10px;
   text-align: center;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.25s ease;
   user-select: none;
-  background: #fff;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 82px;
 }
 
 .period-check-card:hover {
-  border-color: #cbd5e1;
+  border-color: #3b82f6;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .period-check-card.selected {
-  border-color: #059669;
-  background: #ecfdf5;
+  border-color: #2563eb !important;
+  background: #eff6ff !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.18) !important;
 }
 
 .period-check-card.paid-already {
-  background: #f1f5f9;
-  opacity: 0.6;
+  background: #ecfdf5 !important;
+  border-color: #10b981 !important;
+  box-shadow: 0 3px 10px rgba(16, 185, 129, 0.2) !important;
   cursor: not-allowed;
-  border-color: #e2e8f0;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+.period-check-card.paid-already .period-card-title {
+  color: #065f46 !important;
+  font-weight: 800 !important;
+}
+
+.period-check-card.paid-already .period-card-sub {
+  color: #047857 !important;
+  font-weight: 600 !important;
+}
+
+.period-status-pill {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  margin-top: 6px;
+  letter-spacing: 0.2px;
+}
+
+.period-status-pill.paid {
+  background: #10b981;
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(16, 185, 129, 0.4);
+}
+
+.period-status-pill.selected {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.period-status-pill.unpaid {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
 }
 
 .btn-primary-green {
@@ -2019,4 +2066,111 @@ body.printing-report #printable-report-area {
   font-weight: 700;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
+}
+
+
+/* ==========================================================================
+   Slip Upload & Slip Viewer Modal Styles
+   ========================================================================== */
+.slip-upload-dropzone {
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  cursor: pointer;
+  background: #f8fafc;
+  transition: all 0.2s ease;
+}
+
+.slip-upload-dropzone:hover, .slip-upload-dropzone.dragover {
+  border-color: #059669;
+  background: #f0fdf4;
+}
+
+.slip-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.slip-modal-content {
+  background: #ffffff;
+  border-radius: 16px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.slip-modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8fafc;
+}
+
+.slip-modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  text-align: center;
+}
+
+.slip-preview-container {
+  display: inline-block;
+  background: #f1f5f9;
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  max-width: 100%;
+  margin-bottom: 16px;
+}
+
+.slip-preview-image {
+  max-width: 100%;
+  max-height: 460px;
+  object-fit: contain;
+  border-radius: 8px;
+  display: block;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.slip-empty-state {
+  padding: 30px 20px;
+  text-align: center;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px dashed #cbd5e1;
+  margin-bottom: 16px;
+}
+
+.slip-empty-icon {
+  font-size: 48px;
+  margin-bottom: 8px;
+}
+
+.q-check.paid, .badge-status.badge-paid {
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.q-check.paid:hover, .badge-status.badge-paid:hover {
+  transform: scale(1.15);
+  filter: brightness(1.1);
 }

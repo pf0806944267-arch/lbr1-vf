@@ -119,20 +119,24 @@
               <label class="form-label">เลือกงวดที่ต้องการชำระเงิน *</label>
               <div class="period-selector-grid" id="period-selector-container">
                 <div class="period-check-card" data-q="1" onclick="toggleQuarter(1)">
-                  <div style="font-weight: 700; font-size: 14px;">งวดที่ 1</div>
-                  <div style="font-size: 11px; color: #64748b;">ม.ค. - มี.ค.</div>
+                  <div class="period-card-title" style="font-weight: 700; font-size: 14px;">งวดที่ 1</div>
+                  <div class="period-card-sub" style="font-size: 11px; color: #64748b;">ม.ค. - มี.ค.</div>
+                  <div class="period-status-pill unpaid" id="q-status-1">รอชำระ</div>
                 </div>
                 <div class="period-check-card" data-q="2" onclick="toggleQuarter(2)">
-                  <div style="font-weight: 700; font-size: 14px;">งวดที่ 2</div>
-                  <div style="font-size: 11px; color: #64748b;">เม.ย. - มิ.ย.</div>
+                  <div class="period-card-title" style="font-weight: 700; font-size: 14px;">งวดที่ 2</div>
+                  <div class="period-card-sub" style="font-size: 11px; color: #64748b;">เม.ย. - มิ.ย.</div>
+                  <div class="period-status-pill unpaid" id="q-status-2">รอชำระ</div>
                 </div>
                 <div class="period-check-card" data-q="3" onclick="toggleQuarter(3)">
-                  <div style="font-weight: 700; font-size: 14px;">งวดที่ 3</div>
-                  <div style="font-size: 11px; color: #64748b;">ก.ค. - ก.ย.</div>
+                  <div class="period-card-title" style="font-weight: 700; font-size: 14px;">งวดที่ 3</div>
+                  <div class="period-card-sub" style="font-size: 11px; color: #64748b;">ก.ค. - ก.ย.</div>
+                  <div class="period-status-pill unpaid" id="q-status-3">รอชำระ</div>
                 </div>
                 <div class="period-check-card" data-q="4" onclick="toggleQuarter(4)">
-                  <div style="font-weight: 700; font-size: 14px;">งวดที่ 4</div>
-                  <div style="font-size: 11px; color: #64748b;">ต.ค. - ธ.ค.</div>
+                  <div class="period-card-title" style="font-weight: 700; font-size: 14px;">งวดที่ 4</div>
+                  <div class="period-card-sub" style="font-size: 11px; color: #64748b;">ต.ค. - ธ.ค.</div>
+                  <div class="period-status-pill unpaid" id="q-status-4">รอชำระ</div>
                 </div>
               </div>
             </div>
@@ -140,7 +144,7 @@
             <div class="grid-2" style="margin-bottom: 0;">
               <div class="form-group">
                 <label class="form-label">ช่องทางการชำระ *</label>
-                <select id="sel-pay-channel" class="form-control">
+                <select id="sel-pay-channel" class="form-control" onchange="toggleSlipUploadField()">
                   <option value="transfer">โอนเงินเข้าบัญชี (ธนาคารกรุงเทพ)</option>
                   <option value="cash">เงินสด</option>
                 </select>
@@ -148,6 +152,30 @@
               <div class="form-group">
                 <label class="form-label">ยอดเงินที่คำนวณได้ (บาท) *</label>
                 <input type="text" id="input-pay-amount" class="form-control" style="font-size: 18px; font-weight: 700; color: #059669; background: #f8fafc;" value="0.00" readonly>
+              </div>
+            </div>
+
+            <!-- Upload Slip Container (Requirement 1.2) -->
+            <div class="form-group" id="group-pay-slip">
+              <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+                <span>📸 แนบสลิปจากธนาคาร (กรณีโอนผ่านธนาคาร)</span>
+                <span style="font-size: 11px; font-weight: normal; color: #059669;">บันทึกเข้า Google Drive กองทุน</span>
+              </label>
+              <div class="slip-upload-dropzone" id="slip-dropzone" onclick="document.getElementById('input-pay-slip-file').click()">
+                <input type="file" id="input-pay-slip-file" accept="image/*" style="display: none;" onchange="handleSlipFileSelected(this)">
+                <div id="slip-upload-placeholder">
+                  <div style="font-size: 26px; margin-bottom: 4px;">📤</div>
+                  <div style="font-weight: 600; font-size: 13px; color: #334155;">คลิกเพื่อเลือกไฟล์สลิป หรือลากรูปมาวางที่นี่</div>
+                  <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">รองรับ JPG, PNG, WEBP (ส่งเข้า Google Drive กองทุน)</div>
+                </div>
+                <div id="slip-upload-preview" style="display: none; align-items: center; gap: 12px; text-align: left;">
+                  <img id="slip-preview-img" src="" alt="Slip preview" style="max-height: 70px; max-width: 70px; object-fit: cover; border-radius: 8px; border: 1px solid #cbd5e1;">
+                  <div style="flex: 1; min-width: 0;">
+                    <div id="slip-file-name" style="font-weight: 600; font-size: 13px; color: #1e293b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></div>
+                    <div id="slip-file-size" style="font-size: 11px; color: #64748b;"></div>
+                    <button type="button" class="btn btn-sm btn-outline-danger" id="btn-remove-slip" style="margin-top: 4px; padding: 2px 8px; font-size: 11px; cursor: pointer;" onclick="event.stopPropagation(); removeSlipFile();">✕ ลบสลิปออก</button>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -736,6 +764,28 @@
   </div>
 
   <script src="/static/js/staff.js"></script>
+
+  <!-- Modal แสดงสลิปการโอนเงิน (Image Slip Viewer - Requirement 2) -->
+  <div id="slip-modal" class="slip-modal-backdrop" style="display: none;" onclick="closeSlipModal(event)">
+    <div class="slip-modal-content" onclick="event.stopPropagation()">
+      <div class="slip-modal-header">
+        <div>
+          <h3 id="slip-modal-title" style="margin: 0; font-size: 16px; font-weight: 700; color: #0f172a;">หลักฐานสลิปการโอนเงิน</h3>
+          <p id="slip-modal-subtitle" style="margin: 2px 0 0 0; font-size: 12px; color: #64748b;"></p>
+        </div>
+        <button type="button" class="btn-icon" onclick="closeSlipModal()" style="border: none; background: #e2e8f0; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 14px;">✕</button>
+      </div>
+      <div class="slip-modal-body" id="slip-modal-body">
+        <!-- Rendered dynamically -->
+      </div>
+      <div style="padding: 12px 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 10px; background: #f8fafc;">
+        <a id="slip-btn-drive" href="#" target="_blank" class="btn btn-outline-primary" style="display: none; align-items: center; gap: 6px; font-size: 13px; text-decoration: none; padding: 6px 14px; border-radius: 8px;">
+          <span>📂</span> เปิดใน Google Drive
+        </a>
+        <button type="button" class="btn btn-secondary" onclick="closeSlipModal()" style="padding: 6px 16px; border-radius: 8px; font-size: 13px; cursor: pointer;">ปิดหน้าต่าง</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Printable Area for Official Reports -->
   <div id="printable-report-area"></div>

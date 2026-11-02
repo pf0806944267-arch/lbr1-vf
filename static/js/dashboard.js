@@ -113,8 +113,7 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
       if (!ctx || !zoneChart) return;
 
       const labels = zoneChart.map(z => z.zone);
-      const p1Data = zoneChart.map(z => z.p1_pct);
-      const p4Data = zoneChart.map(z => z.p4_pct);
+      const totalData = zoneChart.map(z => z.total_pct);
 
       if (chartZonesInstance) chartZonesInstance.destroy();
 
@@ -124,16 +123,11 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
           labels: labels,
           datasets: [
             {
-              label: 'ชำระงวดที่ 1 (%)',
-              data: p1Data,
-              backgroundColor: '#2563eb',
-              borderRadius: 4
-            },
-            {
-              label: 'ชำระงวดที่ 4 (%)',
-              data: p4Data,
-              backgroundColor: '#93c5fd',
-              borderRadius: 4
+              label: 'อัตราการชำระรวมทั้ง 4 งวด (%)',
+              data: totalData,
+              backgroundColor: '#059669',
+              hoverBackgroundColor: '#047857',
+              borderRadius: 6
             }
           ]
         },
@@ -148,7 +142,19 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
             }
           },
           plugins: {
-            legend: { position: 'top' }
+            legend: { position: 'top' },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const z = zoneChart[context.dataIndex];
+                  return [
+                    ` อัตราการชำระรวมทั้ง 4 งวด: ${z.total_pct}%`,
+                    ` ยอดเก็บได้: ฿${Number(z.collected || 0).toLocaleString()} / ฿${Number(z.total_due || 0).toLocaleString()}`,
+                    ` จำนวนบ้านในซอย: ${z.houses} หลัง`
+                  ];
+                }
+              }
+            }
           }
         }
       });

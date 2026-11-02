@@ -19,6 +19,55 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
     let HOUSES = [];
     let DASH_DATA = null;
     let SELECTED_QUARTERS = new Set();
+    let CURRENT_SLIP_FILE = null;
+
+    window.toggleSlipUploadField = function() {
+      const ch = document.getElementById('sel-pay-channel')?.value;
+      const grp = document.getElementById('group-pay-slip');
+      if (grp) {
+        if (ch === 'transfer') {
+          grp.style.display = 'block';
+        } else {
+          // cash
+          grp.style.display = 'none';
+          window.removeSlipFile();
+        }
+      }
+    };
+
+    window.handleSlipFileSelected = function(input) {
+      if (!input.files || input.files.length === 0) return;
+      const file = input.files[0];
+      if (file.size > 15 * 1024 * 1024) {
+        alert('ไฟล์มีขนาดเกิน 15MB กรุณาเลือกไฟล์รูปภาพขนาดเล็กลง');
+        input.value = '';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        CURRENT_SLIP_FILE = {
+          data: e.target.result,
+          filename: file.name,
+          mimeType: file.type || 'image/jpeg'
+        };
+        document.getElementById('slip-preview-img').src = e.target.result;
+        document.getElementById('slip-file-name').textContent = file.name;
+        document.getElementById('slip-file-size').textContent = (file.size / 1024).toFixed(1) + ' KB';
+        document.getElementById('slip-upload-placeholder').style.display = 'none';
+        document.getElementById('slip-upload-preview').style.display = 'flex';
+      };
+      reader.readAsDataURL(file);
+    };
+
+    window.removeSlipFile = function() {
+      CURRENT_SLIP_FILE = null;
+      const inp = document.getElementById('input-pay-slip-file');
+      if (inp) inp.value = '';
+      const ph = document.getElementById('slip-upload-placeholder');
+      const pv = document.getElementById('slip-upload-preview');
+      if (ph) ph.style.display = 'block';
+      if (pv) pv.style.display = 'none';
+    };
     let ALL_AUDIT_LOGS = [];
     let AUDIT_CURRENT_PAGE = 1;
     const AUDIT_PAGE_SIZE = 10;
@@ -249,16 +298,38 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
       generateOfficialReceipt();
     });
 
+    function updateQuarterCardUI(q, isPaid, isSelected) {
+      const card = document.querySelector(`.period-check-card[data-q="${q}"]`);
+      const pill = document.getElementById(`q-status-${q}`);
+      if (!card || !pill) return;
+
+      if (isPaid) {
+        card.classList.add('paid-already');
+        card.classList.remove('selected');
+        pill.className = 'period-status-pill paid';
+        pill.textContent = '✓ ชำระครบแล้ว';
+      } else if (isSelected) {
+        card.classList.remove('paid-already');
+        card.classList.add('selected');
+        pill.className = 'period-status-pill selected';
+        pill.textContent = '✓ เลือกชำระ';
+      } else {
+        card.classList.remove('paid-already', 'selected');
+        pill.className = 'period-status-pill unpaid';
+        pill.textContent = 'รอชำระ';
+      }
+    }
+
     function toggleQuarter(q) {
       const card = document.querySelector(`.period-check-card[data-q="${q}"]`);
       if (card.classList.contains('paid-already')) return;
 
       if (SELECTED_QUARTERS.has(q)) {
         SELECTED_QUARTERS.delete(q);
-        card.classList.remove('selected');
+        updateQuarterCardUI(q, false, false);
       } else {
         SELECTED_QUARTERS.add(q);
-        card.classList.add('selected');
+        updateQuarterCardUI(q, false, true);
       }
       calcPaymentAmount();
     }
@@ -268,15 +339,14 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
       const h = HOUSES.find(x => x.house_id === hid);
       SELECTED_QUARTERS.clear();
 
-      document.querySelectorAll('.period-check-card').forEach(c => {
-        c.classList.remove('selected', 'paid-already');
-      });
+      for (let i = 1; i <= 4; i++) {
+        updateQuarterCardUI(i, false, false);
+      }
 
-      if (h) {
+      if (h && h.quarters) {
         h.quarters.forEach(q => {
-          const card = document.querySelector(`.period-check-card[data-q="${q.period}"]`);
           if (q.is_full) {
-            card.classList.add('paid-already');
+            updateQuarterCardUI(q.period, true, false);
           }
         });
       }
@@ -302,22 +372,25 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
         months.push((q - 1) * 3 + 1, (q - 1) * 3 + 2, (q - 1) * 3 + 3);
       });
 
+      const channel = document.getElementById('sel-pay-channel').value;
       const body = {
         house_id: hid,
         months: months,
         paid_date: document.getElementById('input-pay-date').value,
-        channel: document.getElementById('sel-pay-channel').value,
+        channel: channel,
         note: document.getElementById('input-pay-note').value,
-        has_slip: true
+        has_slip: !!CURRENT_SLIP_FILE,
+        slip_file: CURRENT_SLIP_FILE
       };
 
       try {
         document.getElementById('btn-submit-payment').disabled = true;
         const res = await apiCall('/api/staff/payments', 'POST', body);
-        showAlert('บันทึกการรับชำระเงินสำเร็จ ออกใบเสร็จเรียบร้อย!');
+        showAlert('บันทึกการรับชำระเงินสำเร็จ บันทึกสลิปและออกใบเสร็จเรียบร้อย!');
 
         SELECTED_QUARTERS.clear();
         document.getElementById('input-pay-note').value = '';
+        window.removeSlipFile();
         await loadHouses();
         loadRecentPayments();
 
@@ -593,15 +666,28 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
         else if (h.paid_count > 0) badgeHtml = '<span class="badge-status badge-partial">ชำระบางส่วน</span>';
         else badgeHtml = '<span class="badge-status badge-unpaid">ยังไม่ชำระ</span>';
 
+        const q0 = h.quarters[0];
+        const q1 = h.quarters[1];
+        const q2 = h.quarters[2];
+        const q3 = h.quarters[3];
+
+        if (h.paid_count === 12) {
+          badgeHtml = `<span class="badge-status badge-paid" onclick="showSlipModal('${h.house_id}', 0)" title="คลิกเพื่อดูสลิป/หลักฐานการชำระ">ชำระครบ</span>`;
+        } else if (h.paid_count > 0) {
+          badgeHtml = `<span class="badge-status badge-partial" onclick="showSlipModal('${h.house_id}', 0)" title="คลิกเพื่อดูสลิป/หลักฐานการชำระ">ชำระบางส่วน</span>`;
+        } else {
+          badgeHtml = '<span class="badge-status badge-unpaid">ยังไม่ชำระ</span>';
+        }
+
         return `
           <tr>
             <td>${h.zone}</td>
             <td><b>${h.house_no}</b></td>
             <td>${h.owner_full}</td>
-            <td class="c"><span class="q-check ${h.quarters[0].is_full ? 'paid' : 'unpaid'}">${h.quarters[0].is_full ? '✔' : '⚪'}</span></td>
-            <td class="c"><span class="q-check ${h.quarters[1].is_full ? 'paid' : 'unpaid'}">${h.quarters[1].is_full ? '✔' : '⚪'}</span></td>
-            <td class="c"><span class="q-check ${h.quarters[2].is_full ? 'paid' : 'unpaid'}">${h.quarters[2].is_full ? '✔' : '⚪'}</span></td>
-            <td class="c"><span class="q-check ${h.quarters[3].is_full ? 'paid' : 'unpaid'}">${h.quarters[3].is_full ? '✔' : '⚪'}</span></td>
+            <td class="c"><span class="q-check ${q0.is_full ? 'paid' : 'unpaid'}" ${q0.is_full ? `onclick="showSlipModal('${h.house_id}', 1)" title="คลิกเพื่อดูสลิปงวดที่ 1"` : ''}>${q0.is_full ? '✔' : '⚪'}</span></td>
+            <td class="c"><span class="q-check ${q1.is_full ? 'paid' : 'unpaid'}" ${q1.is_full ? `onclick="showSlipModal('${h.house_id}', 2)" title="คลิกเพื่อดูสลิปงวดที่ 2"` : ''}>${q1.is_full ? '✔' : '⚪'}</span></td>
+            <td class="c"><span class="q-check ${q2.is_full ? 'paid' : 'unpaid'}" ${q2.is_full ? `onclick="showSlipModal('${h.house_id}', 3)" title="คลิกเพื่อดูสลิปงวดที่ 3"` : ''}>${q2.is_full ? '✔' : '⚪'}</span></td>
+            <td class="c"><span class="q-check ${q3.is_full ? 'paid' : 'unpaid'}" ${q3.is_full ? `onclick="showSlipModal('${h.house_id}', 4)" title="คลิกเพื่อดูสลิปงวดที่ 4"` : ''}>${q3.is_full ? '✔' : '⚪'}</span></td>
             <td class="r" style="color: #059669; font-weight: 700;">฿${fmt0(h.paid_amount)}</td>
             <td class="r" style="color: ${h.overdue_amount > 0 ? '#dc2626' : '#64748b'}; font-weight: 700;">
               ${h.overdue_amount > 0 ? '฿' + fmt0(h.overdue_amount) : '฿0'}
@@ -1557,3 +1643,110 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
     }
 
     initStaff();
+
+    window.showSlipModal = function(houseId, periodNum = 0) {
+      const h = HOUSES.find(x => x.house_id === houseId);
+      if (!h) return;
+
+      const modal = document.getElementById('slip-modal');
+      const title = document.getElementById('slip-modal-title');
+      const subtitle = document.getElementById('slip-modal-subtitle');
+      const body = document.getElementById('slip-modal-body');
+      const btnDrive = document.getElementById('slip-btn-drive');
+
+      title.innerHTML = `หลักฐานการชำระเงิน · บ้านเลขที่ ${h.house_no}`;
+      const periodLabel = periodNum > 0 ? `งวดที่ ${periodNum}` : 'ประวัติทั้งหมด';
+      subtitle.innerHTML = `${h.zone} · เจ้าของ: ${h.owner_full || '-'} · ${periodLabel}`;
+
+      let slipUrl = '';
+      let targetDate = '';
+      let targetChannel = '';
+      let targetTime = '';
+      let targetPid = '';
+
+      if (periodNum > 0 && h.quarters && h.quarters[periodNum - 1]) {
+        const q = h.quarters[periodNum - 1];
+        slipUrl = q.slip_url || '';
+        targetDate = q.paid_date || '';
+        targetChannel = q.channel || '';
+        targetTime = q.transfer_time || '';
+        targetPid = q.payment_id || '';
+      }
+
+      if (!slipUrl && h.slips && h.slips.length > 0) {
+        slipUrl = h.slips[0].url || '';
+        targetDate = targetDate || h.slips[0].date;
+        targetChannel = targetChannel || h.slips[0].channel;
+        targetPid = targetPid || h.slips[0].payment_id;
+      }
+
+      if (slipUrl) {
+        body.innerHTML = `
+          <div class="slip-preview-container">
+            <a href="${slipUrl}" target="_blank" title="คลิกเพื่อเปิดดูภาพขนาดเต็ม">
+              <img src="${slipUrl}" alt="สลิปการโอนเงิน" class="slip-preview-image">
+            </a>
+          </div>
+          <div style="background: #f8fafc; border-radius: 10px; padding: 12px 16px; font-size: 13px; text-align: left; line-height: 1.8; border: 1px solid #e2e8f0;">
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: #64748b;">วันที่ชำระเงิน:</span>
+              <b>${targetDate || '-'}</b>
+            </div>
+            ${targetTime ? `
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: #64748b;">เวลาโอน:</span>
+              <b>${targetTime} น.</b>
+            </div>` : ''}
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: #64748b;">ช่องทางชำระ:</span>
+              <span style="color: #059669; font-weight: 600;">${targetChannel === 'cash' ? '💵 เงินสด' : '🏦 โอนผ่านธนาคาร'}</span>
+            </div>
+            ${targetPid ? `
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: #64748b;">รหัสรายการ:</span>
+              <code>${targetPid}</code>
+            </div>` : ''}
+          </div>
+        `;
+        if (btnDrive) {
+          btnDrive.style.display = 'inline-flex';
+          btnDrive.href = slipUrl;
+        }
+      } else {
+        body.innerHTML = `
+          <div class="slip-empty-state">
+            <div class="slip-empty-icon">🧾</div>
+            <h3 style="margin: 0 0 8px 0; color: #1e293b; font-size: 18px;">ไม่มีสลิป</h3>
+            <p style="margin: 0 0 16px 0; font-size: 13px; color: #64748b; line-height: 1.6;">
+              รายการชำระนี้ <b>ไม่มีไฟล์ภาพสลิปแนบไว้ในระบบ</b><br>
+              (อาจชำระด้วย <b>เงินสด</b> หรือเจ้าหน้าที่บันทึกรับเงินโดยตรง)
+            </p>
+            <div style="background: #ffffff; border-radius: 8px; padding: 12px 16px; font-size: 13px; text-align: left; line-height: 1.8; border: 1px solid #e2e8f0; display: inline-block; min-width: 260px;">
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: #64748b;">สถานะในระบบ:</span>
+                <b style="color: #059669;">✓ บันทึกรับชำระแล้ว</b>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: #64748b;">วันที่ชำระ:</span>
+                <span>${targetDate || '-'}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: #64748b;">ช่องทาง:</span>
+                <span>${targetChannel === 'cash' ? '💵 เงินสด' : '🏦 โอนเงิน'}</span>
+              </div>
+            </div>
+          </div>
+        `;
+        if (btnDrive) btnDrive.style.display = 'none';
+      }
+
+      if (modal) modal.style.display = 'flex';
+    };
+
+    window.closeSlipModal = function(e) {
+      if (e && e.target && e.target.classList && !e.target.classList.contains('slip-modal-backdrop') && !e.target.closest('.btn-icon') && !e.target.classList.contains('btn-secondary')) {
+        return;
+      }
+      const modal = document.getElementById('slip-modal');
+      if (modal) modal.style.display = 'none';
+    };

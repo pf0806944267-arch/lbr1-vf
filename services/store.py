@@ -28,12 +28,32 @@ def load_local_cache():
 def append_to_csv(table, row):
     p = os.path.join(ROOT, "data", table + ".csv")
     try:
-        exists = os.path.exists(p)
+        exists = os.path.exists(p) and os.path.getsize(p) > 0
+        if not exists:
+            with open(p, "w", encoding="utf-8-sig", newline="") as f:
+                w = csv.writer(f)
+                w.writerow(list(row.keys()))
+                w.writerow([row.get(k, "") for k in row.keys()])
+            return
+
+        with open(p, "r", encoding="utf-8-sig", newline="") as f:
+            reader = csv.reader(f)
+            header = next(reader, [])
+
+        new_keys = [k for k in row.keys() if k not in header]
+        if new_keys:
+            with open(p, "r", encoding="utf-8-sig", newline="") as f:
+                all_rows = list(csv.reader(f))
+            header = all_rows[0] + new_keys
+            with open(p, "w", encoding="utf-8-sig", newline="") as f:
+                w = csv.writer(f)
+                w.writerow(header)
+                for r in all_rows[1:]:
+                    w.writerow(r + [""] * len(new_keys))
+
         with open(p, "a", encoding="utf-8-sig", newline="") as f:
             w = csv.writer(f)
-            if not exists or os.path.getsize(p) == 0:
-                w.writerow(list(row.keys()))
-            w.writerow([row.get(k, "") for k in row.keys()])
+            w.writerow([row.get(k, "") for k in header])
     except Exception as e:
         print(f"append_to_csv error {table}: {e}")
 

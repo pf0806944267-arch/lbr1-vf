@@ -1,11 +1,14 @@
+import base64
 import json
+import os
 import re
 import threading
+import time
 
 from flask import Blueprint, jsonify, request
 from werkzeug.security import check_password_hash
 
-from config import FY, INCOME_TYPES, MONTH_TH, num
+from config import FY, INCOME_TYPES, MONTH_TH, ROOT, num
 from core.auth import audit, make_token, next_id, require
 from core.sheets_api import sheet_post
 from services.calculations import houses_view
@@ -53,6 +56,8 @@ def api_staff_recent():
             "amount": num(p.get("amount_paid")),
             "paid_date": p.get("paid_date"),
             "channel": p.get("channel"),
+            "has_slip": p.get("has_slip", ""),
+            "slip_url": p.get("slip_url", ""),
             "recorded_by": p.get("recorded_by"),
             "note": p.get("note", "")
         })
@@ -97,6 +102,7 @@ def api_staff_reports_all():
             "paid_date": p.get("paid_date"),
             "channel": p.get("channel", "transfer"),
             "has_slip": p.get("has_slip", ""),
+            "slip_url": p.get("slip_url", ""),
             "transfer_time": p.get("transfer_time", ""),
             "recorded_by": p.get("recorded_by", ""),
             "note": p.get("note", "")
@@ -162,6 +168,48 @@ def api_add_payment():
             if du["due_id"] in paid_dues:
                 return jsonify(error=f"เดือน {MONTH_TH[m - 1]} มีประวัติชำระเงินแล้ว"), 409
 
+        # จัดการไฟล์สลิป (บันทึกลง Google Drive และเครื่อง)
+        slip_url = b.get("slip_url", "")
+        slip_file = b.get("slip_file")
+        if slip_file and isinstance(slip_file, dict) and slip_file.get("data"):
+            raw_b64 = str(slip_file["data"])
+            if "," in raw_b64:
+                raw_b64 = raw_b64.split(",", 1)[1]
+            mime_type = slip_file.get("mimeType") or "image/jpeg"
+            fname = slip_file.get("filename") or f"slip_{b['house_id']}.jpg"
+            clean_ext = ".jpg"
+            if "png" in mime_type.lower() or fname.lower().endswith(".png"):
+                clean_ext = ".png"
+            elif "webp" in mime_type.lower() or fname.lower().endswith(".webp"):
+                clean_ext = ".webp"
+
+            save_name = f"slip_{b['house_id']}_{int(time.time())}{clean_ext}"
+            local_slips_dir = os.path.join(ROOT, "static", "slips")
+            os.makedirs(local_slips_dir, exist_ok=True)
+            local_path = os.path.join(local_slips_dir, save_name)
+
+            try:
+                with open(local_path, "wb") as f_out:
+                    f_out.write(base64.b64decode(raw_b64))
+                slip_url = f"/static/slips/{save_name}"
+            except Exception as e:
+                print("Local slip save error:", e)
+
+            # อัปโหลดเข้า Google Drive โฟลเดอร์ที่ระบุ
+            try:
+                drive_res = sheet_post(
+                    action="upload_slip",
+                    folder_id="12jT6GUua6hwJvl_xe1IJ64J-dSxGwzD3",
+                    data=raw_b64,
+                    filename=save_name,
+                    mimeType=mime_type
+                )
+                if drive_res and drive_res.get("ok"):
+                    slip_url = drive_res.get("direct_url") or drive_res.get("url") or slip_url
+            except Exception as e:
+                print("Drive slip upload error:", e)
+
+        has_slip_flag = "Y" if (slip_url or b.get("has_slip")) else "N"
         added = []
         for m in months:
             du = dues[(b["house_id"], m)]
@@ -171,7 +219,8 @@ def api_add_payment():
                 "amount_paid": du["amount_due"],
                 "paid_date": b["paid_date"],
                 "channel": b["channel"],
-                "has_slip": "Y" if b.get("has_slip") else "N",
+                "has_slip": has_slip_flag,
+                "slip_url": slip_url,
                 "transfer_time": b.get("transfer_time", ""),
                 "recorded_by": request.user["user_id"],
                 "note": b.get("note", "")

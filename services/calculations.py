@@ -65,7 +65,7 @@ def summary():
     periods = [0.0] * 4
     monthly = [0.0] * 12
     z_stat = {zid: {"zone": z["name"], "houses": 0, "periods": [{"paid": 0, "unpaid": 0} for _ in range(4)],
-                    "collected": 0.0, "due_to_date": 0.0} for zid, z in zones.items()}
+                    "collected": 0.0, "due_to_date": 0.0, "total_due_year": 0.0} for zid, z in zones.items()}
     house_months = {}
     cm = current_month()
     for dd in dues:
@@ -74,6 +74,8 @@ def summary():
         hid = dd["house_id"]
         paid = dd["due_id"] in paid_by_due
         house_months.setdefault(hid, {})[m] = paid
+        if hid in houses and houses[hid]["zone_id"] in z_stat:
+            z_stat[houses[hid]["zone_id"]]["total_due_year"] += num(dd["amount_due"])
         if paid:
             a = paid_amount[dd["due_id"]]
             periods[pr - 1] += a
@@ -117,17 +119,22 @@ def summary():
             "color": p_colors[pr]
         })
 
-    # Zone Chart: compare งวด 1 vs งวด 4 (Image 1)
+    # Zone Chart: อัตราการชำระเงินแยกตามซอย (%) สรุปรวมทั้ง 4 งวดในแต่ละซอย
     zone_chart = []
     for z in zlist:
         p1 = z["periods"][0]
         p4 = z["periods"][3]
+        total_due = z.get("total_due_year", 0.0)
+        coll = z["collected"]
+        total_pct = round(100 * coll / total_due, 1) if total_due > 0 else 0
         zone_chart.append({
             "zone": z["zone"],
             "houses": z["houses"],
+            "total_pct": total_pct,
+            "total_due": total_due,
+            "collected": coll,
             "p1_pct": p1["pct"],
             "p4_pct": p4["pct"],
-            "collected": z["collected"]
         })
 
     # Expenses Budget Breakdown
@@ -225,11 +232,52 @@ def houses_view(full=False):
     for hid, h in houses.items():
         months = [bool(hm.get(hid, {}).get(m)) for m in range(1, 13)]
         quarters = []
+        house_slips = []
         for pr in range(4):
             q_months = [pr * 3 + i for i in (1, 2, 3)]
             is_full = all(months[m - 1] for m in q_months)
             paid_cnt = sum(1 for m in q_months if months[m - 1])
-            quarters.append({"period": pr + 1, "is_full": is_full, "paid_count": paid_cnt})
+
+            # รวบรวมข้อมูลการชำระเงินและสลิปในงวดนี้
+            q_payments = [dues_info.get(hid, {}).get(m, {}).get("payment") for m in q_months if dues_info.get(hid, {}).get(m, {}).get("payment")]
+            q_slip_url = ""
+            q_channel = ""
+            q_paid_date = ""
+            q_payment_id = ""
+            q_transfer_time = ""
+            for p in q_payments:
+                if p.get("slip_url") and not q_slip_url:
+                    q_slip_url = p.get("slip_url")
+                if p.get("channel") and not q_channel:
+                    q_channel = p.get("channel")
+                if p.get("paid_date") and not q_paid_date:
+                    q_paid_date = p.get("paid_date")
+                if p.get("payment_id") and not q_payment_id:
+                    q_payment_id = p.get("payment_id")
+                if p.get("transfer_time") and not q_transfer_time:
+                    q_transfer_time = p.get("transfer_time")
+
+            has_slip = bool(q_slip_url) or any(p.get("has_slip") == "Y" for p in q_payments)
+            if q_slip_url and q_slip_url not in [s["url"] for s in house_slips]:
+                house_slips.append({
+                    "period": pr + 1,
+                    "url": q_slip_url,
+                    "date": q_paid_date,
+                    "channel": q_channel,
+                    "payment_id": q_payment_id
+                })
+
+            quarters.append({
+                "period": pr + 1,
+                "is_full": is_full,
+                "paid_count": paid_cnt,
+                "has_slip": has_slip,
+                "slip_url": q_slip_url,
+                "channel": q_channel,
+                "paid_date": q_paid_date,
+                "payment_id": q_payment_id,
+                "transfer_time": q_transfer_time
+            })
 
         rate = 100 if zones.get(h["zone_id"], {}).get("name") == "สายหลัก" else 300
         paid_amount = sum(rate for m in range(12) if months[m])
@@ -247,6 +295,7 @@ def houses_view(full=False):
             "rate": rate,
             "months": months,
             "quarters": quarters,
+            "slips": house_slips,
             "paid_count": sum(months),
             "paid_amount": paid_amount,
             "overdue_count": overdue_months,

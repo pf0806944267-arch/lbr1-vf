@@ -62,6 +62,30 @@ function doPost(e) {
   try {
     var b = JSON.parse(e.postData.contents);
     if (!checkKey_(b.key)) return json_({ok: false, error: 'unauthorized'});
+
+    // อัปโหลดไฟล์สลิปเข้า Google Drive โฟลเดอร์ที่กำหนด
+    if (b.action === 'upload_slip') {
+      var folderId = b.folder_id || '12jT6GUua6hwJvl_xe1IJ64J-dSxGwzD3';
+      var folder = DriveApp.getFolderById(folderId);
+      var rawData = String(b.data || '');
+      if (rawData.indexOf('base64,') > -1) {
+        rawData = rawData.split('base64,')[1];
+      }
+      var decoded = Utilities.base64Decode(rawData);
+      var blob = Utilities.newBlob(decoded, b.mimeType || 'image/jpeg', b.filename || ('slip_' + new Date().getTime() + '.jpg'));
+      var file = folder.createFile(blob);
+      try {
+        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      } catch (e) {}
+      var fileId = file.getId();
+      return json_({
+        ok: true,
+        file_id: fileId,
+        url: file.getUrl(),
+        direct_url: 'https://lh3.googleusercontent.com/d/' + fileId
+      });
+    }
+
     var sh = sheet_(b.table);
     if (b.action === 'incr') {
       // บวกยอดสถิติรายวันแบบ atomic (อยู่ใน script lock) — ใช้กับตาราง site_stats (date, views, visitors)

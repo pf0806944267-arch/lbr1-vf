@@ -5,3 +5,7 @@ node_modules/
 .env
 __pycache__/
 docs_and_tests/
+
+# Slip uploads
+static/slips/*
+!static/slips/.gitkeep
