@@ -1,1126 +1,1128 @@
-<!doctype html>
-<html lang="th">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ระบบงานเจ้าหน้าที่และกรรมการ - กองทุนพัฒนาหมู่บ้าน</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/style.css?v=20261103_7">
-</head>
-<body style="background: #f1f5f9;">
-
-  <!-- Login Modal / Card if not logged in -->
-  <div id="login-container" class="main-wrapper" style="max-width: 420px; margin: 60px auto;">
-    <div class="form-card" style="text-align: center;">
-      <div style="font-size: 40px; margin-bottom: 8px;">🔐</div>
-      <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 4px;">เข้าสู่ระบบเจ้าหน้าที่</h2>
-      <p style="font-size: 13px; color: var(--ink-light); margin-bottom: 20px;">กองทุนพัฒนาหมู่บ้าน <br>กองทุนหมู่บ้าน ลพบุรีราเมศวร์ธานี  </p>
-      <p style="font-size: 13px; color: var(--ink-light); margin-bottom: 20px;"></p>
-
-      <div id="login-alert"></div>
-
-      <div class="form-group" style="text-align: left;">
-        <label class="form-label">ชื่อผู้ใช้</label>
-        <input type="text" id="input-username" class="form-control" placeholder="admin หรือ staff">
-      </div>
-      <div class="form-group" style="text-align: left;">
-        <label class="form-label">รหัสผ่าน</label>
-        <input type="password" id="input-password" class="form-control" placeholder="••••••••">
-      </div>
-      <button class="btn-primary-green" id="btn-login-submit" style="margin-top: 10px;">
-        เข้าสู่ระบบ
-      </button>
-      <div style="margin-top: 16px;">
-        <a href="/" style="font-size: 13px; color: #2563eb; text-decoration: none;">← กลับไปหน้าสมาชิก</a>
-      </div>
-    </div>
-  </div>
-
-  <!-- Staff App Interface (Images 4 & 5) -->
-  <div id="staff-app" class="hidden">
-    <!-- Top Bar (Image 4) -->
-    <header class="staff-topbar">
-      <div class="nav-container">
-        <div class="brand">
-          <div class="brand-icon" style="background: rgba(16, 185, 129, 0.2); color: #10b981;">🛡️</div>
-          <div>
-            <h1 style="font-size: 17px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px;">
-              ระบบงานเจ้าหน้าที่
-              <span style="font-size: 11px; background: #2563eb; color: #fff; padding: 2px 8px; border-radius: 4px; font-weight: 600;">STAFF ONLY</span>
-            </h1>
-            <p style="font-size: 12px; color: #94a3b8;">กองทุนพัฒนาหมู่บ้าน ลพบุรีราเมศวร์ธานี ปี 2569</p>
-          </div>
-        </div>
-
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <!-- User info badge -->
-          <div style="background: rgba(255,255,255,0.08); padding: 6px 14px; border-radius: 20px; font-size: 13px; display: flex; align-items: center; gap: 8px;">
-            <span class="live-dot" style="width: 8px; height: 8px;"></span>
-            <span id="staff-display-name">เจ้าหน้าที่กองทุน</span>
-          </div>
-          <a href="/" class="btn-search" style="padding: 7px 14px; font-size: 13px; background: rgba(255,255,255,0.12); text-decoration: none;">
-            <span>↗</span> กลับหน้าสมาชิก
-          </a>
-          <button id="btn-logout" style="background: #dc2626; color: #fff; border: none; padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
-            ⏻ ออกจากระบบ
-          </button>
-        </div>
-      </div>
-    </header>
-
-    <!-- Sub Navigation Menu -->
-    <div class="staff-subnav">
-      <div class="staff-menu">
-        <button class="staff-menu-btn active" data-tab="menu">
-          <span>🏠 เมนูหลัก</span>
-        </button>
-        <button class="staff-menu-btn" data-tab="pay">
-          <span>💵 1. รับชำระเงิน</span>
-        </button>
-        <button class="staff-menu-btn" data-tab="exp">
-          <span>🔴 2. รายจ่ายกองทุน</span>
-        </button>
-        <button class="staff-menu-btn" data-tab="ledger">
-          <span>⚖️ 3. บัญชีรายรับ-รายจ่าย</span>
-        </button>
-        <button class="staff-menu-btn" data-tab="inc">
-          <span>💰 4. รายได้อื่น</span>
-        </button>
-        <button class="staff-menu-btn" data-tab="members">
-          <span>👥 5. สมาชิก 162 หลัง</span>
-        </button>
-        <button class="staff-menu-btn" data-tab="receipts">
-          <span>📄 6. เอกสาร PDF</span>
-        </button>
-        <button class="staff-menu-btn" data-tab="history">
-          <span>⏱️ 7. ประวัติรายการ</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Main Container -->
-    <main class="main-wrapper" style="margin-top: 24px;">
-      <div id="staff-alert-box"></div>
-
-      <!-- ==================== TAB 0: เมนูหลักแบบไอคอน 4 เหลี่ยม (Requirement 2) ==================== -->
-      <div id="view-menu" class="staff-view">
-        <!-- Hero Header -->
-        <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #fff; border-radius: 20px; padding: 28px 28px 24px 28px; margin-bottom: 24px; box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2); position: relative; overflow: hidden;">
-          <div style="position: absolute; right: -20px; top: -30px; font-size: 140px; opacity: 0.05; pointer-events: none;">🏛️</div>
-          <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;">
-            <div>
-              <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.4); padding: 4px 12px; border-radius: 20px; font-size: 12px; color: #93c5fd; margin-bottom: 8px;">
-                <span class="live-dot" style="width: 7px; height: 7px;"></span> แดชบอร์ดเจ้าหน้าที่และผู้บริหารกองทุน
-              </div>
-              <h2 style="font-size: 22px; font-weight: 700; margin: 0; color: #f8fafc;">กองทุนพัฒนาหมู่บ้าน ลพบุรีราเมศวร์ธานี</h2>
-              <p style="font-size: 13px; color: #94a3b8; margin: 6px 0 0 0;">เลือกระบบงานที่ต้องการจากเมนูด้านล่าง ข้อมูลเชื่อมต่อกับ Supabase และอัปเดตเรียลไทม์ทันที</p>
-            </div>
-            <div style="display: flex; gap: 10px;">
-              <button onclick="StaffTabs.menu()" class="btn" style="background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 8px 16px; font-size: 13px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                <span>🔄</span> รีเฟรชสถานะสด
-              </button>
-            </div>
-          </div>
-
-          <!-- Top 4 Live KPI Stats -->
-          <div class="staff-hero-kpis" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
-            <div style="background: rgba(255,255,255,0.06); padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
-              <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">ยอดคงเหลือสุทธิ (รวม)</div>
-              <div id="menu-stat-net" style="font-size: 20px; font-weight: 800; color: #38bdf8; margin-top: 4px;">฿0.00</div>
-              <div style="font-size: 11px; color: #64748b; margin-top: 2px;">ธนาคาร + เงินสดย่อย</div>
-            </div>
-            <div style="background: rgba(255,255,255,0.06); padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
-              <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">บัญชีเงินฝาก ธ.กรุงเทพ</div>
-              <div id="menu-stat-bank" style="font-size: 20px; font-weight: 800; color: #60a5fa; margin-top: 4px;">฿0.00</div>
-              <div style="font-size: 11px; color: #64748b; margin-top: 2px;">บัญชีหลักกองทุน</div>
-            </div>
-            <div style="background: rgba(255,255,255,0.06); padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
-              <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">บัญชีเงินสดย่อยสำรองจ่าย</div>
-              <div id="menu-stat-reserve" style="font-size: 20px; font-weight: 800; color: #fbbf24; margin-top: 4px;">฿0.00</div>
-              <div style="font-size: 11px; color: #64748b; margin-top: 2px;">เงินสดเหรัญญิก</div>
-            </div>
-            <div style="background: rgba(255,255,255,0.06); padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
-              <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">อัตราจัดเก็บค่าส่วนกลาง</div>
-              <div id="menu-stat-pct" style="font-size: 20px; font-weight: 800; color: #34d399; margin-top: 4px;">0%</div>
-              <div id="menu-stat-received" style="font-size: 11px; color: #64748b; margin-top: 2px;">ยอดรับ ฿0.00</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 8 Modern Square Icon Menu Cards (Requirement 2) -->
-        <div class="staff-menu-grid">
-          <!-- Card 1: บันทึกรับชำระเงิน -->
-          <div class="staff-square-card" onclick="StaffRouter.navigate('pay')">
-            <div class="staff-card-icon-wrapper" style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); color: #1d4ed8;">
-              💵
-            </div>
-            <span class="staff-card-badge" style="background: #eff6ff; color: #1d4ed8;">โมดูล 1</span>
-            <h3 class="staff-card-title">บันทึกรับชำระเงิน</h3>
-            <p class="staff-card-desc">เคาน์เตอร์การเงิน รับชำระค่าส่วนกลาง 4 งวด, แนบภาพสลิปธนาคาร และออกใบเสร็จรับเงิน E-Receipt</p>
-            <div class="staff-card-action">
-              <span>เปิดใช้งาน</span>
-              <span class="staff-card-arrow">→</span>
-            </div>
-          </div>
-
-          <!-- Card 2: บันทึกรายจ่ายกองทุน -->
-          <div class="staff-square-card" onclick="StaffRouter.navigate('exp')">
-            <div class="staff-card-icon-wrapper" style="background: linear-gradient(135deg, #ffe4e6 0%, #fecdd3 100%); color: #be123c;">
-              🔴
-            </div>
-            <span class="staff-card-badge" style="background: #fff1f2; color: #be123c;">โมดูล 2</span>
-            <h3 class="staff-card-title">บันทึกรายจ่ายกองทุน</h3>
-            <p class="staff-card-desc">ลงรายการเบิกจ่าย ค่ารปภ., ค่าไฟฟ้า, จัดเก็บขยะ, ซ่อมบำรุง และโอนเติมเงินสดย่อย</p>
-            <div class="staff-card-action">
-              <span>เปิดใช้งาน</span>
-              <span class="staff-card-arrow">→</span>
-            </div>
-          </div>
-
-          <!-- Card 3: บัญชีรายรับ-รายจ่าย -->
-          <div class="staff-square-card" onclick="StaffRouter.navigate('ledger')">
-            <div class="staff-card-icon-wrapper" style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); color: #047857;">
-              ⚖️
-            </div>
-            <span class="staff-card-badge" style="background: #ecfdf5; color: #047857;">โมดูล 3</span>
-            <h3 class="staff-card-title">บัญชีรายรับ-รายจ่าย</h3>
-            <p class="staff-card-desc">สมุดบัญชีแยกประเภท มีตัวเลือกบัญชีเงินฝากธนาคาร vs บัญชีเงินสด พร้อมยอดคงเหลือสะสม</p>
-            <div class="staff-card-action">
-              <span>เปิดใช้งาน</span>
-              <span class="staff-card-arrow">→</span>
-            </div>
-          </div>
-
-          <!-- Card 4: บันทึกรายได้อื่น -->
-          <div class="staff-square-card" onclick="StaffRouter.navigate('inc')">
-            <div class="staff-card-icon-wrapper" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: #b45309;">
-              💰
-            </div>
-            <span class="staff-card-badge" style="background: #fffbeb; color: #b45309;">โมดูล 4</span>
-            <h3 class="staff-card-title">บันทึกรายได้อื่น</h3>
-            <p class="staff-card-desc">บันทึกรายรับดอกเบี้ยเงินฝากธนาคาร, เงินบริจาคพัฒนาโครงการ, หรือเงินสนับสนุนกิจกรรม</p>
-            <div class="staff-card-action">
-              <span>เปิดใช้งาน</span>
-              <span class="staff-card-arrow">→</span>
-            </div>
-          </div>
-
-          <!-- Card 5: ทะเบียนสมาชิก 162 หลัง -->
-          <div class="staff-square-card" onclick="StaffRouter.navigate('members')">
-            <div class="staff-card-icon-wrapper" style="background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%); color: #6d28d9;">
-              👥
-            </div>
-            <span class="staff-card-badge" style="background: #f5f3ff; color: #6d28d9;">โมดูล 5</span>
-            <h3 class="staff-card-title">ทะเบียนสมาชิก 162 หลัง</h3>
-            <p class="staff-card-desc">ตรวจสอบรายชื่อลูกบ้านรายซอย, ประวัติการชำระเงิน 4 งวด, ยอดค้างชำระ และส่งออก Excel</p>
-            <div class="staff-card-action">
-              <span>เปิดใช้งาน</span>
-              <span class="staff-card-arrow">→</span>
-            </div>
-          </div>
-
-          <!-- Card 6: ออกเอกสารทางการ PDF -->
-          <div class="staff-square-card" onclick="StaffRouter.navigate('receipts')">
-            <div class="staff-card-icon-wrapper" style="background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); color: #0369a1;">
-              📄
-            </div>
-            <span class="staff-card-badge" style="background: #f0f9ff; color: #0369a1;">โมดูล 6</span>
-            <h3 class="staff-card-title">ออกเอกสารทางการ PDF</h3>
-            <p class="staff-card-desc">พิมพ์ใบเสร็จรับเงินทางการพร้อมลายเซ็น, สรุปงบการเงินประจำปี และหนังสือแจ้งยอดค้างชำระ</p>
-            <div class="staff-card-action">
-              <span>เปิดใช้งาน</span>
-              <span class="staff-card-arrow">→</span>
-            </div>
-          </div>
-
-          <!-- Card 7: ประวัติการทำรายการ -->
-          <div class="staff-square-card" onclick="StaffRouter.navigate('history')">
-            <div class="staff-card-icon-wrapper" style="background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); color: #334155;">
-              ⏱️
-            </div>
-            <span class="staff-card-badge" style="background: #f8fafc; color: #334155;">โมดูล 7</span>
-            <h3 class="staff-card-title">ประวัติการทำรายการ</h3>
-            <p class="staff-card-desc">Audit Trail ตรวจสอบความถูกต้อง บันทึกประวัติการเพิ่ม-ลบ-แก้ไขรายการของเจ้าหน้าที่ทุกคน</p>
-            <div class="staff-card-action">
-              <span>เปิดใช้งาน</span>
-              <span class="staff-card-arrow">→</span>
-            </div>
-          </div>
-
-          <!-- Card 8: กลับหน้าสมาชิก / แดชบอร์ดสาธารณะ -->
-          <div class="staff-square-card" onclick="window.open('/', '_blank')">
-            <div class="staff-card-icon-wrapper" style="background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); color: #4338ca;">
-              🌐
-            </div>
-            <span class="staff-card-badge" style="background: #eef2ff; color: #4338ca;">แดชบอร์ด</span>
-            <h3 class="staff-card-title">หน้าหลักลูกบ้าน</h3>
-            <p class="staff-card-desc">เปิดดูแดชบอร์ดโปร่งใสและระบบค้นหาสถานะบ้านตนเองของลูกบ้านในแท็บใหม่</p>
-            <div class="staff-card-action">
-              <span>เปิดหน้าต่างใหม่</span>
-              <span class="staff-card-arrow">↗</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ==================== TAB 1: บันทึกรับชำระเงิน (Image 4) ==================== -->
-      <div id="view-pay" class="staff-view hidden">
-        <div class="grid-2">
-          <!-- Form Left Column (Image 4) -->
-          <div class="form-card">
-            <span class="form-badge">เคาน์เตอร์การเงิน</span>
-            <h2 class="form-title">บันทึกรับชำระเงินค่ากองทุนพัฒนาหมู่บ้าน</h2>
-            <p class="form-subtitle">บันทึกรับเงิน ออกใบเสร็จรับเงิน (E-Receipt) และอัปเดตระบบเรียลไทม์</p>
-
-            <div class="form-group">
-              <label class="form-label">เลือกลูกบ้าน / บ้านเลขที่ *</label>
-              <select id="sel-pay-house" class="form-control">
-                <option value="">-- ค้นหาหรือเลือกลูกบ้าน (162 หลัง) --</option>
-              </select>
-            </div>
-
-            <!-- 4 Period Selection Cards (Image 4) -->
-            <div class="form-group">
-              <label class="form-label">เลือกงวดที่ต้องการชำระเงิน *</label>
-              <div class="period-selector-grid" id="period-selector-container">
-                <div class="period-check-card" data-q="1" onclick="toggleQuarter(1)">
-                  <div class="period-card-title" style="font-weight: 700; font-size: 14px;">งวดที่ 1</div>
-                  <div class="period-card-sub" style="font-size: 11px; color: #64748b;">ม.ค. - มี.ค.</div>
-                  <div class="period-status-pill unpaid" id="q-status-1">รอชำระ</div>
-                </div>
-                <div class="period-check-card" data-q="2" onclick="toggleQuarter(2)">
-                  <div class="period-card-title" style="font-weight: 700; font-size: 14px;">งวดที่ 2</div>
-                  <div class="period-card-sub" style="font-size: 11px; color: #64748b;">เม.ย. - มิ.ย.</div>
-                  <div class="period-status-pill unpaid" id="q-status-2">รอชำระ</div>
-                </div>
-                <div class="period-check-card" data-q="3" onclick="toggleQuarter(3)">
-                  <div class="period-card-title" style="font-weight: 700; font-size: 14px;">งวดที่ 3</div>
-                  <div class="period-card-sub" style="font-size: 11px; color: #64748b;">ก.ค. - ก.ย.</div>
-                  <div class="period-status-pill unpaid" id="q-status-3">รอชำระ</div>
-                </div>
-                <div class="period-check-card" data-q="4" onclick="toggleQuarter(4)">
-                  <div class="period-card-title" style="font-weight: 700; font-size: 14px;">งวดที่ 4</div>
-                  <div class="period-card-sub" style="font-size: 11px; color: #64748b;">ต.ค. - ธ.ค.</div>
-                  <div class="period-status-pill unpaid" id="q-status-4">รอชำระ</div>
-                </div>
-              </div>
-            </div>
-
-            <div class="grid-2" style="margin-bottom: 0;">
-              <div class="form-group">
-                <label class="form-label">ช่องทางการชำระ *</label>
-                <select id="sel-pay-channel" class="form-control" onchange="toggleSlipUploadField()">
-                  <option value="transfer">โอนเงินเข้าบัญชี (ธนาคารกรุงเทพ)</option>
-                  <option value="cash">เงินสด</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">ยอดเงินที่คำนวณได้ (บาท) *</label>
-                <input type="text" id="input-pay-amount" class="form-control" style="font-size: 18px; font-weight: 700; color: #059669; background: #f8fafc;" value="0.00" readonly>
-              </div>
-            </div>
-
-            <!-- Upload Slip Container (Requirement 1.2) -->
-            <div class="form-group" id="group-pay-slip">
-              <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
-                <span>📸 แนบสลิปจากธนาคาร (กรณีโอนผ่านธนาคาร)</span>
-                <span style="font-size: 11px; font-weight: normal; color: #059669;">บันทึกเข้า Google Drive กองทุน</span>
-              </label>
-              <div class="slip-upload-dropzone" id="slip-dropzone" onclick="document.getElementById('input-pay-slip-file').click()">
-                <input type="file" id="input-pay-slip-file" accept="image/*" style="display: none;" onchange="handleSlipFileSelected(this)">
-                <div id="slip-upload-placeholder">
-                  <div style="font-size: 26px; margin-bottom: 4px;">📤</div>
-                  <div style="font-weight: 600; font-size: 13px; color: #334155;">คลิกเพื่อเลือกไฟล์สลิป หรือลากรูปมาวางที่นี่</div>
-                  <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">รองรับ JPG, PNG, WEBP (ส่งเข้า Google Drive กองทุน)</div>
-                </div>
-                <div id="slip-upload-preview" style="display: none; align-items: center; gap: 12px; text-align: left;">
-                  <img id="slip-preview-img" src="" alt="Slip preview" style="max-height: 70px; max-width: 70px; object-fit: cover; border-radius: 8px; border: 1px solid #cbd5e1;">
-                  <div style="flex: 1; min-width: 0;">
-                    <div id="slip-file-name" style="font-weight: 600; font-size: 13px; color: #1e293b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></div>
-                    <div id="slip-file-size" style="font-size: 11px; color: #64748b;"></div>
-                    <button type="button" class="btn btn-sm btn-outline-danger" id="btn-remove-slip" style="margin-top: 4px; padding: 2px 8px; font-size: 11px; cursor: pointer;" onclick="event.stopPropagation(); removeSlipFile();">✕ ลบสลิปออก</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">หมายเหตุ หรือข้อมูลสลิป</label>
-              <input type="text" id="input-pay-note" class="form-control" placeholder="เช่น เวลาโอน 14.30 น. หรือ ชำระแทนโดยคุณ...">
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">วันที่ชำระเงิน</label>
-              <input type="date" id="input-pay-date" class="form-control">
-            </div>
-
-            <button class="btn-primary-green" id="btn-submit-payment">
-              <span>💳</span> บันทึกรับเงิน & ออกใบเสร็จ E-Receipt ทันที
-            </button>
-          </div>
-
-          <!-- Right Column (Image 4) -->
-          <div style="display: flex; flex-direction: column; gap: 20px;">
-            <!-- Criteria Summary Card -->
-            <div class="content-section" style="margin-bottom: 0;">
-              <div class="section-title" style="font-size: 15px; margin-bottom: 14px;">
-                <span>ℹ️</span> สรุปเกณฑ์การจัดเก็บประจำปี 2569
-              </div>
-              <div style="font-size: 14px; line-height: 2;">
-                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px;">
-                  <span style="color: #64748b;">ซอย 1 ถึง 10:</span>
-                  <b>300 บาท/เดือน (900 บาท/งวด)</b>
-                </div>
-                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding: 6px 0;">
-                  <span style="color: #64748b;">สายหลัก:</span>
-                  <b>100 บาท/เดือน (300 บาท/งวด)</b>
-                </div>
-                <div style="display: flex; justify-content: space-between; padding-top: 6px;">
-                  <span style="color: #64748b;">ผู้รับเงินและลงนามในใบเสร็จ:</span>
-                  <b style="color: #059669;">น.ส.วีระออ สุวรรณสิทธิ์ (เหรัญญิก ผู้รับเงิน)</b>
-                </div>
-              </div>
-            </div>
-
-            <!-- Recent Payments Feed (กล่องรายการรับเงินล่าสุดในระบบ) -->
-            <div class="content-section" style="margin-bottom: 0; flex: 1;">
-              <div class="section-title" style="font-size: 15px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                <div><span>⏱️</span> รายการรับเงินล่าสุดในระบบ</div>
-                <button type="button" class="btn-view-all" onclick="switchTab('all-payments')">
-                  <span>🔍 ดูทั้งหมด (ปี 2569)</span>
-                </button>
-              </div>
-              <div id="recent-payments-feed" style="font-size: 13px; max-height: 340px; overflow-y: auto;">
-                <!-- Filled dynamically -->
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ==================== TAB 2: บันทึกรายจ่ายกองทุน (Image 3) ==================== -->
-      <div id="view-exp" class="staff-view hidden">
-        <div class="grid-2">
-          <!-- Left: Expense Form -->
-          <div class="form-card">
-            <span class="form-badge" style="background: #fee2e2; color: #b91c1c;">การเบิกจ่าย</span>
-            <h2 class="form-title">บันทึกรายจ่ายกองทุนพัฒนาหมู่บ้าน</h2>
-            <p class="form-subtitle">บันทึกค่า รปภ. สาธารณูปโภค ค่าซ่อมแซม และค่าอุปกรณ์</p>
-
-            <div class="form-group">
-              <label class="form-label">รายการค่าใช้จ่าย *</label>
-              <input type="text" id="input-exp-desc" class="form-control" placeholder="เช่น ค่า รปภ. ประจำเดือน, ค่าไฟฟ้าอาคารอเนกประสงค์">
-            </div>
-
-            <div class="grid-2" style="margin-bottom: 0;">
-              <div class="form-group">
-                <label class="form-label">จำนวนเงิน (บาท) *</label>
-                <input type="number" step="0.01" id="input-exp-amount" class="form-control" placeholder="0.00">
-              </div>
-              <div class="form-group">
-                <label class="form-label">ผู้รับเงิน / หน่วยงาน *</label>
-                <input type="text" id="input-exp-payee" class="form-control" placeholder="เช่น บริษัท รปภ., การไฟฟ้าส่วนภูมิภาค">
-              </div>
-            </div>
-
-            <div class="grid-2" style="margin-bottom: 0;">
-              <div class="form-group">
-                <label class="form-label">หมวดหมู่ค่าใช้จ่าย *</label>
-                <select id="sel-exp-cat" class="form-control">
-                  <option value="C01">ค่ารักษาความปลอดภัย (รปภ.)</option>
-                  <option value="C04">บำรุงรักษา & ซ่อมแซม</option>
-                  <option value="C02">สาธารณูปโภค (ไฟ/น้ำ)</option>
-                  <option value="C03">ค่าบริการธนาคาร SMS</option>
-                  <option value="C05">กิจกรรม/พิธีชุมชน</option>
-                  <option value="C99">อื่นๆ</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">จ่ายจากแหล่งเงิน *</label>
-                <select id="sel-exp-src" class="form-control">
-                  <option value="bank">บัญชีธนาคาร (ธนาคารกรุงเทพ)</option>
-                  <option value="reserve">เงินสำรองจ่าย (เงินสด)</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">วันที่จ่าย</label>
-              <input type="date" id="input-exp-date" class="form-control">
-            </div>
-
-            <button class="btn-primary-dark" id="btn-submit-expense" style="margin-top: 10px;">
-              <span>✔️</span> ยืนยันบันทึกรายจ่าย
-            </button>
-          </div>
-
-          <!-- Right: Recent Expenses Feed -->
-          <div class="content-section" style="margin-bottom: 0;">
-            <div class="section-title" style="font-size: 15px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-              <div><span>⏱️</span> รายการรายจ่ายล่าสุดในระบบ</div>
-              <button type="button" class="btn-view-all" onclick="switchTab('all-expenses')">
-                <span>🔍 ดูทั้งหมด (ปี 2569)</span>
-              </button>
-            </div>
-            <div id="recent-expenses-feed" style="font-size: 13px; max-height: 480px; overflow-y: auto;">
-              <!-- Filled dynamically by loadRecentExpenses -->
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ==================== TAB 3: บัญชีรายรับ-รายจ่าย (Requirement 3) ==================== -->
-      <div id="view-ledger" class="staff-view hidden">
-        <div class="report-header-card" style="margin-bottom: 20px;">
-          <div class="report-title-box">
-            <h2><span>⚖️</span> สมุดบัญชีรายรับ-รายจ่าย (Cash & Bank Ledger)</h2>
-            <p>บันทึกการเคลื่อนไหวทางการเงิน แยกบัญชีเงินฝากธนาคาร และ บัญชีเงินสด พร้อมยอดคงเหลือสะสมเรียลไทม์</p>
-          </div>
-          <div class="report-action-btns">
-            <button class="btn btn-primary" onclick="StaffTabs.ledger()" style="padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
-              🔄 รีเฟรชข้อมูลล่าสุด
-            </button>
-            <button class="btn-export-excel" onclick="window.exportLedgerCSV()" style="padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
-              📥 ส่งออก Excel / CSV
-            </button>
-          </div>
-        </div>
-
-        <!-- KPI Balance Summary for Ledger -->
-        <div class="grid-4" style="margin-bottom: 20px;">
-          <div class="card stat-card">
-            <div id="ledger-stat-opening-title" style="font-size: 12px; color: #64748b; font-weight: 600;">ยอดยกมาจากปี 2568</div>
-            <div id="ledger-stat-opening" style="font-size: 22px; font-weight: 700; color: #334155; margin-top: 4px;">฿0.00</div>
-            <div id="ledger-stat-opening-sub" style="font-size: 11px; color: #94a3b8; margin-top: 2px;">ณ วันที่ 24 ม.ค. 2569</div>
-          </div>
-          <div class="card stat-card">
-            <div id="ledger-stat-inflow-title" style="font-size: 12px; color: #059669; font-weight: 600;">รวมรายรับทั้งสิ้น (+)</div>
-            <div id="ledger-stat-inflow" style="font-size: 22px; font-weight: 700; color: #059669; margin-top: 4px;">฿0.00</div>
-            <div id="ledger-stat-inflow-sub" style="font-size: 11px; color: #64748b; margin-top: 2px;">0 รายการ</div>
-          </div>
-          <div class="card stat-card">
-            <div id="ledger-stat-outflow-title" style="font-size: 12px; color: #dc2626; font-weight: 600;">รวมรายจ่ายทั้งสิ้น (-)</div>
-            <div id="ledger-stat-outflow" style="font-size: 22px; font-weight: 700; color: #dc2626; margin-top: 4px;">฿0.00</div>
-            <div id="ledger-stat-outflow-sub" style="font-size: 11px; color: #64748b; margin-top: 2px;">0 รายการ</div>
-          </div>
-          <div class="card stat-card" style="border: 2px solid #2563eb; background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%);">
-            <div id="ledger-stat-balance-title" style="font-size: 12px; color: #1e40af; font-weight: 700;">ยอดคงเหลือสุทธิยกไป</div>
-            <div id="ledger-stat-balance" style="font-size: 22px; font-weight: 800; color: #1e3a8a; margin-top: 4px;">฿0.00</div>
-            <div id="ledger-stat-balance-sub" style="font-size: 11px; color: #2563eb; font-weight: 600; margin-top: 2px;">บัญชีที่เลือก</div>
-          </div>
-        </div>
-
-        <!-- Filter Controls -->
-        <div class="card" style="padding: 16px 20px; margin-bottom: 20px; background: #fff; border-radius: 12px;">
-          <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
-            <div style="flex: 1; min-width: 200px;">
-              <label style="font-size: 12px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">เลือกบัญชีการเงิน *</label>
-              <select id="ledger-filter-account" onchange="window.renderLedgerView()" class="form-control" style="font-weight: 600; color: #1e293b; background: #f8fafc;">
-                <option value="all">🏦+💵 รวมทุกบัญชี (ธนาคาร + เงินสด)</option>
-                <option value="bank">🏦 บัญชีเงินฝาก ธนาคารกรุงเทพ</option>
-                <option value="cash">💵 บัญชีเงินสด / เงินสดย่อยสำรองจ่าย</option>
-              </select>
-            </div>
-            <div style="width: 170px;">
-              <label style="font-size: 12px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">ประจำเดือน</label>
-              <select id="ledger-filter-month" onchange="window.renderLedgerView()" class="form-control">
-                <option value="all">-- ทั้งหมด (ทุกเดือน) --</option>
-                <option value="1">มกราคม</option>
-                <option value="2">กุมภาพันธ์</option>
-                <option value="3">มีนาคม</option>
-                <option value="4">เมษายน</option>
-                <option value="5">พฤษภาคม</option>
-                <option value="6">มิถุนายน</option>
-                <option value="7">กรกฎาคม</option>
-                <option value="8">สิงหาคม</option>
-                <option value="9">กันยายน</option>
-                <option value="10">ตุลาคม</option>
-                <option value="11">พฤศจิกายน</option>
-                <option value="12">ธันวาคม</option>
-              </select>
-            </div>
-            <div style="width: 150px;">
-              <label style="font-size: 12px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">ประเภท</label>
-              <select id="ledger-filter-type" onchange="window.renderLedgerView()" class="form-control">
-                <option value="all">-- ทุกประเภท --</option>
-                <option value="inflow">เฉพาะรายรับ (+)</option>
-                <option value="outflow">เฉพาะรายจ่าย (-)</option>
-              </select>
-            </div>
-            <div style="flex: 1.5; min-width: 220px;">
-              <label style="font-size: 12px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">ค้นหารายการ / รหัส</label>
-              <input type="text" id="ledger-filter-search" oninput="window.renderLedgerView()" placeholder="พิมพ์คำค้น เช่น รปภ., ขยะ, บ้าน 444..." class="form-control">
-            </div>
-          </div>
-        </div>
-
-        <!-- Ledger Table Card -->
-        <div class="card" style="padding: 0; overflow: hidden; border-radius: 12px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04); border: 1px solid #e2e8f0;">
-          <div class="table-responsive">
-            <table class="data-table ledger-table">
-              <thead>
-                <tr>
-                  <th style="width: 55px; text-align: center;">ลำดับ</th>
-                  <th style="width: 115px; text-align: center;">วันที่/เวลา</th>
-                  <th style="width: 115px; text-align: center;">เลขที่เอกสาร</th>
-                  <th style="text-align: left;">รายการ / คำอธิบาย</th>
-                  <th style="width: 110px; text-align: center;">บัญชี</th>
-                  <th style="width: 125px; text-align: right;">รายรับ (+)</th>
-                  <th style="width: 125px; text-align: right;">รายจ่าย (-)</th>
-                  <th style="width: 135px; text-align: right;">คงเหลือสะสม</th>
-                  <th style="width: 85px; text-align: center;">สลิป</th>
-                </tr>
-              </thead>
-              <tbody id="ledger-table-body">
-                <!-- Dynamically rendered by tab-ledger.js -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- ==================== TAB 4: บันทึกรายได้อื่น ==================== -->
-      <div id="view-inc" class="staff-view hidden">
-        <div class="grid-2">
-          <div class="form-card">
-            <span class="form-badge" style="background: #dcfce7; color: #166534;">รายได้กองทุน</span>
-            <h2 class="form-title">บันทึกรายได้อื่นของกองทุน</h2>
-            <p class="form-subtitle">เงินบริจาค ดอกเบี้ยเงินฝาก เงินสนับสนุน และรายได้ทางอื่นๆ (รวมเข้ายอดเงินกองทุนทันที)</p>
-
-            <div class="form-group">
-              <label class="form-label">ประเภทรายได้ *</label>
-              <select id="sel-inc-type" class="form-control">
-                <option value="donation">เงินบริจาค</option>
-                <option value="interest">ดอกเบี้ยเงินฝาก</option>
-                <option value="support">เงินสนับสนุน</option>
-                <option value="other">รายได้ทางอื่นๆ</option>
-              </select>
-            </div>
-            <div class="grid-2" style="margin-bottom: 0;">
-              <div class="form-group">
-                <label class="form-label">ช่องทางรับเงิน *</label>
-                <select id="sel-inc-channel" class="form-control">
-                  <option value="transfer">โอนเข้าบัญชีธนาคารกรุงเทพ</option>
-                  <option value="cash">เงินสด (เข้าเงินสำรองในมือ)</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">จำนวนเงิน (บาท) *</label>
-                <input type="number" step="0.01" id="input-inc-amount" class="form-control" placeholder="0.00">
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">วันที่ได้รับ *</label>
-              <input type="date" id="input-inc-date" class="form-control">
-            </div>
-            <div class="form-group">
-              <label class="form-label">รายละเอียด / ผู้บริจาค / แหล่งที่มา</label>
-              <input type="text" id="input-inc-note" class="form-control" placeholder="เช่น คุณสมชาย บริจาคสมทบทุน, ดอกเบี้ยออมทรัพย์ ธ.กรุงเทพ">
-            </div>
-            <button class="btn-primary-green" id="btn-submit-income" style="margin-top: 10px;">
-              <span>✔️</span> ยืนยันบันทึกรายได้
-            </button>
-          </div>
-
-          <div class="content-section" style="margin-bottom: 0;">
-            <div class="section-title" style="font-size: 15px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span>⏱️</span> รายได้อื่นล่าสุด <span id="inc-total-badge" style="color:#059669; font-weight:700;"></span>
-              </div>
-              <button type="button" class="btn-view-all" onclick="switchTab('all-income')">
-                <span>🔍 ดูทั้งหมด (ปี 69)</span>
-              </button>
-            </div>
-            <div id="recent-income-feed" style="font-size: 13px; max-height: 480px; overflow-y: auto;"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ==================== TAB 4: ทะเบียนสมาชิก 162 หลัง (Image 2) ==================== -->
-      <div id="view-members" class="staff-view hidden">
-        <div class="content-section">
-          <div class="section-header">
-            <div>
-              <div class="section-title">ทะเบียนสมาชิกและประวัติการชำระ (162 หลังคาเรือน)</div>
-              <p style="font-size: 13px; color: #64748b;">จัดการข้อมูลลูกบ้าน ตรวจสอบรายซอย และพิมพ์ใบเสร็จย้อนหลัง</p>
-            </div>
-            <div class="members-filter-group" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-              <!-- Filter by Zone -->
-              <select id="staff-filter-zone" class="form-control" style="width: auto;">
-                <option value="">ทุกซอย (162 หลัง)</option>
-              </select>
-              <!-- Filter by Status -->
-              <select id="staff-filter-status" class="form-control" style="width: auto;">
-                <option value="">ทุกสถานะ</option>
-                <option value="paid">ชำระครบ</option>
-                <option value="partial">ชำระบางส่วน</option>
-                <option value="unpaid">ยังไม่ชำระ</option>
-              </select>
-              <!-- Search box -->
-              <input type="text" id="staff-members-search" class="form-control" style="width: 200px;" placeholder="ค้นหาชื่อ หรือบ้านเลขที่...">
-              <!-- Excel Export Button -->
-              <button id="btn-export-excel" class="btn-excel" onclick="exportToExcel()">
-                <span>📥</span> ส่งออก Excel
-              </button>
-            </div>
-          </div>
-          <div class="table-responsive">
-            <div class="mobile-scroll-hint">👉 เลื่อนตารางซ้าย-ขวา เพื่อดูยอดชำระและประวัติงวด</div>
-            <table class="table-statement" id="staff-members-table"></table>
-          </div>
-        </div>
-      </div>
-
-      <!-- ==================== TAB 4: ออกเอกสารทางการ PDF (Image 4) ==================== -->
-      <div id="view-receipts" class="staff-view hidden">
-        <div class="content-section">
-          <div style="margin-bottom: 24px;">
-            <h2 style="font-size: 20px; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">
-              <span style="color: #dc2626;">📄</span> ศูนย์ออกเอกสารและรายงานทางการ (PDF A4)
-            </h2>
-            <p style="font-size: 13px; color: #64748b;">เลือกรายงานที่ต้องการพิมพ์ หรือบันทึกเป็นเอกสาร PDF สำหรับคณะกรรมการ</p>
-          </div>
-
-          <!-- 3 Document Action Cards (Image 4) -->
-          <div class="grid-3">
-            <!-- Card 1: ใบเสร็จรับเงิน -->
-            <div class="doc-card">
-              <div class="doc-card-top">
-                <div class="doc-icon-box" style="background: #eff6ff; color: #2563eb;">🧾</div>
-                <div class="doc-card-title">1. ใบเสร็จรับเงิน (Official E-Receipt)</div>
-                <div class="doc-card-desc">ใบเสร็จรับเงินระบุงวดที่ชำระตามจริง พร้อมลงนามเหรัญญิก</div>
-
-                <div class="form-group" style="margin-bottom: 10px;">
-                  <label class="form-label" style="font-size: 12px;">เลือกลูกบ้าน:</label>
-                  <select id="pdf-sel-house" class="form-control" style="font-size: 13px;"></select>
-                </div>
-                <div class="form-group" style="margin-bottom: 0;">
-                  <label class="form-label" style="font-size: 12px;">เลือกงวดที่ต้องการออกใบเสร็จ:</label>
-                  <select id="pdf-sel-period" class="form-control" style="font-size: 13px;">
-                    <option value="all">ทุกงวดที่ชำระแล้ว (แจกแจงรายงวด)</option>
-                    <option value="1">งวดที่ 1 (ม.ค. - มี.ค.)</option>
-                    <option value="2">งวดที่ 2 (เม.ย. - มิ.ย.)</option>
-                    <option value="3">งวดที่ 3 (ก.ค. - ก.ย.)</option>
-                    <option value="4">งวดที่ 4 (ต.ค. - ธ.ค.)</option>
-                  </select>
-                </div>
-              </div>
-              <button class="btn-search" style="width: 100%; justify-content: center;" onclick="generateOfficialReceipt()">
-                <span>🖨️</span> พิมพ์ใบเสร็จ PDF
-              </button>
-            </div>
-
-            <!-- Card 2: รายงานสรุปงบการเงิน 2569 -->
-            <div class="doc-card">
-              <div class="doc-card-top">
-                <div class="doc-icon-box" style="background: #ecfdf5; color: #059669;">📊</div>
-                <div class="doc-card-title">2. รายงานสรุปงบการเงิน 2569</div>
-                <div class="doc-card-desc">งบดุลสรุปยอดเงินและเงินฝากธนาคาร พร้อมลายเซ็นประธานและเหรัญญิก</div>
-              </div>
-              <button class="btn-primary-green" style="margin-top: 40px;" onclick="generateFinancialReport()">
-                <span>🖨️</span> พิมพ์งบดุล PDF
-              </button>
-            </div>
-
-            <!-- Card 3: รายงานผู้ค้างชำระแยกซอย -->
-            <div class="doc-card">
-              <div class="doc-card-top">
-                <div class="doc-icon-box" style="background: #fef2f2; color: #dc2626;">⚠️</div>
-                <div class="doc-card-title">3. รายงานผู้ค้างชำระแยกซอย</div>
-                <div class="doc-card-desc">บัญชีรายชื่อบ้านที่ค้างชำระเงิน สำหรับคณะกรรมการลงพื้นที่</div>
-              </div>
-              <button style="background: #dc2626; color: #fff; border: none; border-radius: 8px; padding: 10px; font-weight: 600; width: 100%; margin-top: 40px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="generateOverdueReport()">
-                <span>🖨️</span> พิมพ์รายชื่อค้างชำระ PDF
-              </button>
-            </div>
-          </div>
-
-          <!-- Document Print Preview Area -->
-          <div id="pdf-preview-box" class="hidden" style="margin-top: 30px; border-top: 2px solid #e2e8f0; padding-top: 24px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;" class="no-print">
-              <h3 style="font-size: 16px;">เอกสารสำหรับพิมพ์ (Print Preview)</h3>
-              <div style="display: flex; gap: 8px;">
-                <button onclick="printActiveDoc()" class="btn-search">🖨️ สั่งพิมพ์เอกสารนี้</button>
-                <button onclick="document.getElementById('pdf-preview-box').classList.add('hidden')" style="padding: 6px 12px; background: #e2e8f0; border: none; border-radius: 6px; cursor: pointer;">ปิด</button>
-              </div>
-            </div>
-            <div id="pdf-render-canvas" class="paper-statement print-sheet"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ==================== TAB 5: ประวัติการทำรายการ (Image 5) ==================== -->
-      <div id="view-history" class="staff-view hidden">
-        <div class="content-section" style="padding: 24px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #f1f5f9;">
-            <div>
-              <h2 style="font-size: 20px; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">
-                <span>⏱️</span> บันทึกประวัติการทำรายการ (Audit Log)
-              </h2>
-              <p style="font-size: 13px; color: #64748b;">บันทึกความเคลื่อนไหวทุกขั้นตอนเพื่อความโปร่งใสและตรวจสอบได้</p>
-            </div>
-            <div id="audit-total-badge" style="font-size: 12px; font-weight: 600; background: #f1f5f9; color: #475569; padding: 6px 14px; border-radius: 20px;">
-              ทั้งหมด 0 รายการ
-            </div>
-          </div>
-
-          <!-- Audit Log Feed (No card borders, dashed line separator) -->
-          <div id="audit-log-feed">
-            <!-- Filled dynamically by renderAuditPage() -->
-          </div>
-
-          <!-- Pagination Bar -->
-          <div id="audit-pagination" class="pagination-bar" style="margin-top: 24px; padding-top: 16px; border-top: 1px dashed #cbd5e1; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-            <div id="audit-page-info" style="font-size: 13px; color: #64748b;">
-              กำลังโหลดข้อมูล...
-            </div>
-            <div id="audit-page-btns" style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-              <!-- Page buttons rendered by JS -->
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ==================== TAB 7: รายการรายรับ ปี 2569 ==================== -->
-      <div id="view-all-payments" class="staff-view hidden">
-        <div class="report-header-card">
-          <div class="report-title-box">
-            <h2><span>📊</span> รายการรายรับ ปี 2569</h2>
-            <p>สรุปการรับชำระเงินค่ากองทุนพัฒนาหมู่บ้าน ลพบุรีราเมศวร์ธานี ประจำปี 2569 ทั้งหมด</p>
-          </div>
-          <div class="report-action-btns">
-            <button class="btn-print-report" onclick="printReport('payments')">
-              <span>🖨️</span> พิมพ์รายงาน
-            </button>
-            <button class="btn-excel" onclick="exportReportExcel('payments')">
-              <span>📥</span> ส่งออก Excel
-            </button>
-            <button type="button" class="btn-view-all" onclick="switchTab('pay')" style="background:#f1f5f9; color:#475569; border-color:#cbd5e1;">
-              <span>←</span> กลับหน้าบันทึก
-            </button>
-          </div>
-        </div>
-
-        <!-- Summary Stats -->
-        <div class="report-stats-grid">
-          <div class="report-stat-chip">
-            <div class="label">รวมยอดรับชำระทั้งหมด</div>
-            <div class="val" id="rep-pay-total" style="color: #059669;">฿0.00</div>
-          </div>
-          <div class="report-stat-chip">
-            <div class="label">จำนวนรายการรับชำระ</div>
-            <div class="val" id="rep-pay-count">0 รายการ</div>
-          </div>
-          <div class="report-stat-chip">
-            <div class="label">โอนเข้าบัญชีธนาคาร</div>
-            <div class="val" id="rep-pay-transfer" style="color: #2563eb;">฿0.00</div>
-          </div>
-          <div class="report-stat-chip">
-            <div class="label">รับชำระเป็นเงินสด</div>
-            <div class="val" id="rep-pay-cash" style="color: #d97706;">฿0.00</div>
-          </div>
-        </div>
-
-        <!-- Filter Bar -->
-        <div class="report-filter-bar">
-          <input type="text" id="filter-pay-search" class="form-control" style="width: 240px;" placeholder="ค้นหาบ้านเลขที่, สมาชิก, รหัส..." oninput="filterAllPayments()">
-          <select id="filter-pay-quarter" class="form-control" style="width: auto;" onchange="filterAllPayments()">
-            <option value="">ทุกงวด (งวด 1-4)</option>
-            <option value="1">งวดที่ 1 (ม.ค. - มี.ค.)</option>
-            <option value="2">งวดที่ 2 (เม.ย. - มิ.ย.)</option>
-            <option value="3">งวดที่ 3 (ก.ค. - ก.ย.)</option>
-            <option value="4">งวดที่ 4 (ต.ค. - ธ.ค.)</option>
-          </select>
-          <select id="filter-pay-month" class="form-control" style="width: auto;" onchange="filterAllPayments()">
-            <option value="">ทุกเดือน (ม.ค. - ธ.ค.)</option>
-            <option value="1">มกราคม (ม.ค.)</option>
-            <option value="2">กุมภาพันธ์ (ก.พ.)</option>
-            <option value="3">มีนาคม (มี.ค.)</option>
-            <option value="4">เมษายน (เม.ย.)</option>
-            <option value="5">พฤษภาคม (พ.ค.)</option>
-            <option value="6">มิถุนายน (มิ.ย.)</option>
-            <option value="7">กรกฎาคม (ก.ค.)</option>
-            <option value="8">สิงหาคม (ส.ค.)</option>
-            <option value="9">กันยายน (ก.ย.)</option>
-            <option value="10">ตุลาคม (ต.ค.)</option>
-            <option value="11">พฤศจิกายน (พ.ย.)</option>
-            <option value="12">ธันวาคม (ธ.ค.)</option>
-          </select>
-          <select id="filter-pay-channel" class="form-control" style="width: auto;" onchange="filterAllPayments()">
-            <option value="">ทุกช่องทาง (โอน/เงินสด)</option>
-            <option value="transfer">โอนเงินเข้าธนาคาร</option>
-            <option value="cash">เงินสด</option>
-          </select>
-          <button type="button" class="btn-view-all" onclick="resetPayFilter()" style="margin-left: auto;">
-            <span>🔄</span> รีเซ็ตตัวกรอง
-          </button>
-        </div>
-
-        <!-- Table Section -->
-        <div class="content-section" style="padding: 0; overflow: hidden;">
-          <div class="table-responsive">
-            <table class="table-statement" id="table-all-payments">
-              <thead>
-                <tr>
-                  <th style="width: 50px; text-align: center;">ลำดับ</th>
-                  <th style="width: 95px; text-align: center;">รหัสรายการ</th>
-                  <th style="width: 105px; text-align: center;">วันที่รับชำระ</th>
-                  <th style="width: 95px; text-align: center;">บ้านเลขที่</th>
-                  <th>สมาชิก / เจ้าของ</th>
-                  <th style="width: 110px; text-align: center;">งวด / เดือน</th>
-                  <th style="width: 110px; text-align: center;">ช่องทาง</th>
-                  <th style="width: 110px; text-align: right;">จำนวนเงิน</th>
-                  <th style="width: 95px; text-align: center;">ผู้บันทึก</th>
-                  <th>หมายเหตุ</th>
-                  <th style="width: 75px; text-align: center;">จัดการ</th>
-                </tr>
-              </thead>
-              <tbody id="tbody-all-payments">
-                <!-- Rendered dynamically -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- ==================== TAB 8: รายการรายจ่าย ปี 2569 ==================== -->
-      <div id="view-all-expenses" class="staff-view hidden">
-        <div class="report-header-card">
-          <div class="report-title-box">
-            <h2><span>🔴</span> รายการรายจ่าย ปี 2569</h2>
-            <p>สรุปการเบิกจ่ายงบประมาณและค่าใช้จ่ายของกองทุนพัฒนาหมู่บ้าน ปี 2569 ทั้งหมด</p>
-          </div>
-          <div class="report-action-btns">
-            <button class="btn-print-report" onclick="printReport('expenses')">
-              <span>🖨️</span> พิมพ์รายงาน
-            </button>
-            <button class="btn-excel" onclick="exportReportExcel('expenses')">
-              <span>📥</span> ส่งออก Excel
-            </button>
-            <button type="button" class="btn-view-all" onclick="switchTab('exp')" style="background:#f1f5f9; color:#475569; border-color:#cbd5e1;">
-              <span>←</span> กลับหน้าบันทึก
-            </button>
-          </div>
-        </div>
-
-        <!-- Summary Stats -->
-        <div class="report-stats-grid">
-          <div class="report-stat-chip">
-            <div class="label">รวมยอดรายจ่ายทั้งหมด</div>
-            <div class="val" id="rep-exp-total" style="color: #dc2626;">฿0.00</div>
-          </div>
-          <div class="report-stat-chip">
-            <div class="label">จำนวนรายการเบิกจ่าย</div>
-            <div class="val" id="rep-exp-count">0 รายการ</div>
-          </div>
-          <div class="report-stat-chip">
-            <div class="label">จ่ายจากบัญชีธนาคาร</div>
-            <div class="val" id="rep-exp-bank" style="color: #2563eb;">฿0.00</div>
-          </div>
-          <div class="report-stat-chip">
-            <div class="label">จ่ายจากเงินสำรอง (เงินสด)</div>
-            <div class="val" id="rep-exp-reserve" style="color: #d97706;">฿0.00</div>
-          </div>
-        </div>
-
-        <!-- Filter Bar -->
-        <div class="report-filter-bar">
-          <input type="text" id="filter-exp-search" class="form-control" style="width: 220px;" placeholder="ค้นหารายการ, ผู้รับเงิน, เลขที่..." oninput="filterAllExpenses()">
-          <select id="filter-exp-month" class="form-control" style="width: auto;" onchange="filterAllExpenses()">
-            <option value="">ทุกเดือน (ม.ค. - ธ.ค.)</option>
-            <option value="1">มกราคม (ม.ค.)</option>
-            <option value="2">กุมภาพันธ์ (ก.พ.)</option>
-            <option value="3">มีนาคม (มี.ค.)</option>
-            <option value="4">เมษายน (เม.ย.)</option>
-            <option value="5">พฤษภาคม (พ.ค.)</option>
-            <option value="6">มิถุนายน (มิ.ย.)</option>
-            <option value="7">กรกฎาคม (ก.ค.)</option>
-            <option value="8">สิงหาคม (ส.ค.)</option>
-            <option value="9">กันยายน (ก.ย.)</option>
-            <option value="10">ตุลาคม (ต.ค.)</option>
-            <option value="11">พฤศจิกายน (พ.ย.)</option>
-            <option value="12">ธันวาคม (ธ.ค.)</option>
-          </select>
-          <select id="filter-exp-cat" class="form-control" style="width: auto;" onchange="filterAllExpenses()">
-            <option value="">ทุกหมวดหมู่ค่าใช้จ่าย</option>
-          </select>
-          <select id="filter-exp-source" class="form-control" style="width: auto;" onchange="filterAllExpenses()">
-            <option value="">ทุกแหล่งเงิน (ธนาคาร/เงินสด)</option>
-            <option value="bank">บัญชีธนาคารกรุงเทพ</option>
-            <option value="reserve">เงินสำรองจ่าย (เงินสด)</option>
-          </select>
-          <button type="button" class="btn-view-all" onclick="resetExpFilter()" style="margin-left: auto;">
-            <span>🔄</span> รีเซ็ตตัวกรอง
-          </button>
-        </div>
-
-        <!-- Table Section -->
-        <div class="content-section" style="padding: 0; overflow: hidden;">
-          <div class="table-responsive">
-            <table class="table-statement" id="table-all-expenses">
-              <thead>
-                <tr>
-                  <th style="width: 50px; text-align: center;">ลำดับ</th>
-                  <th style="width: 85px; text-align: center;">เลขที่</th>
-                  <th style="width: 105px; text-align: center;">วันที่จ่าย</th>
-                  <th>รายการค่าใช้จ่าย</th>
-                  <th style="width: 140px;">หมวดหมู่</th>
-                  <th style="width: 150px;">ผู้รับเงิน / หน่วยงาน</th>
-                  <th style="width: 120px; text-align: center;">แหล่งเงิน</th>
-                  <th style="width: 110px; text-align: right;">จำนวนเงิน</th>
-                  <th style="width: 90px; text-align: center;">สถานะ</th>
-                  <th style="width: 90px; text-align: center;">ผู้บันทึก</th>
-                </tr>
-              </thead>
-              <tbody id="tbody-all-expenses">
-                <!-- Rendered dynamically -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- ==================== TAB 9: รายการรายได้อื่น ปี 69 ==================== -->
-      <div id="view-all-income" class="staff-view hidden">
-        <div class="report-header-card">
-          <div class="report-title-box">
-            <h2><span>💰</span> รายการรายได้อื่น ปี 69</h2>
-            <p>สรุปเงินบริจาค ดอกเบี้ยเงินฝาก เงินสนับสนุน และรายได้อื่นๆ ประจำปี 2569 ทั้งหมด</p>
-          </div>
-          <div class="report-action-btns">
-            <button class="btn-print-report" onclick="printReport('income')">
-              <span>🖨️</span> พิมพ์รายงาน
-            </button>
-            <button class="btn-excel" onclick="exportReportExcel('income')">
-              <span>📥</span> ส่งออก Excel
-            </button>
-            <button type="button" class="btn-view-all" onclick="switchTab('inc')" style="background:#f1f5f9; color:#475569; border-color:#cbd5e1;">
-              <span>←</span> กลับหน้าบันทึก
-            </button>
-          </div>
-        </div>
-
-        <!-- Summary Stats -->
-        <div class="report-stats-grid">
-          <div class="report-stat-chip">
-            <div class="label">รวมยอดรายได้อื่นทั้งหมด</div>
-            <div class="val" id="rep-inc-total" style="color: #059669;">฿0.00</div>
-          </div>
-          <div class="report-stat-chip">
-            <div class="label">จำนวนรายการ</div>
-            <div class="val" id="rep-inc-count">0 รายการ</div>
-          </div>
-          <div class="report-stat-chip">
-            <div class="label">โอนเข้าบัญชีธนาคาร</div>
-            <div class="val" id="rep-inc-transfer" style="color: #2563eb;">฿0.00</div>
-          </div>
-          <div class="report-stat-chip">
-            <div class="label">รับเป็นเงินสด</div>
-            <div class="val" id="rep-inc-cash" style="color: #d97706;">฿0.00</div>
-          </div>
-        </div>
-
-        <!-- Filter Bar -->
-        <div class="report-filter-bar">
-          <input type="text" id="filter-inc-search" class="form-control" style="width: 220px;" placeholder="ค้นหารายละเอียด, แหล่งที่มา..." oninput="filterAllIncome()">
-          <select id="filter-inc-month" class="form-control" style="width: auto;" onchange="filterAllIncome()">
-            <option value="">ทุกเดือน (ม.ค. - ธ.ค.)</option>
-            <option value="1">มกราคม (ม.ค.)</option>
-            <option value="2">กุมภาพันธ์ (ก.พ.)</option>
-            <option value="3">มีนาคม (มี.ค.)</option>
-            <option value="4">เมษายน (เม.ย.)</option>
-            <option value="5">พฤษภาคม (พ.ค.)</option>
-            <option value="6">มิถุนายน (มิ.ย.)</option>
-            <option value="7">กรกฎาคม (ก.ค.)</option>
-            <option value="8">สิงหาคม (ส.ค.)</option>
-            <option value="9">กันยายน (ก.ย.)</option>
-            <option value="10">ตุลาคม (ต.ค.)</option>
-            <option value="11">พฤศจิกายน (พ.ย.)</option>
-            <option value="12">ธันวาคม (ธ.ค.)</option>
-          </select>
-          <select id="filter-inc-type" class="form-control" style="width: auto;" onchange="filterAllIncome()">
-            <option value="">ทุกประเภทรายได้</option>
-            <option value="donation">เงินบริจาค</option>
-            <option value="interest">ดอกเบี้ยเงินฝาก</option>
-            <option value="support">เงินสนับสนุน</option>
-            <option value="other">รายได้ทางอื่นๆ</option>
-          </select>
-          <select id="filter-inc-channel" class="form-control" style="width: auto;" onchange="filterAllIncome()">
-            <option value="">ทุกช่องทาง (ธนาคาร/เงินสด)</option>
-            <option value="transfer">โอนเข้าบัญชีธนาคาร</option>
-            <option value="cash">เงินสด</option>
-          </select>
-          <button type="button" class="btn-view-all" onclick="resetIncFilter()" style="margin-left: auto;">
-            <span>🔄</span> รีเซ็ตตัวกรอง
-          </button>
-        </div>
-
-        <!-- Table Section -->
-        <div class="content-section" style="padding: 0; overflow: hidden;">
-          <div class="table-responsive">
-            <table class="table-statement" id="table-all-income">
-              <thead>
-                <tr>
-                  <th style="width: 50px; text-align: center;">ลำดับ</th>
-                  <th style="width: 95px; text-align: center;">รหัสรายการ</th>
-                  <th style="width: 105px; text-align: center;">วันที่ได้รับ</th>
-                  <th style="width: 140px;">ประเภทรายได้</th>
-                  <th>รายละเอียด / ผู้บริจาค / แหล่งที่มา</th>
-                  <th style="width: 130px; text-align: center;">ช่องทาง</th>
-                  <th style="width: 120px; text-align: right;">จำนวนเงิน</th>
-                </tr>
-              </thead>
-              <tbody id="tbody-all-income">
-                <!-- Rendered dynamically -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-  <footer class="site-footer">
-    <div>© Copyright 2026 กองทุนพัฒนาหมู่บ้าน ลพบุรีราเมศวร์ธานี · พัฒนาระบบโดย <b>Mathman BM</b></div>
-    <div class="visit-stats" id="visit-stats"></div>
-  </footer>
-  </div>
-
-  <script src="/static/js/staff/api.js?v=20261103_7"></script>
-  <script src="/static/js/staff/router.js?v=20261103_7"></script>
-  <script src="/static/js/staff/tab-menu.js?v=20261103_7"></script>
-  <script src="/static/js/staff/tab-ledger.js?v=20261103_7"></script>
-  <script src="/static/js/staff/tab-pay.js?v=20261103_7"></script>
-  <script src="/static/js/staff/tab-exp.js?v=20261103_7"></script>
-  <script src="/static/js/staff/tab-inc.js?v=20261103_7"></script>
-  <script src="/static/js/staff/tab-members.js?v=20261103_7"></script>
-  <script src="/static/js/staff/tab-receipts.js?v=20261103_7"></script>
-  <script src="/static/js/staff/tab-history.js?v=20261103_7"></script>
-  <script src="/static/js/staff.js?v=20261103_7"></script>
-
-  <!-- Modal แสดงสลิปการโอนเงิน (Image Slip Viewer - Requirement 2) -->
-  <div id="slip-modal" class="slip-modal-backdrop" style="display: none;" onclick="closeSlipModal(event)">
-    <div class="slip-modal-content" onclick="event.stopPropagation()">
-      <div class="slip-modal-header">
-        <div>
-          <h3 id="slip-modal-title" style="margin: 0; font-size: 16px; font-weight: 700; color: #0f172a;">หลักฐานสลิปการโอนเงิน</h3>
-          <p id="slip-modal-subtitle" style="margin: 2px 0 0 0; font-size: 12px; color: #64748b;"></p>
-        </div>
-        <button type="button" class="btn-icon" onclick="closeSlipModal()" style="border: none; background: #e2e8f0; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 14px;">✕</button>
-      </div>
-      <div class="slip-modal-body" id="slip-modal-body">
-        <!-- Rendered dynamically -->
-      </div>
-      <div style="padding: 12px 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 10px; background: #f8fafc;">
-        <a id="slip-btn-drive" href="#" target="_blank" class="btn btn-outline-primary" style="display: none; align-items: center; gap: 6px; font-size: 13px; text-decoration: none; padding: 6px 14px; border-radius: 8px;">
-          <span>📂</span> เปิดดูไฟล์สลิปต้นฉบับ
-        </a>
-        <button type="button" class="btn btn-secondary" onclick="closeSlipModal()" style="padding: 6px 16px; border-radius: 8px; font-size: 13px; cursor: pointer;">ปิดหน้าต่าง</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Printable Area for Official Reports -->
-  <div id="printable-report-area"></div>
-</body>
-</html>
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ระบบงานเจ้าหน้าที่และกรรมการ - กองทุนพัฒนาหมู่บ้าน</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css?v=20261103_8">
+</head>
+<body style="background: #f1f5f9;">
+
+  <!-- Login Modal / Card if not logged in -->
+  <div id="login-container" class="main-wrapper" style="max-width: 420px; margin: 60px auto;">
+    <div class="form-card" style="text-align: center;">
+      <div style="font-size: 40px; margin-bottom: 8px;">🔐</div>
+      <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 4px;">เข้าสู่ระบบเจ้าหน้าที่</h2>
+      <p style="font-size: 13px; color: var(--ink-light); margin-bottom: 20px;">กองทุนพัฒนาหมู่บ้าน <br>กองทุนหมู่บ้าน ลพบุรีราเมศวร์ธานี  </p>
+      <p style="font-size: 13px; color: var(--ink-light); margin-bottom: 20px;"></p>
+
+      <div id="login-alert"></div>
+
+      <div class="form-group" style="text-align: left;">
+        <label class="form-label">ชื่อผู้ใช้</label>
+        <input type="text" id="input-username" class="form-control" placeholder="admin หรือ staff">
+      </div>
+      <div class="form-group" style="text-align: left;">
+        <label class="form-label">รหัสผ่าน</label>
+        <input type="password" id="input-password" class="form-control" placeholder="••••••••">
+      </div>
+      <button class="btn-primary-green" id="btn-login-submit" style="margin-top: 10px;">
+        เข้าสู่ระบบ
+      </button>
+      <div style="margin-top: 16px;">
+        <a href="/" style="font-size: 13px; color: #2563eb; text-decoration: none;">← กลับไปหน้าสมาชิก</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Staff App Interface (Images 4 & 5) -->
+  <div id="staff-app" class="hidden">
+    <!-- Top Bar (Image 4) -->
+    <header class="staff-topbar">
+      <div class="nav-container">
+        <div class="brand">
+          <div class="brand-icon" style="background: rgba(16, 185, 129, 0.2); color: #10b981;">🛡️</div>
+          <div>
+            <h1 style="font-size: 17px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px;">
+              ระบบงานเจ้าหน้าที่
+              <span style="font-size: 11px; background: #2563eb; color: #fff; padding: 2px 8px; border-radius: 4px; font-weight: 600;">STAFF ONLY</span>
+            </h1>
+            <p style="font-size: 12px; color: #94a3b8;">กองทุนพัฒนาหมู่บ้าน ลพบุรีราเมศวร์ธานี ปี 2569</p>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <!-- User info badge -->
+          <div style="background: rgba(255,255,255,0.08); padding: 6px 14px; border-radius: 20px; font-size: 13px; display: flex; align-items: center; gap: 8px;">
+            <span class="live-dot" style="width: 8px; height: 8px;"></span>
+            <span id="staff-display-name">เจ้าหน้าที่กองทุน</span>
+          </div>
+          <a href="/" class="btn-search" style="padding: 7px 14px; font-size: 13px; background: rgba(255,255,255,0.12); text-decoration: none;">
+            <span>↗</span> กลับหน้าสมาชิก
+          </a>
+          <button id="btn-logout" style="background: #dc2626; color: #fff; border: none; padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+            ⏻ ออกจากระบบ
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Sub Navigation Menu -->
+    <div class="staff-subnav">
+      <div class="staff-menu">
+        <button class="staff-menu-btn active" data-tab="menu">
+          <span>🏠 เมนูหลัก</span>
+        </button>
+        <button class="staff-menu-btn" data-tab="pay">
+          <span>💵 1. รับชำระเงิน</span>
+        </button>
+        <button class="staff-menu-btn" data-tab="exp">
+          <span>🔴 2. รายจ่ายกองทุน</span>
+        </button>
+        <button class="staff-menu-btn" data-tab="ledger">
+          <span>⚖️ 3. บัญชีรายรับ-รายจ่าย</span>
+        </button>
+        <button class="staff-menu-btn" data-tab="inc">
+          <span>💰 4. รายได้อื่น</span>
+        </button>
+        <button class="staff-menu-btn" data-tab="members">
+          <span>👥 5. สมาชิก 162 หลัง</span>
+        </button>
+        <button class="staff-menu-btn" data-tab="receipts">
+          <span>📄 6. เอกสาร PDF</span>
+        </button>
+        <button class="staff-menu-btn" data-tab="history">
+          <span>⏱️ 7. ประวัติรายการ</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Container -->
+    <main class="main-wrapper" style="margin-top: 24px;">
+      <div id="staff-alert-box"></div>
+
+      <!-- ==================== TAB 0: เมนูหลักแบบไอคอน 4 เหลี่ยม (Requirement 2) ==================== -->
+      <div id="view-menu" class="staff-view">
+        <!-- Hero Header -->
+        <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #fff; border-radius: 20px; padding: 28px 28px 24px 28px; margin-bottom: 24px; box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2); position: relative; overflow: hidden;">
+          <div style="position: absolute; right: -20px; top: -30px; font-size: 140px; opacity: 0.05; pointer-events: none;">🏛️</div>
+          <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;">
+            <div>
+              <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.4); padding: 4px 12px; border-radius: 20px; font-size: 12px; color: #93c5fd; margin-bottom: 8px;">
+                <span class="live-dot" style="width: 7px; height: 7px;"></span> แดชบอร์ดเจ้าหน้าที่และผู้บริหารกองทุน
+              </div>
+              <h2 style="font-size: 22px; font-weight: 700; margin: 0; color: #f8fafc;">กองทุนพัฒนาหมู่บ้าน ลพบุรีราเมศวร์ธานี</h2>
+              <p style="font-size: 13px; color: #94a3b8; margin: 6px 0 0 0;">เลือกระบบงานที่ต้องการจากเมนูด้านล่าง ข้อมูลเชื่อมต่อกับ Supabase และอัปเดตเรียลไทม์ทันที</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+              <button onclick="StaffTabs.menu()" class="btn" style="background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 8px 16px; font-size: 13px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                <span>🔄</span> รีเฟรชสถานะสด
+              </button>
+            </div>
+          </div>
+
+          <!-- Top 4 Live KPI Stats -->
+          <div class="staff-hero-kpis" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <div style="background: rgba(255,255,255,0.06); padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
+              <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">ยอดคงเหลือสุทธิ (รวม)</div>
+              <div id="menu-stat-net" style="font-size: 20px; font-weight: 800; color: #38bdf8; margin-top: 4px;">฿0.00</div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 2px;">ธนาคาร + เงินสดย่อย</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.06); padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
+              <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">บัญชีเงินฝาก ธ.กรุงเทพ</div>
+              <div id="menu-stat-bank" style="font-size: 20px; font-weight: 800; color: #60a5fa; margin-top: 4px;">฿0.00</div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 2px;">บัญชีหลักกองทุน</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.06); padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
+              <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">บัญชีเงินสดย่อยสำรองจ่าย</div>
+              <div id="menu-stat-reserve" style="font-size: 20px; font-weight: 800; color: #fbbf24; margin-top: 4px;">฿0.00</div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 2px;">เงินสดเหรัญญิก</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.06); padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
+              <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">อัตราจัดเก็บค่าส่วนกลาง</div>
+              <div id="menu-stat-pct" style="font-size: 20px; font-weight: 800; color: #34d399; margin-top: 4px;">0%</div>
+              <div id="menu-stat-received" style="font-size: 11px; color: #64748b; margin-top: 2px;">ยอดรับ ฿0.00</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 8 Modern Square Icon Menu Cards (Requirement 2) -->
+        <div class="staff-menu-grid">
+          <!-- Card 1: บันทึกรับชำระเงิน -->
+          <div class="staff-square-card" onclick="StaffRouter.navigate('pay')">
+            <div class="staff-card-icon-wrapper" style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); color: #1d4ed8;">
+              💵
+            </div>
+            <span class="staff-card-badge" style="background: #eff6ff; color: #1d4ed8;">โมดูล 1</span>
+            <h3 class="staff-card-title">บันทึกรับชำระเงิน</h3>
+            <p class="staff-card-desc">เคาน์เตอร์การเงิน รับชำระค่าส่วนกลาง 4 งวด, แนบภาพสลิปธนาคาร และออกใบเสร็จรับเงิน E-Receipt</p>
+            <div class="staff-card-action">
+              <span>เปิดใช้งาน</span>
+              <span class="staff-card-arrow">→</span>
+            </div>
+          </div>
+
+          <!-- Card 2: บันทึกรายจ่ายกองทุน -->
+          <div class="staff-square-card" onclick="StaffRouter.navigate('exp')">
+            <div class="staff-card-icon-wrapper" style="background: linear-gradient(135deg, #ffe4e6 0%, #fecdd3 100%); color: #be123c;">
+              🔴
+            </div>
+            <span class="staff-card-badge" style="background: #fff1f2; color: #be123c;">โมดูล 2</span>
+            <h3 class="staff-card-title">บันทึกรายจ่ายกองทุน</h3>
+            <p class="staff-card-desc">ลงรายการเบิกจ่าย ค่ารปภ., ค่าไฟฟ้า, จัดเก็บขยะ, ซ่อมบำรุง และโอนเติมเงินสดย่อย</p>
+            <div class="staff-card-action">
+              <span>เปิดใช้งาน</span>
+              <span class="staff-card-arrow">→</span>
+            </div>
+          </div>
+
+          <!-- Card 3: บัญชีรายรับ-รายจ่าย -->
+          <div class="staff-square-card" onclick="StaffRouter.navigate('ledger')">
+            <div class="staff-card-icon-wrapper" style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); color: #047857;">
+              ⚖️
+            </div>
+            <span class="staff-card-badge" style="background: #ecfdf5; color: #047857;">โมดูล 3</span>
+            <h3 class="staff-card-title">บัญชีรายรับ-รายจ่าย</h3>
+            <p class="staff-card-desc">สมุดบัญชีแยกประเภท มีตัวเลือกบัญชีเงินฝากธนาคาร vs บัญชีเงินสด พร้อมยอดคงเหลือสะสม</p>
+            <div class="staff-card-action">
+              <span>เปิดใช้งาน</span>
+              <span class="staff-card-arrow">→</span>
+            </div>
+          </div>
+
+          <!-- Card 4: บันทึกรายได้อื่น -->
+          <div class="staff-square-card" onclick="StaffRouter.navigate('inc')">
+            <div class="staff-card-icon-wrapper" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: #b45309;">
+              💰
+            </div>
+            <span class="staff-card-badge" style="background: #fffbeb; color: #b45309;">โมดูล 4</span>
+            <h3 class="staff-card-title">บันทึกรายได้อื่น</h3>
+            <p class="staff-card-desc">บันทึกรายรับดอกเบี้ยเงินฝากธนาคาร, เงินบริจาคพัฒนาโครงการ, หรือเงินสนับสนุนกิจกรรม</p>
+            <div class="staff-card-action">
+              <span>เปิดใช้งาน</span>
+              <span class="staff-card-arrow">→</span>
+            </div>
+          </div>
+
+          <!-- Card 5: ทะเบียนสมาชิก 162 หลัง -->
+          <div class="staff-square-card" onclick="StaffRouter.navigate('members')">
+            <div class="staff-card-icon-wrapper" style="background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%); color: #6d28d9;">
+              👥
+            </div>
+            <span class="staff-card-badge" style="background: #f5f3ff; color: #6d28d9;">โมดูล 5</span>
+            <h3 class="staff-card-title">ทะเบียนสมาชิก 162 หลัง</h3>
+            <p class="staff-card-desc">ตรวจสอบรายชื่อลูกบ้านรายซอย, ประวัติการชำระเงิน 4 งวด, ยอดค้างชำระ และส่งออก Excel</p>
+            <div class="staff-card-action">
+              <span>เปิดใช้งาน</span>
+              <span class="staff-card-arrow">→</span>
+            </div>
+          </div>
+
+          <!-- Card 6: ออกเอกสารทางการ PDF -->
+          <div class="staff-square-card" onclick="StaffRouter.navigate('receipts')">
+            <div class="staff-card-icon-wrapper" style="background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); color: #0369a1;">
+              📄
+            </div>
+            <span class="staff-card-badge" style="background: #f0f9ff; color: #0369a1;">โมดูล 6</span>
+            <h3 class="staff-card-title">ออกเอกสารทางการ PDF</h3>
+            <p class="staff-card-desc">พิมพ์ใบเสร็จรับเงินทางการพร้อมลายเซ็น, สรุปงบการเงินประจำปี และหนังสือแจ้งยอดค้างชำระ</p>
+            <div class="staff-card-action">
+              <span>เปิดใช้งาน</span>
+              <span class="staff-card-arrow">→</span>
+            </div>
+          </div>
+
+          <!-- Card 7: ประวัติการทำรายการ -->
+          <div class="staff-square-card" onclick="StaffRouter.navigate('history')">
+            <div class="staff-card-icon-wrapper" style="background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); color: #334155;">
+              ⏱️
+            </div>
+            <span class="staff-card-badge" style="background: #f8fafc; color: #334155;">โมดูล 7</span>
+            <h3 class="staff-card-title">ประวัติการทำรายการ</h3>
+            <p class="staff-card-desc">Audit Trail ตรวจสอบความถูกต้อง บันทึกประวัติการเพิ่ม-ลบ-แก้ไขรายการของเจ้าหน้าที่ทุกคน</p>
+            <div class="staff-card-action">
+              <span>เปิดใช้งาน</span>
+              <span class="staff-card-arrow">→</span>
+            </div>
+          </div>
+
+          <!-- Card 8: กลับหน้าสมาชิก / แดชบอร์ดสาธารณะ -->
+          <div class="staff-square-card" onclick="window.open('/', '_blank')">
+            <div class="staff-card-icon-wrapper" style="background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); color: #4338ca;">
+              🌐
+            </div>
+            <span class="staff-card-badge" style="background: #eef2ff; color: #4338ca;">แดชบอร์ด</span>
+            <h3 class="staff-card-title">หน้าหลักลูกบ้าน</h3>
+            <p class="staff-card-desc">เปิดดูแดชบอร์ดโปร่งใสและระบบค้นหาสถานะบ้านตนเองของลูกบ้านในแท็บใหม่</p>
+            <div class="staff-card-action">
+              <span>เปิดหน้าต่างใหม่</span>
+              <span class="staff-card-arrow">↗</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 1: บันทึกรับชำระเงิน (Image 4) ==================== -->
+      <div id="view-pay" class="staff-view hidden">
+        <div class="grid-2">
+          <!-- Form Left Column (Image 4) -->
+          <div class="form-card">
+            <span class="form-badge">เคาน์เตอร์การเงิน</span>
+            <h2 class="form-title">บันทึกรับชำระเงินค่ากองทุนพัฒนาหมู่บ้าน</h2>
+            <p class="form-subtitle">บันทึกรับเงิน ออกใบเสร็จรับเงิน (E-Receipt) และอัปเดตระบบเรียลไทม์</p>
+
+            <div class="form-group">
+              <label class="form-label">เลือกลูกบ้าน / บ้านเลขที่ *</label>
+              <select id="sel-pay-house" class="form-control">
+                <option value="">-- ค้นหาหรือเลือกลูกบ้าน (162 หลัง) --</option>
+              </select>
+            </div>
+
+            <!-- 4 Period Selection Cards (Image 4) -->
+            <div class="form-group">
+              <label class="form-label">เลือกงวดที่ต้องการชำระเงิน *</label>
+              <div class="period-selector-grid" id="period-selector-container">
+                <div class="period-check-card" data-q="1" onclick="toggleQuarter(1)">
+                  <div class="period-card-title" style="font-weight: 700; font-size: 14px;">งวดที่ 1</div>
+                  <div class="period-card-sub" style="font-size: 11px; color: #64748b;">ม.ค. - มี.ค.</div>
+                  <div class="period-status-pill unpaid" id="q-status-1">รอชำระ</div>
+                </div>
+                <div class="period-check-card" data-q="2" onclick="toggleQuarter(2)">
+                  <div class="period-card-title" style="font-weight: 700; font-size: 14px;">งวดที่ 2</div>
+                  <div class="period-card-sub" style="font-size: 11px; color: #64748b;">เม.ย. - มิ.ย.</div>
+                  <div class="period-status-pill unpaid" id="q-status-2">รอชำระ</div>
+                </div>
+                <div class="period-check-card" data-q="3" onclick="toggleQuarter(3)">
+                  <div class="period-card-title" style="font-weight: 700; font-size: 14px;">งวดที่ 3</div>
+                  <div class="period-card-sub" style="font-size: 11px; color: #64748b;">ก.ค. - ก.ย.</div>
+                  <div class="period-status-pill unpaid" id="q-status-3">รอชำระ</div>
+                </div>
+                <div class="period-check-card" data-q="4" onclick="toggleQuarter(4)">
+                  <div class="period-card-title" style="font-weight: 700; font-size: 14px;">งวดที่ 4</div>
+                  <div class="period-card-sub" style="font-size: 11px; color: #64748b;">ต.ค. - ธ.ค.</div>
+                  <div class="period-status-pill unpaid" id="q-status-4">รอชำระ</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid-2" style="margin-bottom: 0;">
+              <div class="form-group">
+                <label class="form-label">ช่องทางการชำระ *</label>
+                <select id="sel-pay-channel" class="form-control" onchange="toggleSlipUploadField()">
+                  <option value="transfer">โอนเงินเข้าบัญชี (ธนาคารกรุงเทพ)</option>
+                  <option value="cash">เงินสด</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">ยอดเงินที่คำนวณได้ (บาท) *</label>
+                <input type="text" id="input-pay-amount" class="form-control" style="font-size: 18px; font-weight: 700; color: #059669; background: #f8fafc;" value="0.00" readonly>
+              </div>
+            </div>
+
+            <!-- Upload Slip Container (Requirement 1.2) -->
+            <div class="form-group" id="group-pay-slip">
+              <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+                <span>📸 แนบสลิปจากธนาคาร (กรณีโอนผ่านธนาคาร)</span>
+                <span style="font-size: 11px; font-weight: normal; color: #059669;">บันทึกเข้า Google Drive กองทุน</span>
+              </label>
+              <div class="slip-upload-dropzone" id="slip-dropzone" onclick="document.getElementById('input-pay-slip-file').click()">
+                <input type="file" id="input-pay-slip-file" accept="image/*" style="display: none;" onchange="handleSlipFileSelected(this)">
+                <div id="slip-upload-placeholder">
+                  <div style="font-size: 26px; margin-bottom: 4px;">📤</div>
+                  <div style="font-weight: 600; font-size: 13px; color: #334155;">คลิกเพื่อเลือกไฟล์สลิป หรือลากรูปมาวางที่นี่</div>
+                  <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">รองรับ JPG, PNG, WEBP (ส่งเข้า Google Drive กองทุน)</div>
+                </div>
+                <div id="slip-upload-preview" style="display: none; align-items: center; gap: 12px; text-align: left;">
+                  <img id="slip-preview-img" src="" alt="Slip preview" style="max-height: 70px; max-width: 70px; object-fit: cover; border-radius: 8px; border: 1px solid #cbd5e1;">
+                  <div style="flex: 1; min-width: 0;">
+                    <div id="slip-file-name" style="font-weight: 600; font-size: 13px; color: #1e293b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></div>
+                    <div id="slip-file-size" style="font-size: 11px; color: #64748b;"></div>
+                    <button type="button" class="btn btn-sm btn-outline-danger" id="btn-remove-slip" style="margin-top: 4px; padding: 2px 8px; font-size: 11px; cursor: pointer;" onclick="event.stopPropagation(); removeSlipFile();">✕ ลบสลิปออก</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">หมายเหตุ หรือข้อมูลสลิป</label>
+              <input type="text" id="input-pay-note" class="form-control" placeholder="เช่น เวลาโอน 14.30 น. หรือ ชำระแทนโดยคุณ...">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">วันที่ชำระเงิน</label>
+              <input type="date" id="input-pay-date" class="form-control">
+            </div>
+
+            <button class="btn-primary-green" id="btn-submit-payment">
+              <span>💳</span> บันทึกรับเงิน & ออกใบเสร็จ E-Receipt ทันที
+            </button>
+          </div>
+
+          <!-- Right Column (Image 4) -->
+          <div style="display: flex; flex-direction: column; gap: 20px;">
+            <!-- Criteria Summary Card -->
+            <div class="content-section" style="margin-bottom: 0;">
+              <div class="section-title" style="font-size: 15px; margin-bottom: 14px;">
+                <span>ℹ️</span> สรุปเกณฑ์การจัดเก็บประจำปี 2569
+              </div>
+              <div style="font-size: 14px; line-height: 2;">
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px;">
+                  <span style="color: #64748b;">ซอย 1 ถึง 10:</span>
+                  <b>300 บาท/เดือน (900 บาท/งวด)</b>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding: 6px 0;">
+                  <span style="color: #64748b;">สายหลัก:</span>
+                  <b>100 บาท/เดือน (300 บาท/งวด)</b>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding-top: 6px;">
+                  <span style="color: #64748b;">ผู้รับเงินและลงนามในใบเสร็จ:</span>
+                  <b style="color: #059669;">น.ส.วีระออ สุวรรณสิทธิ์ (เหรัญญิก ผู้รับเงิน)</b>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recent Payments Feed (กล่องรายการรับเงินล่าสุดในระบบ) -->
+            <div class="content-section" style="margin-bottom: 0; flex: 1;">
+              <div class="section-title" style="font-size: 15px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                <div><span>⏱️</span> รายการรับเงินล่าสุดในระบบ</div>
+                <button type="button" class="btn-view-all" onclick="switchTab('all-payments')">
+                  <span>🔍 ดูทั้งหมด (ปี 2569)</span>
+                </button>
+              </div>
+              <div id="recent-payments-feed" style="font-size: 13px; max-height: 340px; overflow-y: auto;">
+                <!-- Filled dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 2: บันทึกรายจ่ายกองทุน (Image 3) ==================== -->
+      <div id="view-exp" class="staff-view hidden">
+        <div class="grid-2">
+          <!-- Left: Expense Form -->
+          <div class="form-card">
+            <span class="form-badge" style="background: #fee2e2; color: #b91c1c;">การเบิกจ่าย</span>
+            <h2 class="form-title">บันทึกรายจ่ายกองทุนพัฒนาหมู่บ้าน</h2>
+            <p class="form-subtitle">บันทึกค่า รปภ. สาธารณูปโภค ค่าซ่อมแซม และค่าอุปกรณ์</p>
+
+            <div class="form-group">
+              <label class="form-label">รายการค่าใช้จ่าย *</label>
+              <input type="text" id="input-exp-desc" class="form-control" placeholder="เช่น ค่า รปภ. ประจำเดือน, ค่าไฟฟ้าอาคารอเนกประสงค์">
+            </div>
+
+            <div class="grid-2" style="margin-bottom: 0;">
+              <div class="form-group">
+                <label class="form-label">จำนวนเงิน (บาท) *</label>
+                <input type="number" step="0.01" id="input-exp-amount" class="form-control" placeholder="0.00">
+              </div>
+              <div class="form-group">
+                <label class="form-label">ผู้รับเงิน / หน่วยงาน *</label>
+                <input type="text" id="input-exp-payee" class="form-control" placeholder="เช่น บริษัท รปภ., การไฟฟ้าส่วนภูมิภาค">
+              </div>
+            </div>
+
+            <div class="grid-2" style="margin-bottom: 0;">
+              <div class="form-group">
+                <label class="form-label">หมวดหมู่ค่าใช้จ่าย *</label>
+                <select id="sel-exp-cat" class="form-control">
+                  <option value="C01">ค่ารักษาความปลอดภัย (รปภ.)</option>
+                  <option value="C04">บำรุงรักษา & ซ่อมแซม</option>
+                  <option value="C02">สาธารณูปโภค (ไฟ/น้ำ)</option>
+                  <option value="C03">ค่าบริการธนาคาร SMS</option>
+                  <option value="C05">กิจกรรม/พิธีชุมชน</option>
+                  <option value="C99">อื่นๆ</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">จ่ายจากแหล่งเงิน *</label>
+                <select id="sel-exp-src" class="form-control">
+                  <option value="bank">บัญชีธนาคาร (ธนาคารกรุงเทพ)</option>
+                  <option value="reserve">เงินสำรองจ่าย (เงินสด)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">วันที่จ่าย</label>
+              <input type="date" id="input-exp-date" class="form-control">
+            </div>
+
+            <button class="btn-primary-dark" id="btn-submit-expense" style="margin-top: 10px;">
+              <span>✔️</span> ยืนยันบันทึกรายจ่าย
+            </button>
+          </div>
+
+          <!-- Right: Recent Expenses Feed -->
+          <div class="content-section" style="margin-bottom: 0;">
+            <div class="section-title" style="font-size: 15px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+              <div><span>⏱️</span> รายการรายจ่ายล่าสุดในระบบ</div>
+              <button type="button" class="btn-view-all" onclick="switchTab('all-expenses')">
+                <span>🔍 ดูทั้งหมด (ปี 2569)</span>
+              </button>
+            </div>
+            <div id="recent-expenses-feed" style="font-size: 13px; max-height: 480px; overflow-y: auto;">
+              <!-- Filled dynamically by loadRecentExpenses -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 3: บัญชีรายรับ-รายจ่าย (Requirement 3) ==================== -->
+      <div id="view-ledger" class="staff-view hidden">
+        <div class="report-header-card" style="margin-bottom: 20px;">
+          <div class="report-title-box">
+            <h2><span>⚖️</span> สมุดบัญชีรายรับ-รายจ่าย (Cash & Bank Ledger)</h2>
+            <p>บันทึกการเคลื่อนไหวทางการเงิน แยกบัญชีเงินฝากธนาคาร และ บัญชีเงินสด พร้อมยอดคงเหลือสะสมเรียลไทม์</p>
+          </div>
+          <div class="report-action-btns">
+            <button class="btn btn-primary" onclick="StaffTabs.ledger()" style="padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
+              🔄 รีเฟรชข้อมูลล่าสุด
+            </button>
+            <button class="btn-print-report" onclick="window.printLedgerReport()" style="padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; background: #0284c7; color: #fff; border: none; cursor: pointer;">
+              🖨️ พิมพ์รายงาน
+            </button>
+            <button class="btn-export-excel" onclick="window.exportLedgerCSV()" style="padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
+              📥 ส่งออก Excel / CSV
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI Balance Summary for Ledger -->
+        <div class="grid-4" style="margin-bottom: 20px;">
+          <div class="card stat-card">
+            <div id="ledger-stat-opening-title" style="font-size: 12px; color: #64748b; font-weight: 600;">ยอดยกมาจากปี 2568</div>
+            <div id="ledger-stat-opening" style="font-size: 22px; font-weight: 700; color: #334155; margin-top: 4px;">฿0.00</div>
+            <div id="ledger-stat-opening-sub" style="font-size: 11px; color: #94a3b8; margin-top: 2px;">ณ วันที่ 24 ม.ค. 2569</div>
+          </div>
+          <div class="card stat-card">
+            <div id="ledger-stat-inflow-title" style="font-size: 12px; color: #059669; font-weight: 600;">รวมรายรับทั้งสิ้น (+)</div>
+            <div id="ledger-stat-inflow" style="font-size: 22px; font-weight: 700; color: #059669; margin-top: 4px;">฿0.00</div>
+            <div id="ledger-stat-inflow-sub" style="font-size: 11px; color: #64748b; margin-top: 2px;">0 รายการ</div>
+          </div>
+          <div class="card stat-card">
+            <div id="ledger-stat-outflow-title" style="font-size: 12px; color: #dc2626; font-weight: 600;">รวมรายจ่ายทั้งสิ้น (-)</div>
+            <div id="ledger-stat-outflow" style="font-size: 22px; font-weight: 700; color: #dc2626; margin-top: 4px;">฿0.00</div>
+            <div id="ledger-stat-outflow-sub" style="font-size: 11px; color: #64748b; margin-top: 2px;">0 รายการ</div>
+          </div>
+          <div class="card stat-card" style="border: 2px solid #2563eb; background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%);">
+            <div id="ledger-stat-balance-title" style="font-size: 12px; color: #1e40af; font-weight: 700;">ยอดคงเหลือสุทธิยกไป</div>
+            <div id="ledger-stat-balance" style="font-size: 22px; font-weight: 800; color: #1e3a8a; margin-top: 4px;">฿0.00</div>
+            <div id="ledger-stat-balance-sub" style="font-size: 11px; color: #2563eb; font-weight: 600; margin-top: 2px;">บัญชีที่เลือก</div>
+          </div>
+        </div>
+
+        <!-- Filter Controls -->
+        <div class="card" style="padding: 16px 20px; margin-bottom: 20px; background: #fff; border-radius: 12px;">
+          <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+            <div style="flex: 1; min-width: 200px;">
+              <label style="font-size: 12px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">เลือกบัญชีการเงิน *</label>
+              <select id="ledger-filter-account" onchange="window.renderLedgerView()" class="form-control" style="font-weight: 600; color: #1e293b; background: #f8fafc;">
+                <option value="all">🏦+💵 รวมทุกบัญชี (ธนาคาร + เงินสด)</option>
+                <option value="bank">🏦 บัญชีเงินฝาก ธนาคารกรุงเทพ</option>
+                <option value="cash">💵 บัญชีเงินสด / เงินสดย่อยสำรองจ่าย</option>
+              </select>
+            </div>
+            <div style="width: 170px;">
+              <label style="font-size: 12px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">ประจำเดือน</label>
+              <select id="ledger-filter-month" onchange="window.renderLedgerView()" class="form-control">
+                <option value="all">-- ทั้งหมด (ทุกเดือน) --</option>
+                <option value="1">มกราคม</option>
+                <option value="2">กุมภาพันธ์</option>
+                <option value="3">มีนาคม</option>
+                <option value="4">เมษายน</option>
+                <option value="5">พฤษภาคม</option>
+                <option value="6">มิถุนายน</option>
+                <option value="7">กรกฎาคม</option>
+                <option value="8">สิงหาคม</option>
+                <option value="9">กันยายน</option>
+                <option value="10">ตุลาคม</option>
+                <option value="11">พฤศจิกายน</option>
+                <option value="12">ธันวาคม</option>
+              </select>
+            </div>
+            <div style="width: 150px;">
+              <label style="font-size: 12px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">ประเภท</label>
+              <select id="ledger-filter-type" onchange="window.renderLedgerView()" class="form-control">
+                <option value="all">-- ทุกประเภท --</option>
+                <option value="inflow">เฉพาะรายรับ (+)</option>
+                <option value="outflow">เฉพาะรายจ่าย (-)</option>
+              </select>
+            </div>
+            <div style="flex: 1.5; min-width: 220px;">
+              <label style="font-size: 12px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">ค้นหารายการ / รหัส</label>
+              <input type="text" id="ledger-filter-search" oninput="window.renderLedgerView()" placeholder="พิมพ์คำค้น เช่น รปภ., ขยะ, บ้าน 444..." class="form-control">
+            </div>
+          </div>
+        </div>
+
+        <!-- Ledger Table Card -->
+        <div class="card" style="padding: 0; overflow: hidden; border-radius: 12px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04); border: 1px solid #e2e8f0;">
+          <div class="table-responsive">
+            <table class="data-table ledger-table">
+              <thead>
+                <tr>
+                  <th style="width: 55px; text-align: center;">ลำดับ</th>
+                  <th style="width: 115px; text-align: center;">วันที่/เวลา</th>
+                  <th style="width: 115px; text-align: center;">เลขที่เอกสาร</th>
+                  <th style="text-align: left;">รายการ / คำอธิบาย</th>
+                  <th style="width: 110px; text-align: center;">บัญชี</th>
+                  <th style="width: 125px; text-align: right;">รายรับ (+)</th>
+                  <th style="width: 125px; text-align: right;">รายจ่าย (-)</th>
+                  <th style="width: 135px; text-align: right;">คงเหลือสะสม</th>
+                </tr>
+              </thead>
+              <tbody id="ledger-table-body">
+                <!-- Dynamically rendered by tab-ledger.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 4: บันทึกรายได้อื่น ==================== -->
+      <div id="view-inc" class="staff-view hidden">
+        <div class="grid-2">
+          <div class="form-card">
+            <span class="form-badge" style="background: #dcfce7; color: #166534;">รายได้กองทุน</span>
+            <h2 class="form-title">บันทึกรายได้อื่นของกองทุน</h2>
+            <p class="form-subtitle">เงินบริจาค ดอกเบี้ยเงินฝาก เงินสนับสนุน และรายได้ทางอื่นๆ (รวมเข้ายอดเงินกองทุนทันที)</p>
+
+            <div class="form-group">
+              <label class="form-label">ประเภทรายได้ *</label>
+              <select id="sel-inc-type" class="form-control">
+                <option value="donation">เงินบริจาค</option>
+                <option value="interest">ดอกเบี้ยเงินฝาก</option>
+                <option value="support">เงินสนับสนุน</option>
+                <option value="other">รายได้ทางอื่นๆ</option>
+              </select>
+            </div>
+            <div class="grid-2" style="margin-bottom: 0;">
+              <div class="form-group">
+                <label class="form-label">ช่องทางรับเงิน *</label>
+                <select id="sel-inc-channel" class="form-control">
+                  <option value="transfer">โอนเข้าบัญชีธนาคารกรุงเทพ</option>
+                  <option value="cash">เงินสด (เข้าเงินสำรองในมือ)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">จำนวนเงิน (บาท) *</label>
+                <input type="number" step="0.01" id="input-inc-amount" class="form-control" placeholder="0.00">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">วันที่ได้รับ *</label>
+              <input type="date" id="input-inc-date" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label">รายละเอียด / ผู้บริจาค / แหล่งที่มา</label>
+              <input type="text" id="input-inc-note" class="form-control" placeholder="เช่น คุณสมชาย บริจาคสมทบทุน, ดอกเบี้ยออมทรัพย์ ธ.กรุงเทพ">
+            </div>
+            <button class="btn-primary-green" id="btn-submit-income" style="margin-top: 10px;">
+              <span>✔️</span> ยืนยันบันทึกรายได้
+            </button>
+          </div>
+
+          <div class="content-section" style="margin-bottom: 0;">
+            <div class="section-title" style="font-size: 15px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span>⏱️</span> รายได้อื่นล่าสุด <span id="inc-total-badge" style="color:#059669; font-weight:700;"></span>
+              </div>
+              <button type="button" class="btn-view-all" onclick="switchTab('all-income')">
+                <span>🔍 ดูทั้งหมด (ปี 69)</span>
+              </button>
+            </div>
+            <div id="recent-income-feed" style="font-size: 13px; max-height: 480px; overflow-y: auto;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 4: ทะเบียนสมาชิก 162 หลัง (Image 2) ==================== -->
+      <div id="view-members" class="staff-view hidden">
+        <div class="content-section">
+          <div class="section-header">
+            <div>
+              <div class="section-title">ทะเบียนสมาชิกและประวัติการชำระ (162 หลังคาเรือน)</div>
+              <p style="font-size: 13px; color: #64748b;">จัดการข้อมูลลูกบ้าน ตรวจสอบรายซอย และพิมพ์ใบเสร็จย้อนหลัง</p>
+            </div>
+            <div class="members-filter-group" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+              <!-- Filter by Zone -->
+              <select id="staff-filter-zone" class="form-control" style="width: auto;">
+                <option value="">ทุกซอย (162 หลัง)</option>
+              </select>
+              <!-- Filter by Status -->
+              <select id="staff-filter-status" class="form-control" style="width: auto;">
+                <option value="">ทุกสถานะ</option>
+                <option value="paid">ชำระครบ</option>
+                <option value="partial">ชำระบางส่วน</option>
+                <option value="unpaid">ยังไม่ชำระ</option>
+              </select>
+              <!-- Search box -->
+              <input type="text" id="staff-members-search" class="form-control" style="width: 200px;" placeholder="ค้นหาชื่อ หรือบ้านเลขที่...">
+              <!-- Excel Export Button -->
+              <button id="btn-export-excel" class="btn-excel" onclick="exportToExcel()">
+                <span>📥</span> ส่งออก Excel
+              </button>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <div class="mobile-scroll-hint">👉 เลื่อนตารางซ้าย-ขวา เพื่อดูยอดชำระและประวัติงวด</div>
+            <table class="table-statement" id="staff-members-table"></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 4: ออกเอกสารทางการ PDF (Image 4) ==================== -->
+      <div id="view-receipts" class="staff-view hidden">
+        <div class="content-section">
+          <div style="margin-bottom: 24px;">
+            <h2 style="font-size: 20px; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+              <span style="color: #dc2626;">📄</span> ศูนย์ออกเอกสารและรายงานทางการ (PDF A4)
+            </h2>
+            <p style="font-size: 13px; color: #64748b;">เลือกรายงานที่ต้องการพิมพ์ หรือบันทึกเป็นเอกสาร PDF สำหรับคณะกรรมการ</p>
+          </div>
+
+          <!-- 3 Document Action Cards (Image 4) -->
+          <div class="grid-3">
+            <!-- Card 1: ใบเสร็จรับเงิน -->
+            <div class="doc-card">
+              <div class="doc-card-top">
+                <div class="doc-icon-box" style="background: #eff6ff; color: #2563eb;">🧾</div>
+                <div class="doc-card-title">1. ใบเสร็จรับเงิน (Official E-Receipt)</div>
+                <div class="doc-card-desc">ใบเสร็จรับเงินระบุงวดที่ชำระตามจริง พร้อมลงนามเหรัญญิก</div>
+
+                <div class="form-group" style="margin-bottom: 10px;">
+                  <label class="form-label" style="font-size: 12px;">เลือกลูกบ้าน:</label>
+                  <select id="pdf-sel-house" class="form-control" style="font-size: 13px;"></select>
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label" style="font-size: 12px;">เลือกงวดที่ต้องการออกใบเสร็จ:</label>
+                  <select id="pdf-sel-period" class="form-control" style="font-size: 13px;">
+                    <option value="all">ทุกงวดที่ชำระแล้ว (แจกแจงรายงวด)</option>
+                    <option value="1">งวดที่ 1 (ม.ค. - มี.ค.)</option>
+                    <option value="2">งวดที่ 2 (เม.ย. - มิ.ย.)</option>
+                    <option value="3">งวดที่ 3 (ก.ค. - ก.ย.)</option>
+                    <option value="4">งวดที่ 4 (ต.ค. - ธ.ค.)</option>
+                  </select>
+                </div>
+              </div>
+              <button class="btn-search" style="width: 100%; justify-content: center;" onclick="generateOfficialReceipt()">
+                <span>🖨️</span> พิมพ์ใบเสร็จ PDF
+              </button>
+            </div>
+
+            <!-- Card 2: รายงานสรุปงบการเงิน 2569 -->
+            <div class="doc-card">
+              <div class="doc-card-top">
+                <div class="doc-icon-box" style="background: #ecfdf5; color: #059669;">📊</div>
+                <div class="doc-card-title">2. รายงานสรุปงบการเงิน 2569</div>
+                <div class="doc-card-desc">งบดุลสรุปยอดเงินและเงินฝากธนาคาร พร้อมลายเซ็นประธานและเหรัญญิก</div>
+              </div>
+              <button class="btn-primary-green" style="margin-top: 40px;" onclick="generateFinancialReport()">
+                <span>🖨️</span> พิมพ์งบดุล PDF
+              </button>
+            </div>
+
+            <!-- Card 3: รายงานผู้ค้างชำระแยกซอย -->
+            <div class="doc-card">
+              <div class="doc-card-top">
+                <div class="doc-icon-box" style="background: #fef2f2; color: #dc2626;">⚠️</div>
+                <div class="doc-card-title">3. รายงานผู้ค้างชำระแยกซอย</div>
+                <div class="doc-card-desc">บัญชีรายชื่อบ้านที่ค้างชำระเงิน สำหรับคณะกรรมการลงพื้นที่</div>
+              </div>
+              <button style="background: #dc2626; color: #fff; border: none; border-radius: 8px; padding: 10px; font-weight: 600; width: 100%; margin-top: 40px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="generateOverdueReport()">
+                <span>🖨️</span> พิมพ์รายชื่อค้างชำระ PDF
+              </button>
+            </div>
+          </div>
+
+          <!-- Document Print Preview Area -->
+          <div id="pdf-preview-box" class="hidden" style="margin-top: 30px; border-top: 2px solid #e2e8f0; padding-top: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;" class="no-print">
+              <h3 style="font-size: 16px;">เอกสารสำหรับพิมพ์ (Print Preview)</h3>
+              <div style="display: flex; gap: 8px;">
+                <button onclick="printActiveDoc()" class="btn-search">🖨️ สั่งพิมพ์เอกสารนี้</button>
+                <button onclick="document.getElementById('pdf-preview-box').classList.add('hidden')" style="padding: 6px 12px; background: #e2e8f0; border: none; border-radius: 6px; cursor: pointer;">ปิด</button>
+              </div>
+            </div>
+            <div id="pdf-render-canvas" class="paper-statement print-sheet"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 5: ประวัติการทำรายการ (Image 5) ==================== -->
+      <div id="view-history" class="staff-view hidden">
+        <div class="content-section" style="padding: 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #f1f5f9;">
+            <div>
+              <h2 style="font-size: 20px; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                <span>⏱️</span> บันทึกประวัติการทำรายการ (Audit Log)
+              </h2>
+              <p style="font-size: 13px; color: #64748b;">บันทึกความเคลื่อนไหวทุกขั้นตอนเพื่อความโปร่งใสและตรวจสอบได้</p>
+            </div>
+            <div id="audit-total-badge" style="font-size: 12px; font-weight: 600; background: #f1f5f9; color: #475569; padding: 6px 14px; border-radius: 20px;">
+              ทั้งหมด 0 รายการ
+            </div>
+          </div>
+
+          <!-- Audit Log Feed (No card borders, dashed line separator) -->
+          <div id="audit-log-feed">
+            <!-- Filled dynamically by renderAuditPage() -->
+          </div>
+
+          <!-- Pagination Bar -->
+          <div id="audit-pagination" class="pagination-bar" style="margin-top: 24px; padding-top: 16px; border-top: 1px dashed #cbd5e1; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div id="audit-page-info" style="font-size: 13px; color: #64748b;">
+              กำลังโหลดข้อมูล...
+            </div>
+            <div id="audit-page-btns" style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+              <!-- Page buttons rendered by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 7: รายการรายรับ ปี 2569 ==================== -->
+      <div id="view-all-payments" class="staff-view hidden">
+        <div class="report-header-card">
+          <div class="report-title-box">
+            <h2><span>📊</span> รายการรายรับ ปี 2569</h2>
+            <p>สรุปการรับชำระเงินค่ากองทุนพัฒนาหมู่บ้าน ลพบุรีราเมศวร์ธานี ประจำปี 2569 ทั้งหมด</p>
+          </div>
+          <div class="report-action-btns">
+            <button class="btn-print-report" onclick="printReport('payments')">
+              <span>🖨️</span> พิมพ์รายงาน
+            </button>
+            <button class="btn-excel" onclick="exportReportExcel('payments')">
+              <span>📥</span> ส่งออก Excel
+            </button>
+            <button type="button" class="btn-view-all" onclick="switchTab('pay')" style="background:#f1f5f9; color:#475569; border-color:#cbd5e1;">
+              <span>←</span> กลับหน้าบันทึก
+            </button>
+          </div>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="report-stats-grid">
+          <div class="report-stat-chip">
+            <div class="label">รวมยอดรับชำระทั้งหมด</div>
+            <div class="val" id="rep-pay-total" style="color: #059669;">฿0.00</div>
+          </div>
+          <div class="report-stat-chip">
+            <div class="label">จำนวนรายการรับชำระ</div>
+            <div class="val" id="rep-pay-count">0 รายการ</div>
+          </div>
+          <div class="report-stat-chip">
+            <div class="label">โอนเข้าบัญชีธนาคาร</div>
+            <div class="val" id="rep-pay-transfer" style="color: #2563eb;">฿0.00</div>
+          </div>
+          <div class="report-stat-chip">
+            <div class="label">รับชำระเป็นเงินสด</div>
+            <div class="val" id="rep-pay-cash" style="color: #d97706;">฿0.00</div>
+          </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="report-filter-bar">
+          <input type="text" id="filter-pay-search" class="form-control" style="width: 240px;" placeholder="ค้นหาบ้านเลขที่, สมาชิก, รหัส..." oninput="filterAllPayments()">
+          <select id="filter-pay-quarter" class="form-control" style="width: auto;" onchange="filterAllPayments()">
+            <option value="">ทุกงวด (งวด 1-4)</option>
+            <option value="1">งวดที่ 1 (ม.ค. - มี.ค.)</option>
+            <option value="2">งวดที่ 2 (เม.ย. - มิ.ย.)</option>
+            <option value="3">งวดที่ 3 (ก.ค. - ก.ย.)</option>
+            <option value="4">งวดที่ 4 (ต.ค. - ธ.ค.)</option>
+          </select>
+          <select id="filter-pay-month" class="form-control" style="width: auto;" onchange="filterAllPayments()">
+            <option value="">ทุกเดือน (ม.ค. - ธ.ค.)</option>
+            <option value="1">มกราคม (ม.ค.)</option>
+            <option value="2">กุมภาพันธ์ (ก.พ.)</option>
+            <option value="3">มีนาคม (มี.ค.)</option>
+            <option value="4">เมษายน (เม.ย.)</option>
+            <option value="5">พฤษภาคม (พ.ค.)</option>
+            <option value="6">มิถุนายน (มิ.ย.)</option>
+            <option value="7">กรกฎาคม (ก.ค.)</option>
+            <option value="8">สิงหาคม (ส.ค.)</option>
+            <option value="9">กันยายน (ก.ย.)</option>
+            <option value="10">ตุลาคม (ต.ค.)</option>
+            <option value="11">พฤศจิกายน (พ.ย.)</option>
+            <option value="12">ธันวาคม (ธ.ค.)</option>
+          </select>
+          <select id="filter-pay-channel" class="form-control" style="width: auto;" onchange="filterAllPayments()">
+            <option value="">ทุกช่องทาง (โอน/เงินสด)</option>
+            <option value="transfer">โอนเงินเข้าธนาคาร</option>
+            <option value="cash">เงินสด</option>
+          </select>
+          <button type="button" class="btn-view-all" onclick="resetPayFilter()" style="margin-left: auto;">
+            <span>🔄</span> รีเซ็ตตัวกรอง
+          </button>
+        </div>
+
+        <!-- Table Section -->
+        <div class="content-section" style="padding: 0; overflow: hidden;">
+          <div class="table-responsive">
+            <table class="table-statement" id="table-all-payments">
+              <thead>
+                <tr>
+                  <th style="width: 50px; text-align: center;">ลำดับ</th>
+                  <th style="width: 95px; text-align: center;">รหัสรายการ</th>
+                  <th style="width: 105px; text-align: center;">วันที่รับชำระ</th>
+                  <th style="width: 95px; text-align: center;">บ้านเลขที่</th>
+                  <th>สมาชิก / เจ้าของ</th>
+                  <th style="width: 110px; text-align: center;">งวด / เดือน</th>
+                  <th style="width: 110px; text-align: center;">ช่องทาง</th>
+                  <th style="width: 110px; text-align: right;">จำนวนเงิน</th>
+                  <th style="width: 95px; text-align: center;">ผู้บันทึก</th>
+                  <th>หมายเหตุ</th>
+                  <th style="width: 75px; text-align: center;">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-all-payments">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 8: รายการรายจ่าย ปี 2569 ==================== -->
+      <div id="view-all-expenses" class="staff-view hidden">
+        <div class="report-header-card">
+          <div class="report-title-box">
+            <h2><span>🔴</span> รายการรายจ่าย ปี 2569</h2>
+            <p>สรุปการเบิกจ่ายงบประมาณและค่าใช้จ่ายของกองทุนพัฒนาหมู่บ้าน ปี 2569 ทั้งหมด</p>
+          </div>
+          <div class="report-action-btns">
+            <button class="btn-print-report" onclick="printReport('expenses')">
+              <span>🖨️</span> พิมพ์รายงาน
+            </button>
+            <button class="btn-excel" onclick="exportReportExcel('expenses')">
+              <span>📥</span> ส่งออก Excel
+            </button>
+            <button type="button" class="btn-view-all" onclick="switchTab('exp')" style="background:#f1f5f9; color:#475569; border-color:#cbd5e1;">
+              <span>←</span> กลับหน้าบันทึก
+            </button>
+          </div>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="report-stats-grid">
+          <div class="report-stat-chip">
+            <div class="label">รวมยอดรายจ่ายทั้งหมด</div>
+            <div class="val" id="rep-exp-total" style="color: #dc2626;">฿0.00</div>
+          </div>
+          <div class="report-stat-chip">
+            <div class="label">จำนวนรายการเบิกจ่าย</div>
+            <div class="val" id="rep-exp-count">0 รายการ</div>
+          </div>
+          <div class="report-stat-chip">
+            <div class="label">จ่ายจากบัญชีธนาคาร</div>
+            <div class="val" id="rep-exp-bank" style="color: #2563eb;">฿0.00</div>
+          </div>
+          <div class="report-stat-chip">
+            <div class="label">จ่ายจากเงินสำรอง (เงินสด)</div>
+            <div class="val" id="rep-exp-reserve" style="color: #d97706;">฿0.00</div>
+          </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="report-filter-bar">
+          <input type="text" id="filter-exp-search" class="form-control" style="width: 220px;" placeholder="ค้นหารายการ, ผู้รับเงิน, เลขที่..." oninput="filterAllExpenses()">
+          <select id="filter-exp-month" class="form-control" style="width: auto;" onchange="filterAllExpenses()">
+            <option value="">ทุกเดือน (ม.ค. - ธ.ค.)</option>
+            <option value="1">มกราคม (ม.ค.)</option>
+            <option value="2">กุมภาพันธ์ (ก.พ.)</option>
+            <option value="3">มีนาคม (มี.ค.)</option>
+            <option value="4">เมษายน (เม.ย.)</option>
+            <option value="5">พฤษภาคม (พ.ค.)</option>
+            <option value="6">มิถุนายน (มิ.ย.)</option>
+            <option value="7">กรกฎาคม (ก.ค.)</option>
+            <option value="8">สิงหาคม (ส.ค.)</option>
+            <option value="9">กันยายน (ก.ย.)</option>
+            <option value="10">ตุลาคม (ต.ค.)</option>
+            <option value="11">พฤศจิกายน (พ.ย.)</option>
+            <option value="12">ธันวาคม (ธ.ค.)</option>
+          </select>
+          <select id="filter-exp-cat" class="form-control" style="width: auto;" onchange="filterAllExpenses()">
+            <option value="">ทุกหมวดหมู่ค่าใช้จ่าย</option>
+          </select>
+          <select id="filter-exp-source" class="form-control" style="width: auto;" onchange="filterAllExpenses()">
+            <option value="">ทุกแหล่งเงิน (ธนาคาร/เงินสด)</option>
+            <option value="bank">บัญชีธนาคารกรุงเทพ</option>
+            <option value="reserve">เงินสำรองจ่าย (เงินสด)</option>
+          </select>
+          <button type="button" class="btn-view-all" onclick="resetExpFilter()" style="margin-left: auto;">
+            <span>🔄</span> รีเซ็ตตัวกรอง
+          </button>
+        </div>
+
+        <!-- Table Section -->
+        <div class="content-section" style="padding: 0; overflow: hidden;">
+          <div class="table-responsive">
+            <table class="table-statement" id="table-all-expenses">
+              <thead>
+                <tr>
+                  <th style="width: 50px; text-align: center;">ลำดับ</th>
+                  <th style="width: 85px; text-align: center;">เลขที่</th>
+                  <th style="width: 105px; text-align: center;">วันที่จ่าย</th>
+                  <th>รายการค่าใช้จ่าย</th>
+                  <th style="width: 140px;">หมวดหมู่</th>
+                  <th style="width: 150px;">ผู้รับเงิน / หน่วยงาน</th>
+                  <th style="width: 120px; text-align: center;">แหล่งเงิน</th>
+                  <th style="width: 110px; text-align: right;">จำนวนเงิน</th>
+                  <th style="width: 90px; text-align: center;">สถานะ</th>
+                  <th style="width: 90px; text-align: center;">ผู้บันทึก</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-all-expenses">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 9: รายการรายได้อื่น ปี 69 ==================== -->
+      <div id="view-all-income" class="staff-view hidden">
+        <div class="report-header-card">
+          <div class="report-title-box">
+            <h2><span>💰</span> รายการรายได้อื่น ปี 69</h2>
+            <p>สรุปเงินบริจาค ดอกเบี้ยเงินฝาก เงินสนับสนุน และรายได้อื่นๆ ประจำปี 2569 ทั้งหมด</p>
+          </div>
+          <div class="report-action-btns">
+            <button class="btn-print-report" onclick="printReport('income')">
+              <span>🖨️</span> พิมพ์รายงาน
+            </button>
+            <button class="btn-excel" onclick="exportReportExcel('income')">
+              <span>📥</span> ส่งออก Excel
+            </button>
+            <button type="button" class="btn-view-all" onclick="switchTab('inc')" style="background:#f1f5f9; color:#475569; border-color:#cbd5e1;">
+              <span>←</span> กลับหน้าบันทึก
+            </button>
+          </div>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="report-stats-grid">
+          <div class="report-stat-chip">
+            <div class="label">รวมยอดรายได้อื่นทั้งหมด</div>
+            <div class="val" id="rep-inc-total" style="color: #059669;">฿0.00</div>
+          </div>
+          <div class="report-stat-chip">
+            <div class="label">จำนวนรายการ</div>
+            <div class="val" id="rep-inc-count">0 รายการ</div>
+          </div>
+          <div class="report-stat-chip">
+            <div class="label">โอนเข้าบัญชีธนาคาร</div>
+            <div class="val" id="rep-inc-transfer" style="color: #2563eb;">฿0.00</div>
+          </div>
+          <div class="report-stat-chip">
+            <div class="label">รับเป็นเงินสด</div>
+            <div class="val" id="rep-inc-cash" style="color: #d97706;">฿0.00</div>
+          </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="report-filter-bar">
+          <input type="text" id="filter-inc-search" class="form-control" style="width: 220px;" placeholder="ค้นหารายละเอียด, แหล่งที่มา..." oninput="filterAllIncome()">
+          <select id="filter-inc-month" class="form-control" style="width: auto;" onchange="filterAllIncome()">
+            <option value="">ทุกเดือน (ม.ค. - ธ.ค.)</option>
+            <option value="1">มกราคม (ม.ค.)</option>
+            <option value="2">กุมภาพันธ์ (ก.พ.)</option>
+            <option value="3">มีนาคม (มี.ค.)</option>
+            <option value="4">เมษายน (เม.ย.)</option>
+            <option value="5">พฤษภาคม (พ.ค.)</option>
+            <option value="6">มิถุนายน (มิ.ย.)</option>
+            <option value="7">กรกฎาคม (ก.ค.)</option>
+            <option value="8">สิงหาคม (ส.ค.)</option>
+            <option value="9">กันยายน (ก.ย.)</option>
+            <option value="10">ตุลาคม (ต.ค.)</option>
+            <option value="11">พฤศจิกายน (พ.ย.)</option>
+            <option value="12">ธันวาคม (ธ.ค.)</option>
+          </select>
+          <select id="filter-inc-type" class="form-control" style="width: auto;" onchange="filterAllIncome()">
+            <option value="">ทุกประเภทรายได้</option>
+            <option value="donation">เงินบริจาค</option>
+            <option value="interest">ดอกเบี้ยเงินฝาก</option>
+            <option value="support">เงินสนับสนุน</option>
+            <option value="other">รายได้ทางอื่นๆ</option>
+          </select>
+          <select id="filter-inc-channel" class="form-control" style="width: auto;" onchange="filterAllIncome()">
+            <option value="">ทุกช่องทาง (ธนาคาร/เงินสด)</option>
+            <option value="transfer">โอนเข้าบัญชีธนาคาร</option>
+            <option value="cash">เงินสด</option>
+          </select>
+          <button type="button" class="btn-view-all" onclick="resetIncFilter()" style="margin-left: auto;">
+            <span>🔄</span> รีเซ็ตตัวกรอง
+          </button>
+        </div>
+
+        <!-- Table Section -->
+        <div class="content-section" style="padding: 0; overflow: hidden;">
+          <div class="table-responsive">
+            <table class="table-statement" id="table-all-income">
+              <thead>
+                <tr>
+                  <th style="width: 50px; text-align: center;">ลำดับ</th>
+                  <th style="width: 95px; text-align: center;">รหัสรายการ</th>
+                  <th style="width: 105px; text-align: center;">วันที่ได้รับ</th>
+                  <th style="width: 140px;">ประเภทรายได้</th>
+                  <th>รายละเอียด / ผู้บริจาค / แหล่งที่มา</th>
+                  <th style="width: 130px; text-align: center;">ช่องทาง</th>
+                  <th style="width: 120px; text-align: right;">จำนวนเงิน</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-all-income">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+  <footer class="site-footer">
+    <div>© Copyright 2026 กองทุนพัฒนาหมู่บ้าน ลพบุรีราเมศวร์ธานี · พัฒนาระบบโดย <b>Mathman BM</b></div>
+    <div class="visit-stats" id="visit-stats"></div>
+  </footer>
+  </div>
+
+  <script src="/static/js/staff/api.js?v=20261103_8"></script>
+  <script src="/static/js/staff/router.js?v=20261103_8"></script>
+  <script src="/static/js/staff/tab-menu.js?v=20261103_8"></script>
+  <script src="/static/js/staff/tab-ledger.js?v=20261103_8"></script>
+  <script src="/static/js/staff/tab-pay.js?v=20261103_8"></script>
+  <script src="/static/js/staff/tab-exp.js?v=20261103_8"></script>
+  <script src="/static/js/staff/tab-inc.js?v=20261103_8"></script>
+  <script src="/static/js/staff/tab-members.js?v=20261103_8"></script>
+  <script src="/static/js/staff/tab-receipts.js?v=20261103_8"></script>
+  <script src="/static/js/staff/tab-history.js?v=20261103_8"></script>
+  <script src="/static/js/staff.js?v=20261103_8"></script>
+
+  <!-- Modal แสดงสลิปการโอนเงิน (Image Slip Viewer - Requirement 2) -->
+  <div id="slip-modal" class="slip-modal-backdrop" style="display: none;" onclick="closeSlipModal(event)">
+    <div class="slip-modal-content" onclick="event.stopPropagation()">
+      <div class="slip-modal-header">
+        <div>
+          <h3 id="slip-modal-title" style="margin: 0; font-size: 16px; font-weight: 700; color: #0f172a;">หลักฐานสลิปการโอนเงิน</h3>
+          <p id="slip-modal-subtitle" style="margin: 2px 0 0 0; font-size: 12px; color: #64748b;"></p>
+        </div>
+        <button type="button" class="btn-icon" onclick="closeSlipModal()" style="border: none; background: #e2e8f0; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 14px;">✕</button>
+      </div>
+      <div class="slip-modal-body" id="slip-modal-body">
+        <!-- Rendered dynamically -->
+      </div>
+      <div style="padding: 12px 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 10px; background: #f8fafc;">
+        <a id="slip-btn-drive" href="#" target="_blank" class="btn btn-outline-primary" style="display: none; align-items: center; gap: 6px; font-size: 13px; text-decoration: none; padding: 6px 14px; border-radius: 8px;">
+          <span>📂</span> เปิดดูไฟล์สลิปต้นฉบับ
+        </a>
+        <button type="button" class="btn btn-secondary" onclick="closeSlipModal()" style="padding: 6px 16px; border-radius: 8px; font-size: 13px; cursor: pointer;">ปิดหน้าต่าง</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Printable Area for Official Reports -->
+  <div id="printable-report-area"></div>
+</body>
+</html>
