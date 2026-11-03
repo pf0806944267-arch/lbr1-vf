@@ -325,3 +325,35 @@ def api_add_income():
 
     threading.Thread(target=store.refresh, daemon=True).start()
     return jsonify(ok=True, income=row)
+
+@staff_bp.post("/api/staff/transfers")
+@require()
+def api_add_transfer():
+    b = request.get_json(force=True)
+    d = store.data
+    amount = num(b.get("amount"), -1)
+    if amount <= 0 or not re.match(r"\d{4}-\d{2}-\d{2}$", b.get("date", "")):
+        return jsonify(error="กรุณากรอกวันที่และจำนวนเงินให้ถูกต้อง"), 400
+
+    with store.write_lock:
+        row = {
+            "rt_id": next_id("RT", d.get("reserve_transactions", []), "rt_id", 4),
+            "date": b["date"],
+            "type": "in",
+            "amount": amount,
+            "expense_id": "",
+            "note": b.get("note") or "เบิกเงินจากบัญชีธนาคารมาเติมเงินสดสำรองจ่าย"
+        }
+        sheet_post(action="append", table="reserve_transactions", row=row)
+        d.setdefault("reserve_transactions", []).append(row)
+        append_to_csv("reserve_transactions", row)
+        audit(request.user, "create", "reserve_transactions", row["rt_id"], new=json.dumps(row, ensure_ascii=False))
+
+        with store.cond:
+            store.version += 1
+            store.digest = json.dumps(d, sort_keys=True, ensure_ascii=False)
+            store.cond.notify_all()
+
+    threading.Thread(target=store.refresh, daemon=True).start()
+    return jsonify(ok=True, transfer=row)
+

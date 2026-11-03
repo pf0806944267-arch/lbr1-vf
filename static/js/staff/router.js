@@ -3,7 +3,7 @@
  */
 (function() {
   window.StaffRouter = {
-    validTabs: ['menu', 'pay', 'exp', 'ledger', 'inc', 'members', 'receipts', 'history', 'all-payments', 'all-expenses', 'all-income'],
+    validTabs: ['menu', 'pay', 'exp', 'ledger', 'inc', 'transfer', 'members', 'receipts', 'history', 'all-payments', 'all-expenses', 'all-income'],
     currentTab: 'menu',
 
     init: function() {

@@ -60,8 +60,11 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
       document.getElementById('val-received').textContent = '฿' + fmt(bal.received);
       document.getElementById('val-houses').textContent = data.houses_total + ' หลังคาเรือน';
       document.getElementById('val-expenses').textContent = '฿' + fmt(bal.expenses);
-      document.getElementById('val-opening').textContent = '฿' + fmt(bal.opening);
-      document.getElementById('val-interest').textContent = '฿' + fmt(bal.other_income);
+      const openTotal = (bal.opening_total !== undefined) ? bal.opening_total : ((bal.opening || 0) + (bal.opening_reserve || 0));
+      document.getElementById('val-opening').textContent = '฿' + fmt(openTotal);
+      if (document.getElementById('val-open-bank')) document.getElementById('val-open-bank').textContent = '฿' + fmt(bal.opening);
+      if (document.getElementById('val-open-reserve')) document.getElementById('val-open-reserve').textContent = '฿' + fmt(bal.opening_reserve);
+      if (document.getElementById('val-interest')) document.getElementById('val-interest').textContent = '฿' + fmt(bal.other_income);
       document.getElementById('badge-collected-rate').textContent = 'จัดเก็บแล้ว ' + data.year_collected_pct + '%';
       if (document.getElementById('comm-bank-bal')) {
         document.getElementById('comm-bank-bal').textContent = '฿' + fmt(bal.bank);

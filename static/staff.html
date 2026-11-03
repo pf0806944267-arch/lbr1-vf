@@ -97,6 +97,9 @@
         <button class="staff-menu-btn" data-tab="history">
           <span>⏱️ 7. ประวัติรายการ</span>
         </button>
+        <button class="staff-menu-btn" data-tab="transfer">
+          <span>🔄 8. ถอนเงินสด</span>
+        </button>
       </div>
     </div>
 
@@ -249,12 +252,26 @@
             </div>
           </div>
 
-          <!-- Card 8: กลับหน้าสมาชิก / แดชบอร์ดสาธารณะ -->
-          <div class="staff-square-card" onclick="window.open('/', '_blank')">
+          <!-- Card 8: ถอนเงินสด / โอนย้ายเงิน (Requirement) -->
+          <div class="staff-square-card" onclick="StaffRouter.navigate('transfer')">
             <div class="staff-card-icon-wrapper" style="background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); color: #4338ca;">
+              🔄
+            </div>
+            <span class="staff-card-badge" style="background: #eef2ff; color: #4338ca;">โมดูล 8</span>
+            <h3 class="staff-card-title">ถอนเงินสด / โอนย้ายเงิน</h3>
+            <p class="staff-card-desc">บันทึกถอนเงินจากบัญชี ธ.กรุงเทพ เพื่อเติมเงินสดสำรองจ่าย (ยอดคงเหลือรวมคงเดิม ไม่นับเป็นรายจ่าย)</p>
+            <div class="staff-card-action">
+              <span>เปิดใช้งาน</span>
+              <span class="staff-card-arrow">→</span>
+            </div>
+          </div>
+
+          <!-- Card 9: กลับหน้าสมาชิก / แดชบอร์ดสาธารณะ -->
+          <div class="staff-square-card" onclick="window.open('/', '_blank')">
+            <div class="staff-card-icon-wrapper" style="background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); color: #0284c7;">
               🌐
             </div>
-            <span class="staff-card-badge" style="background: #eef2ff; color: #4338ca;">แดชบอร์ด</span>
+            <span class="staff-card-badge" style="background: #f0f9ff; color: #0284c7;">แดชบอร์ด</span>
             <h3 class="staff-card-title">หน้าหลักลูกบ้าน</h3>
             <p class="staff-card-desc">เปิดดูแดชบอร์ดโปร่งใสและระบบค้นหาสถานะบ้านตนเองของลูกบ้านในแท็บใหม่</p>
             <div class="staff-card-action">
@@ -1082,23 +1099,117 @@
         </div>
       </div>
 
+      <!-- ==================== TAB 8: บันทึกถอนเงินสด / โอนย้ายเงิน (Requirement) ==================== -->
+      <div id="view-transfer" class="staff-view hidden">
+        <div class="grid-2">
+          <!-- Form Card -->
+          <div class="card" style="padding: 24px; background: #fff; border-radius: 16px;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid #f1f5f9;">
+              <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); display: flex; align-items: center; justify-content: center; font-size: 22px;">
+                🔄
+              </div>
+              <div>
+                <h2 style="font-size: 18px; font-weight: 700; color: #1e293b; margin: 0;">บันทึกถอนเงินสด / โอนย้ายเงิน</h2>
+                <p style="font-size: 12.5px; color: #64748b; margin: 3px 0 0 0;">ถอนเงินจากบัญชี ธ.กรุงเทพ เพื่อเติมเงินสดสำรองจ่าย (เงินสดย่อย)</p>
+              </div>
+            </div>
+
+            <!-- Notice Info Box -->
+            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 14px 16px; margin-bottom: 20px; font-size: 12.5px; color: #1e40af; line-height: 1.6;">
+              <div style="font-weight: 700; display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                ℹ️ ผลกระทบต่อบัญชีการเงิน:
+              </div>
+              <div>• <b>ยอดเงินคงเหลือสุทธิรวมของกองทุนยังคงเท่าเดิม</b> ไม่เปลี่ยนแปลง</div>
+              <div>• ยอดเงินในบัญชี ธนาคารกรุงเทพ จะลดลงตามจำนวนที่ถอน</div>
+              <div>• ยอดเงินในบัญชี เงินสดสำรองจ่าย จะเพิ่มขึ้นตามจำนวนที่รับเติม</div>
+              <div>• รายการนี้เป็นการโอนย้ายสินทรัพย์ภายในกองทุน <b>ไม่นับเป็นรายจ่ายของกองทุน</b></div>
+            </div>
+
+            <div id="transfer-form-alert"></div>
+
+            <form id="form-transfer" onsubmit="event.preventDefault();">
+              <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+                  📅 วันที่ทำรายการถอนเงิน <span style="color: #ef4444;">*</span>
+                </label>
+                <input type="date" id="input-trans-date" class="form-control" required style="font-size: 14px;">
+              </div>
+
+              <div class="grid-2" style="margin-bottom: 16px;">
+                <div>
+                  <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+                    🏦 ถอนจากบัญชีต้นทาง
+                  </label>
+                  <input type="text" class="form-control" value="บัญชีเงินฝาก ธ.กรุงเทพ" readonly style="background: #f8fafc; font-weight: 600; color: #1e40af;">
+                </div>
+                <div>
+                  <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+                    💵 เข้าสู่บัญชีปลายทาง
+                  </label>
+                  <input type="text" class="form-control" value="เงินสดสำรองจ่าย (เงินสดย่อย)" readonly style="background: #f8fafc; font-weight: 600; color: #b45309;">
+                </div>
+              </div>
+
+              <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+                  💰 จำนวนเงินที่ถอน (บาท) <span style="color: #ef4444;">*</span>
+                </label>
+                <div style="position: relative;">
+                  <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-weight: 700; color: #64748b; font-size: 16px;">฿</span>
+                  <input type="number" step="0.01" min="1" id="input-trans-amount" class="form-control" placeholder="เช่น 10000.00" required style="padding-left: 36px; font-size: 18px; font-weight: 700; color: #0f172a;">
+                </div>
+              </div>
+
+              <div style="margin-bottom: 24px;">
+                <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+                  📝 รายละเอียด / วัตถุประสงค์การถอน
+                </label>
+                <input type="text" id="input-trans-note" class="form-control" placeholder="เช่น ถอนเงินสดเติมเงินสำรองจ่ายงวดใหม่" style="font-size: 13.5px;">
+              </div>
+
+              <button type="button" id="btn-submit-transfer" class="btn" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: #fff; font-size: 15px; font-weight: 600; border: none; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);">
+                <span>💾</span> บันทึกการถอนเงินสด
+              </button>
+            </form>
+          </div>
+
+          <!-- History & Summary Card -->
+          <div class="card" style="padding: 24px; background: #fff; border-radius: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid #f1f5f9;">
+              <div>
+                <h3 style="font-size: 17px; font-weight: 700; color: #1e293b; margin: 0;">ประวัติการถอนเติมเงินสดสำรอง</h3>
+                <p style="font-size: 12px; color: #64748b; margin: 3px 0 0 0;">รายการถอนเงินจากบัญชีธนาคารมาเติมเงินสดย่อยในปีงบประมาณ</p>
+              </div>
+              <button onclick="StaffTabs.transfer()" class="btn btn-sm" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer;">
+                🔄 รีเฟรช
+              </button>
+            </div>
+
+            <div id="recent-transfers-feed" style="max-height: 480px; overflow-y: auto;">
+              <!-- Loaded dynamically by tab-transfer.js -->
+            </div>
+          </div>
+        </div>
+      </div>
+
   <footer class="site-footer">
     <div>© Copyright 2026 กองทุนพัฒนาหมู่บ้าน ลพบุรีราเมศวร์ธานี · พัฒนาระบบโดย <b>Mathman BM</b></div>
     <div class="visit-stats" id="visit-stats"></div>
   </footer>
   </div>
 
-  <script src="/static/js/staff/api.js?v=20261103_9"></script>
-  <script src="/static/js/staff/router.js?v=20261103_9"></script>
-  <script src="/static/js/staff/tab-menu.js?v=20261103_9"></script>
-  <script src="/static/js/staff/tab-ledger.js?v=20261103_9"></script>
-  <script src="/static/js/staff/tab-pay.js?v=20261103_9"></script>
-  <script src="/static/js/staff/tab-exp.js?v=20261103_9"></script>
-  <script src="/static/js/staff/tab-inc.js?v=20261103_9"></script>
-  <script src="/static/js/staff/tab-members.js?v=20261103_9"></script>
-  <script src="/static/js/staff/tab-receipts.js?v=20261103_9"></script>
-  <script src="/static/js/staff/tab-history.js?v=20261103_9"></script>
-  <script src="/static/js/staff.js?v=20261103_9"></script>
+  <script src="/static/js/staff/api.js?v=20261103_10"></script>
+  <script src="/static/js/staff/router.js?v=20261103_10"></script>
+  <script src="/static/js/staff/tab-menu.js?v=20261103_10"></script>
+  <script src="/static/js/staff/tab-ledger.js?v=20261103_10"></script>
+  <script src="/static/js/staff/tab-pay.js?v=20261103_10"></script>
+  <script src="/static/js/staff/tab-exp.js?v=20261103_10"></script>
+  <script src="/static/js/staff/tab-transfer.js?v=20261103_10"></script>
+  <script src="/static/js/staff/tab-inc.js?v=20261103_10"></script>
+  <script src="/static/js/staff/tab-members.js?v=20261103_10"></script>
+  <script src="/static/js/staff/tab-receipts.js?v=20261103_10"></script>
+  <script src="/static/js/staff/tab-history.js?v=20261103_10"></script>
+  <script src="/static/js/staff.js?v=20261103_10"></script>
 
   <!-- Modal แสดงสลิปการโอนเงิน (Image Slip Viewer - Requirement 2) -->
   <div id="slip-modal" class="slip-modal-backdrop" style="display: none;" onclick="closeSlipModal(event)">

@@ -195,6 +195,8 @@ def summary():
         "current_month": cm,
         "balance": {
             "opening": opening,
+            "opening_reserve": opening_reserve,
+            "opening_total": round(opening + opening_reserve, 2),
             "received": received,
             "other_income": other_income,
             "other_income_by_type": {t: round(a, 2) for t, a in income_by_type.items()},
@@ -202,7 +204,6 @@ def summary():
             "total": round(total, 2),
             "reserve": round(reserve_bal, 2),
             "bank": round(bank_bal, 2),
-            "opening_reserve": opening_reserve
         },
         "period_cards": period_cards,
         "zone_chart": zone_chart,
