@@ -2186,12 +2186,65 @@ body.printing-report #printable-report-area {
 @media (max-width: 1024px) {
   .staff-menu-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
   }
 }
 
-@media (max-width: 580px) {
+/* On mobile phones (<= 640px and <= 480px), always display in 2 columns */
+@media (max-width: 640px) {
   .staff-menu-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+    margin-top: 16px !important;
+  }
+  .staff-square-card {
+    padding: 16px 12px !important;
+    border-radius: 14px !important;
+  }
+  .staff-card-icon-wrapper {
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 12px !important;
+    font-size: 22px !important;
+    margin-bottom: 8px !important;
+  }
+  .staff-card-badge {
+    font-size: 9.5px !important;
+    padding: 2px 6px !important;
+    margin-bottom: 6px !important;
+  }
+  .staff-card-title {
+    font-size: 13.5px !important;
+    line-height: 1.25 !important;
+    margin: 0 0 4px 0 !important;
+  }
+  .staff-card-desc {
+    font-size: 11px !important;
+    line-height: 1.35 !important;
+    margin: 0 0 10px 0 !important;
+  }
+  .staff-card-action {
+    font-size: 11px !important;
+    padding-top: 8px !important;
+  }
+  .staff-hero-kpis {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .staff-menu-grid {
+    gap: 8px !important;
+  }
+  .staff-square-card {
+    padding: 12px 10px !important;
+  }
+  .staff-card-title {
+    font-size: 12.5px !important;
+  }
+  .staff-card-desc {
+    font-size: 10.5px !important;
   }
 }
 
