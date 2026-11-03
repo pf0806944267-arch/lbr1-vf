@@ -193,8 +193,12 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
     };
     document.getElementById('input-password').onkeydown = e => { if (e.key === 'Enter') document.getElementById('btn-login-submit').click(); };
 
-    // Tab Navigation
+    // Tab Navigation (Supports Modular Router and Hash state)
     function switchTab(tabName) {
+      if (window.StaffRouter) {
+        window.StaffRouter.navigate(tabName);
+        return;
+      }
       const activeMenu = {
         'all-payments': 'pay',
         'all-expenses': 'exp',
@@ -245,6 +249,34 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
       loadRecentPayments();
       loadRecentExpenses();
       fetchDashboard();
+
+      // Expose to window.StaffApp for modular tabs
+      window.StaffApp = {
+        get HOUSES() { return HOUSES; },
+        set HOUSES(v) { HOUSES = v; },
+        get TOKEN() { return TOKEN; },
+        loadHouses,
+        loadRecentPayments,
+        loadRecentExpenses,
+        loadRecentIncome,
+        loadAuditHistory,
+        renderStaffMembersTable,
+        generateOfficialReceipt,
+        deletePayment,
+        deleteExpense,
+        deleteIncome,
+        fetchDashboard
+      };
+
+      window.StaffTabs = window.StaffTabs || {};
+      window.StaffTabs.allPayments = loadAllPaymentsReport;
+      window.StaffTabs.allExpenses = loadAllExpensesReport;
+      window.StaffTabs.allIncome = loadAllIncomeReport;
+
+      // Start Router to restore tab from URL hash / sessionStorage
+      if (window.StaffRouter) {
+        window.StaffRouter.init();
+      }
     }
 
     async function fetchDashboard() {
@@ -829,7 +861,7 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
               <div style="font-size: 38px;">🏛️</div>
               <div>
                 <h2 style="font-size: 22px; font-weight: 700; color: #0f172a; margin-bottom: 2px;">ใบเสร็จรับเงิน</h2>
-                <div style="font-size: 15px; font-weight: 600; color: #1e3a8a;">กองทุนหมู่บ้าน ลพบุรีราเมศวร์โครงการ 1 ประจำปี 2569</div>
+                <div style="font-size: 15px; font-weight: 600; color: #1e3a8a;">กองทุนหมู่บ้าน ลพบุรีราเมศวร์ธานี ประจำปี 2569</div>
                 <div style="font-size: 12px; color: #64748b;">เอกสารหลักฐานการรับเงินกองทุนตามระเบียบการเงินและบัญชี</div>
               </div>
             </div>
@@ -876,7 +908,7 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
             <div class="sig-block" style="text-align: center; width: 220px;">
               <div class="sig-line" style="border-bottom: 1px dotted #64748b; height: 35px; margin-bottom: 8px;"></div>
               <div><b>(นายสุนทร คำสุข)</b></div>
-              <div style="color: #64748b; font-size: 12px; margin-top: 2px;">ประธานคณะทำงานกองทุนพัฒนาหมู่บ้าน<br>ลพบุรีราเมศวร์โครงการ 1</div>
+              <div style="color: #64748b; font-size: 12px; margin-top: 2px;">ประธานคณะทำงานกองทุนพัฒนาหมู่บ้าน<br>ลพบุรีราเมศวร์ธานี</div>
             </div>
           </div>
         </div>
@@ -921,7 +953,7 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
           <div class="sig-block" style="text-align: center; width: 220px;">
             <div class="sig-line"></div>
             <div><b>(นายสุนทร คำสุข)</b></div>
-            <div style="color: #64748b; font-size: 12px; margin-top: 2px;">ประธานคณะทำงานกองทุนพัฒนาหมู่บ้าน<br>ลพบุรีราเมศวร์โครงการ 1</div>
+            <div style="color: #64748b; font-size: 12px; margin-top: 2px;">ประธานคณะทำงานกองทุนพัฒนาหมู่บ้าน<br>ลพบุรีราเมศวร์ธานี</div>
           </div>
         </div>
       `;
@@ -968,7 +1000,7 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
           <div class="sig-block" style="text-align: center; width: 220px;">
             <div class="sig-line"></div>
             <div><b>(นายสุนทร คำสุข)</b></div>
-            <div style="color: #64748b; font-size: 12px; margin-top: 2px;">ประธานคณะทำงานกองทุนพัฒนาหมู่บ้าน<br>ลพบุรีราเมศวร์โครงการ 1</div>
+            <div style="color: #64748b; font-size: 12px; margin-top: 2px;">ประธานคณะทำงานกองทุนพัฒนาหมู่บ้าน<br>ลพบุรีราเมศวร์ธานี</div>
           </div>
         </div>
       `;
@@ -1592,7 +1624,7 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
       printArea.innerHTML = `
         <div style="font-family: 'Sarabun', 'Prompt', sans-serif; color: #000; padding: 10px;">
           <div style="text-align: center; margin-bottom: 20px;">
-            <h2 style="font-size: 19px; margin: 0 0 4px 0; font-weight: 700;">กองทุนพัฒนาหมู่บ้าน ลพบุรีราเมศวร์ โครงการ 1</h2>
+            <h2 style="font-size: 19px; margin: 0 0 4px 0; font-weight: 700;">กองทุนพัฒนาหมู่บ้าน ลพบุรีราเมศวร์ธานี</h2>
             <p style="font-size: 13px; margin: 0 0 4px 0; color: #475569;">หมู่ที่ 2 ตำบลน้ำน้อย อำเภอหาดใหญ่ จังหวัดสงขลา</p>
             <h3 style="font-size: 16px; margin: 6px 0; font-weight: 700; text-decoration: underline;">${title} ประจำปีงบประมาณ 2569</h3>
             <p style="font-size: 12px; margin: 4px 0; color: #64748b;">พิมพ์ออกรายงาน ณ วันที่ ${printTimeStr}</p>
@@ -1614,7 +1646,7 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
             <div style="text-align: center; width: 260px;">
               <p style="margin-bottom: 45px;">ลงชื่อ .....................................................</p>
               <p style="font-weight: 600; margin: 0; font-size: 13px;">(นายสุนทร คำสุข)</p>
-              <p style="font-size: 12px; color: #64748b; margin: 2px 0;">ประธานคณะทำงานกองทุนพัฒนาหมู่บ้าน<br>ลพบุรีราเมศวร์โครงการ 1</p>
+              <p style="font-size: 12px; color: #64748b; margin: 2px 0;">ประธานคณะทำงานกองทุนพัฒนาหมู่บ้าน<br>ลพบุรีราเมศวร์ธานี</p>
             </div>
           </div>
         </div>
