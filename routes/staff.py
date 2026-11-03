@@ -11,7 +11,7 @@ from werkzeug.security import check_password_hash
 from config import FY, INCOME_TYPES, MONTH_TH, ROOT, num, DRIVE_FOLDER_ID
 from core.auth import audit, make_token, next_id, require
 from core.sheets_api import sheet_post
-from services.calculations import houses_view
+from services.calculations import houses_view, summary
 from services.store import append_to_csv, store
 
 staff_bp = Blueprint("staff", __name__)
@@ -56,6 +56,7 @@ def api_staff_recent():
             "house_no": houses.get(du.get("house_id"), ""),
             "month": du.get("month"),
             "amount": num(p.get("amount_paid")),
+            "amount_paid": num(p.get("amount_paid")),
             "paid_date": p.get("paid_date"),
             "channel": p.get("channel"),
             "has_slip": p.get("has_slip", ""),
@@ -101,6 +102,7 @@ def api_staff_reports_all():
             "month": m,
             "quarter": q,
             "amount": num(p.get("amount_paid")),
+            "amount_paid": num(p.get("amount_paid")),
             "paid_date": p.get("paid_date"),
             "channel": p.get("channel", "transfer"),
             "has_slip": p.get("has_slip", ""),
@@ -138,11 +140,18 @@ def api_staff_reports_all():
             "note": i.get("note", "")
         })
 
+    summary_data = summary()
+    bal = summary_data.get("balance", {})
+
     return jsonify(
         fiscal_year=FY,
+        balance=bal,
+        opening_balance=bal.get("opening", 82969.73),
+        opening_reserve=bal.get("opening_reserve", 10049.57),
         payments=pays,
         expenses=exps,
         incomes=incs,
+        reserve=d.get("reserve_transactions", []),
         categories=d.get("expense_categories", [])
     )
 

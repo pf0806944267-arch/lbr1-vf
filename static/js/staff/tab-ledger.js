@@ -6,8 +6,10 @@
   window.StaffTabs = window.StaffTabs || {};
 
   let ALL_TRANSACTIONS = [];
-  let OPENING_BANK = 82969.73;
+  let OPENING_ALL = 82969.73;
+  let OPENING_BANK = 72920.16;
   let OPENING_RESERVE = 10049.57;
+  let SERVER_BALANCE = null;
 
   window.StaffTabs.ledger = async function() {
     await loadLedgerData();
@@ -17,45 +19,46 @@
     const tableBody = document.getElementById('ledger-table-body');
     if (!tableBody) return;
 
-    tableBody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: #64748b;">⏳ กำลังโหลดข้อมูลบัญชีรายรับ-รายจ่ายจาก Supabase...</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: #64748b;">⏳ กำลังโหลดข้อมูลบัญชีรายรับ-รายจ่ายจากระบบ...</td></tr>';
 
     try {
       const data = await StaffAPI.call('/api/staff/reports/all');
       if (!data) return;
 
-      const fy = data.fiscal_year || {};
-      OPENING_BANK = Number(fy.opening_balance || 82969.73);
-      OPENING_RESERVE = Number(fy.opening_reserve || 10049.57);
+      SERVER_BALANCE = data.balance || {};
+      const openTotal = Number(data.opening_balance || SERVER_BALANCE.opening || 82969.73);
+      const openRes = Number(data.opening_reserve || SERVER_BALANCE.opening_reserve || 10049.57);
 
-      const duesMap = {};
-      (data.dues || []).forEach(d => duesMap[d.due_id] = d);
-
-      const housesMap = {};
-      (data.houses || []).forEach(h => housesMap[h.house_id] = h);
-
-      const categoriesMap = {};
-      (data.categories || []).forEach(c => categoriesMap[c.category_id] = c.name);
+      OPENING_ALL = openTotal;
+      OPENING_RESERVE = openRes;
+      OPENING_BANK = Math.round((openTotal - openRes) * 100) / 100;
 
       const txs = [];
 
       // 1. Payments (รายรับค่าส่วนกลาง)
       (data.payments || []).forEach(p => {
-        const du = duesMap[p.due_id] || {};
-        const house = housesMap[du.house_id] || {};
-        const hNo = house.house_no ? `บ้าน ${house.house_no}` : (du.house_id || '-');
-        const monthName = du.month ? ` (เดือน ${MONTHS_TH[du.month - 1]})` : '';
+        const amt = Number(p.amount || p.amount_paid || 0);
+        if (amt <= 0) return;
+
+        const hNo = p.house_no ? `บ้าน ${p.house_no}` : (p.house_id ? `บ้าน ${p.house_id}` : '-');
+        const mNum = parseInt(p.month, 10);
+        const monthName = (!isNaN(mNum) && mNum >= 1 && mNum <= 12) ? 
+          ` (งวดเดือน ${window.MONTHS_TH ? window.MONTHS_TH[mNum - 1] : mNum})` : 
+          (p.month ? ` (เดือน ${p.month})` : '');
+        const ownerStr = (p.owner && p.owner !== '-') ? ` · ${p.owner}` : '';
         const isBank = (p.channel || 'transfer') !== 'cash';
 
         txs.push({
           id: p.payment_id,
+          doc_no: p.payment_id,
           date: p.paid_date || '2026-01-01',
           time: p.transfer_time || '',
-          title: `รับชำระค่าส่วนกลาง ${hNo}${monthName}`,
+          title: `รับชำระค่าส่วนกลาง ${hNo}${monthName}${ownerStr}`,
           category: 'ค่าส่วนกลาง',
           account: isBank ? 'bank' : 'cash',
           account_label: isBank ? 'ธนาคารกรุงเทพ' : 'เงินสด',
           type: 'inflow',
-          inflow: Number(p.amount_paid || 0),
+          inflow: amt,
           outflow: 0,
           slip_url: p.slip_url || '',
           note: p.note || ''
@@ -64,12 +67,15 @@
 
       // 2. Expenses (รายจ่ายกองทุน)
       (data.expenses || []).forEach(e => {
+        const amt = Number(e.amount || 0);
+        if (amt <= 0) return;
+
         const isBank = (e.source || 'bank') !== 'reserve';
-        const catName = categoriesMap[e.category_id] || e.category_id || 'ค่าใช้จ่ายทั่วไป';
+        const catName = e.category_name || (e.category_id || 'ค่าใช้จ่ายทั่วไป');
 
         txs.push({
           id: e.expense_id,
-          doc_no: e.doc_no || '',
+          doc_no: e.doc_no || e.expense_id,
           date: e.expense_date || '2026-01-01',
           time: '',
           title: e.description || 'ค่าใช้จ่ายกองทุน',
@@ -78,7 +84,7 @@
           account_label: isBank ? 'ธนาคารกรุงเทพ' : 'เงินสดย่อย',
           type: 'outflow',
           inflow: 0,
-          outflow: Number(e.amount || 0),
+          outflow: amt,
           slip_url: '',
           payee: e.payee || '',
           note: e.payee ? `ผู้รับเงิน: ${e.payee}` : ''
@@ -87,11 +93,15 @@
 
       // 3. Other Incomes (รายได้อื่น เช่น ดอกเบี้ย / บริจาค)
       (data.incomes || []).forEach(i => {
+        const amt = Number(i.amount || 0);
+        if (amt <= 0) return;
+
         const isBank = (i.channel || 'bank') !== 'cash';
-        const typeLabel = i.type === 'interest' ? 'ดอกเบี้ยเงินฝาก' : (i.type === 'donation' ? 'เงินบริจาค' : (i.type || 'รายได้อื่น'));
+        const typeLabel = i.type_label || (i.type === 'interest' ? 'ดอกเบี้ยเงินฝาก' : (i.type === 'donation' ? 'เงินบริจาค' : (i.type || 'รายได้อื่น')));
 
         txs.push({
           id: i.income_id,
+          doc_no: i.income_id,
           date: i.date || '2026-01-01',
           time: '',
           title: `รายรับ: ${typeLabel}`,
@@ -99,40 +109,43 @@
           account: isBank ? 'bank' : 'cash',
           account_label: isBank ? 'ธนาคารกรุงเทพ' : 'เงินสด',
           type: 'inflow',
-          inflow: Number(i.amount || 0),
+          inflow: amt,
           outflow: 0,
           slip_url: '',
           note: i.note || ''
         });
       });
 
-      // 4. Reserve transfers (โอนเติมเงินสดย่อย)
+      // 4. Reserve transfers (โอนจากธนาคารมาเติมเงินสดย่อย - ข้าม RT0001 ที่เป็นยอดยกมา)
       (data.reserve || []).forEach(r => {
-        if (r.type === 'in' && !r.expense_id) {
-          // โอนจากธนาคารมาเติมเงินสดย่อย
+        if (r.type === 'in' && r.rt_id !== 'RT0001') {
+          const amt = Number(r.amount || 0);
+          if (amt <= 0) return;
+
           txs.push({
             id: r.rt_id,
+            doc_no: r.rt_id,
             date: r.date || '2026-01-01',
             time: '',
-            title: 'เบิกเงินจากธนาคารมาเติมเงินสดย่อย',
+            title: r.note || 'เบิกเงินจากธนาคารมาเติมเงินสดย่อย',
             category: 'โอนระหว่างบัญชี',
-            account: 'transfer_bank_to_cash',
+            account: 'transfer',
             account_label: 'โอนย้ายบัญชี',
             type: 'transfer',
+            transfer_amount: amt,
             inflow: 0,
             outflow: 0,
-            transfer_amount: Number(r.amount || 0),
             slip_url: '',
             note: r.note || ''
           });
         }
       });
 
-      // Sort by date ascending
+      // Sort chronological ascending (oldest first so running balance increases logically)
       txs.sort((a, b) => {
         const da = (a.date || '') + ' ' + (a.time || '');
         const db = (b.date || '') + ' ' + (b.time || '');
-        return da.localeCompare(db);
+        return da.localeCompare(db) || (a.id || '').localeCompare(b.id || '');
       });
 
       ALL_TRANSACTIONS = txs;
@@ -150,27 +163,33 @@
     const keyword = ((document.getElementById('ledger-filter-search') || {}).value || '').trim().toLowerCase();
 
     let openBal = 0;
-    if (accFilter === 'bank') openBal = OPENING_BANK;
-    else if (accFilter === 'cash') openBal = OPENING_RESERVE;
-    else openBal = OPENING_BANK + OPENING_RESERVE;
+    if (accFilter === 'bank') {
+      openBal = OPENING_BANK;
+    } else if (accFilter === 'cash') {
+      openBal = OPENING_RESERVE;
+    } else {
+      openBal = OPENING_ALL;
+    }
 
     let runningBal = openBal;
     let totalInflow = 0;
     let totalOutflow = 0;
+    let countInflow = 0;
+    let countOutflow = 0;
 
     const rowsHtml = [];
 
-    // แถวยอดยกมา
+    // Opening Balance Row
     rowsHtml.push(`
       <tr style="background: #f8fafc; font-weight: 600;">
         <td class="c">-</td>
         <td class="c">24 ม.ค. 2569</td>
-        <td class="c"><span class="badge" style="background:#e2e8f0; color:#334155;">ยอดยกมา</span></td>
-        <td><b>ยอดยกมาจากปี 2568</b> ${accFilter === 'all' ? '(ธนาคาร + เงินสดย่อย)' : (accFilter === 'bank' ? '(ธนาคารกรุงเทพ)' : '(เงินสดย่อย)')}</td>
+        <td class="c"><span class="badge" style="background:#e2e8f0; color:#334155; font-size:11px; padding:2px 8px; border-radius:10px;">ยอดยกมา</span></td>
+        <td><b>ยอดยกมาจากปี 2568</b> ${accFilter === 'all' ? '(ยอดรวมทั้งสิ้น)' : (accFilter === 'bank' ? '(บัญชีเงินฝาก ธ.กรุงเทพ)' : '(บัญชีเงินสดย่อยสำรองจ่าย)')}</td>
         <td class="c"><span style="font-size:11px; padding:2px 8px; border-radius:10px; background:#f1f5f9; color:#475569;">ยอดยกมา</span></td>
-        <td class="r" style="color: #059669;">+฿${StaffAPI.fmt(openBal)}</td>
+        <td class="r" style="color: #059669; font-weight: 700;">+฿${StaffAPI.fmt(openBal)}</td>
         <td class="r" style="color: #94a3b8;">-</td>
-        <td class="r" style="color: #1e3a8a; font-weight: 700;">฿${StaffAPI.fmt(runningBal)}</td>
+        <td class="r" style="color: #1e3a8a; font-weight: 800;">฿${StaffAPI.fmt(runningBal)}</td>
         <td class="c">-</td>
       </tr>
     `);
@@ -178,18 +197,17 @@
     let itemIndex = 0;
 
     ALL_TRANSACTIONS.forEach(tx => {
-      // 1. Account filter
       let txInflow = 0;
       let txOutflow = 0;
 
       if (tx.type === 'transfer') {
-        // รายการโอนเงินจากธนาคารมาเติมเงินสดย่อย
+        // โอนเงินจากธนาคารมาเติมเงินสดย่อย
         if (accFilter === 'bank') {
           txOutflow = tx.transfer_amount;
         } else if (accFilter === 'cash') {
           txInflow = tx.transfer_amount;
         } else {
-          // รวมทุกบัญชี เงินไม่ได้ออกจากระบบ ไม่กระทบยอดรวมสุทธิ
+          // รวมทุกบัญชี เงินยังอยู่ในกองทุน จึงไม่กระทบยอดสุทธิรวม
         }
       } else {
         if (accFilter === 'bank' && tx.account !== 'bank') return;
@@ -198,29 +216,36 @@
         txOutflow = tx.outflow;
       }
 
-      // 2. Month filter
+      // Month filter
       if (monthFilter !== 'all') {
-        const m = parseInt(tx.date.split('-')[1], 10);
+        const parts = (tx.date || '').split('-');
+        const m = parseInt(parts[1], 10);
         if (m !== parseInt(monthFilter, 10)) return;
       }
 
-      // 3. Type filter
+      // Type filter
       if (typeFilter === 'inflow' && txInflow === 0) return;
       if (typeFilter === 'outflow' && txOutflow === 0) return;
 
-      // 4. Keyword search
+      // Keyword search
       if (keyword) {
         const searchStr = `${tx.id} ${tx.doc_no || ''} ${tx.title} ${tx.category} ${tx.note} ${tx.payee || ''}`.toLowerCase();
         if (!searchStr.includes(keyword)) return;
       }
 
       runningBal += (txInflow - txOutflow);
-      totalInflow += txInflow;
-      totalOutflow += txOutflow;
+      if (txInflow > 0) {
+        totalInflow += txInflow;
+        countInflow++;
+      }
+      if (txOutflow > 0) {
+        totalOutflow += txOutflow;
+        countOutflow++;
+      }
       itemIndex++;
 
       const slipBtn = tx.slip_url ? `
-        <button onclick="window.showSlipDirect('${tx.slip_url}', '${tx.title}')" class="btn btn-sm" style="background:#e0f2fe; color:#0284c7; padding:2px 8px; border-radius:6px; font-size:11px; border:none; cursor:pointer;" title="คลิกดูภาพสลิป">
+        <button onclick="window.showSlipDirect('${tx.slip_url}', '${tx.title.replace(/'/g, "\\'")}')" class="btn btn-sm" style="background:#e0f2fe; color:#0284c7; padding:2px 8px; border-radius:6px; font-size:11px; border:none; cursor:pointer;" title="คลิกดูภาพสลิป">
           🖼️ ดูสลิป
         </button>
       ` : '-';
@@ -271,20 +296,18 @@
     }
 
     // Update Top Summary KPI Cards
-    const elOpen = document.getElementById('ledger-stat-opening');
-    if (elOpen) elOpen.textContent = '฿' + StaffAPI.fmt(openBal);
+    const setEl = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val;
+    };
 
-    const elIn = document.getElementById('ledger-stat-inflow');
-    if (elIn) elIn.textContent = '+฿' + StaffAPI.fmt(totalInflow);
-
-    const elOut = document.getElementById('ledger-stat-outflow');
-    if (elOut) elOut.textContent = '-฿' + StaffAPI.fmt(totalOutflow);
-
-    const elCur = document.getElementById('ledger-stat-balance');
-    if (elCur) elCur.textContent = '฿' + StaffAPI.fmt(runningBal);
-
-    const elCount = document.getElementById('ledger-stat-count');
-    if (elCount) elCount.textContent = `แสดง ${itemIndex} รายการ`;
+    setEl('ledger-stat-opening', '฿' + StaffAPI.fmt(openBal));
+    setEl('ledger-stat-inflow', '+฿' + StaffAPI.fmt(totalInflow));
+    setEl('ledger-stat-inflow-sub', `${countInflow.toLocaleString('th-TH')} รายการ`);
+    setEl('ledger-stat-outflow', '-฿' + StaffAPI.fmt(totalOutflow));
+    setEl('ledger-stat-outflow-sub', `${countOutflow.toLocaleString('th-TH')} รายการ`);
+    setEl('ledger-stat-balance', '฿' + StaffAPI.fmt(runningBal));
+    setEl('ledger-stat-balance-sub', accFilter === 'all' ? 'รวมทุกบัญชี' : (accFilter === 'bank' ? 'บัญชีธนาคารกรุงเทพ' : 'บัญชีเงินสดย่อย'));
   };
 
   // Helper for direct slip viewing
@@ -310,54 +333,58 @@
     }
 
     if (btnDrive) {
-      btnDrive.style.display = 'inline-flex';
       btnDrive.href = url;
+      btnDrive.style.display = 'inline-flex';
     }
 
-    if (modal) modal.style.display = 'flex';
+    if (modal) {
+      modal.style.display = 'flex';
+      modal.classList.add('show');
+    }
   };
 
-  // Export ledger to CSV
+  // Export CSV
   window.exportLedgerCSV = function() {
+    if (!ALL_TRANSACTIONS.length) {
+      alert('ไม่มีข้อมูลสำหรับส่งออก');
+      return;
+    }
+
     const accFilter = (document.getElementById('ledger-filter-account') || {}).value || 'all';
-    const accName = accFilter === 'bank' ? 'ธนาคารกรุงเทพ' : (accFilter === 'cash' ? 'เงินสดย่อย' : 'รวมทุกบัญชี');
-    const filename = `บัญชีรายรับรายจ่าย_${accName}_${new Date().toISOString().slice(0, 10)}.csv`;
+    let openBal = (accFilter === 'bank') ? OPENING_BANK : ((accFilter === 'cash') ? OPENING_RESERVE : OPENING_ALL);
+    let running = openBal;
 
-    let csvContent = '\uFEFF'; // BOM
-    csvContent += 'ลำดับ,วันที่,เวลา,เลขที่เอกสาร,รายการ,หมวดหมู่,บัญชี,รายรับ(บาท),รายจ่าย(บาท),ยอดคงเหลือ(บาท),หมายเหตุ\n';
-
-    let openBal = accFilter === 'bank' ? OPENING_BANK : (accFilter === 'cash' ? OPENING_RESERVE : OPENING_BANK + OPENING_RESERVE);
-    let runningBal = openBal;
-    csvContent += `0,2026-01-24,-,OPENING,"ยอดยกมาจากปี 2568","ยอดยกมา","${accName}",${openBal},0,${runningBal},"ยอดยกมาต้นงวด"\n`;
+    let csvContent = '\uFEFF';
+    csvContent += 'ลำดับ,วันที่,เวลา,เลขที่เอกสาร,รายการ,บัญชี,รายรับ (+),รายจ่าย (-),คงเหลือสะสม,หมายเหตุ\n';
+    csvContent += `"-","24/01/2569","-","ยอดยกมา","ยอดยกมาจากปี 2568","${accFilter}","${openBal}","-","${running}","ยอดยกมา"\n`;
 
     let idx = 0;
     ALL_TRANSACTIONS.forEach(tx => {
-      let txInflow = 0;
-      let txOutflow = 0;
+      let txIn = 0;
+      let txOut = 0;
+
       if (tx.type === 'transfer') {
-        if (accFilter === 'bank') txOutflow = tx.transfer_amount;
-        else if (accFilter === 'cash') txInflow = tx.transfer_amount;
+        if (accFilter === 'bank') txOut = tx.transfer_amount;
+        else if (accFilter === 'cash') txIn = tx.transfer_amount;
       } else {
         if (accFilter === 'bank' && tx.account !== 'bank') return;
         if (accFilter === 'cash' && tx.account !== 'cash') return;
-        txInflow = tx.inflow;
-        txOutflow = tx.outflow;
+        txIn = tx.inflow;
+        txOut = tx.outflow;
       }
 
-      runningBal += (txInflow - txOutflow);
+      running += (txIn - txOut);
       idx++;
-      const safeTitle = (tx.title || '').replace(/"/g, '""');
-      const safeCat = (tx.category || '').replace(/"/g, '""');
-      const safeNote = (tx.note || '').replace(/"/g, '""');
-      csvContent += `${idx},"${tx.date}","${tx.time}","${tx.doc_no || tx.id}","${safeTitle}","${safeCat}","${tx.account_label}",${txInflow},${txOutflow},${runningBal},"${safeNote}"\n`;
+
+      const cleanTitle = `"${(tx.title || '').replace(/"/g, '""')}"`;
+      const cleanNote = `"${(tx.note || '').replace(/"/g, '""')}"`;
+      csvContent += `${idx},"${tx.date}","${tx.time}","${tx.doc_no || tx.id}",${cleanTitle},"${tx.account_label}",${txIn || 0},${txOut || 0},${running},${cleanNote}\n`;
     });
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.setAttribute('download', filename);
-    document.body.appendChild(link);
+    link.download = `General_Ledger_${accFilter}_2569.csv`;
     link.click();
-    document.body.removeChild(link);
   };
 })();
