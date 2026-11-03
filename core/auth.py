@@ -26,7 +26,7 @@ def current_user():
         data = serializer.loads(tok, max_age=60 * 60 * 24)
     except (BadSignature, SignatureExpired):
         return None
-    u = next((x for x in store.data.get("users", []) if x.get("user_id") == data["u"] and x.get("active") == "Y"), None)
+    u = next((x for x in store.data.get("users", []) if x.get("user_id") == data["u"] and str(x.get("active", "")).lower() in ("y", "true", "1")), None)
     return u
 
 

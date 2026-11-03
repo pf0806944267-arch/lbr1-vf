@@ -15,6 +15,8 @@ def load_env():
 
 
 load_env()
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
 SCRIPT_URL = os.environ.get("APPS_SCRIPT_URL", "")
 API_KEY = os.environ.get("API_KEY", "")
 SECRET = os.environ.get("SESSION_SECRET") or (API_KEY + "-session" if API_KEY else "secret-fund-2569")

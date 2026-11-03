@@ -21,7 +21,7 @@ staff_bp = Blueprint("staff", __name__)
 def api_login():
     b = request.get_json(force=True)
     users = store.data.get("users", [])
-    candidates = [x for x in users if x.get("username") == b.get("username") and x.get("active") == "Y"]
+    candidates = [x for x in users if x.get("username") == b.get("username") and str(x.get("active", "")).lower() in ("y", "true", "1")]
     u = next((x for x in candidates if check_password_hash(x.get("password_hash", ""), b.get("password", ""))), None)
     if not u:
         return jsonify(error="ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง"), 401
@@ -218,6 +218,7 @@ def api_add_payment():
             row = {
                 "payment_id": next_id("P", d.get("payments", []), "payment_id", 5),
                 "due_id": du["due_id"],
+                "year_be": FY,
                 "amount_paid": du["amount_due"],
                 "paid_date": b["paid_date"],
                 "channel": b["channel"],
@@ -256,6 +257,7 @@ def api_add_expense():
         doc_no = f"{max(nums, default=0) + 1}/{FY % 100}"
         row = {
             "expense_id": next_id("E", d.get("expenses", []), "expense_id", 4),
+            "year_be": FY,
             "doc_no": doc_no,
             "expense_date": b["expense_date"],
             "description": b["description"],
@@ -295,6 +297,7 @@ def api_add_income():
     with store.write_lock:
         row = {
             "income_id": next_id("I", d.get("other_income", []), "income_id", 3),
+            "year_be": FY,
             "date": b["date"],
             "type": itype,
             "amount": amount,
