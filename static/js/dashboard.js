@@ -35,8 +35,8 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
     async function loadData() {
       try {
         const [dashRes, housesRes] = await Promise.all([
-          fetch('/api/dashboard').then(r => r.json()),
-          fetch('/api/houses').then(r => r.json())
+          fetch('/api/dashboard?_=' + Date.now()).then(r => r.json()),
+          fetch('/api/houses?_=' + Date.now()).then(r => r.json())
         ]);
         DASH_DATA = dashRes;
         HOUSES_DATA = housesRes;
@@ -341,15 +341,25 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
       }).join('');
     }
 
-    // Realtime SSE stream
+    // Realtime SSE stream + 30s auto-refresh fallback
     loadData();
-    const es = new EventSource('/api/stream');
-    es.addEventListener('update', () => loadData());
-    es.onerror = () => {
-      document.getElementById('live-dot').style.background = '#f59e0b';
-      document.getElementById('live-status').textContent = 'กำลังเชื่อมต่อใหม่...';
-    };
-    es.onopen = () => {
-      document.getElementById('live-dot').style.background = '#10b981';
-      document.getElementById('live-status').textContent = 'ข้อมูลแบบเรียลไทม์';
-    };
+    setInterval(loadData, 30000);
+    try {
+      const es = new EventSource('/api/stream');
+      es.onmessage = () => loadData();
+      es.addEventListener('update', () => loadData());
+      es.onerror = () => {
+        const dot = document.getElementById('live-dot');
+        const st = document.getElementById('live-status');
+        if (dot) dot.style.background = '#f59e0b';
+        if (st) st.textContent = 'กำลังเชื่อมต่อใหม่...';
+      };
+      es.onopen = () => {
+        const dot = document.getElementById('live-dot');
+        const st = document.getElementById('live-status');
+        if (dot) dot.style.background = '#10b981';
+        if (st) st.textContent = 'ข้อมูลแบบเรียลไทม์';
+      };
+    } catch (e) {
+      console.warn('SSE error:', e);
+    }

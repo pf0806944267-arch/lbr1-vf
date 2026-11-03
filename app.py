@@ -4,7 +4,7 @@
 """
 import os
 import threading
-from flask import Flask
+from flask import Flask, request
 
 from core.auth import bootstrap_admin, current_user, make_token, require
 from routes.admin import admin_bp
@@ -19,6 +19,15 @@ app = Flask(__name__, static_folder=None)
 app.register_blueprint(public_bp)
 app.register_blueprint(staff_bp)
 app.register_blueprint(admin_bp)
+
+
+@app.after_request
+def add_cache_headers(response):
+    if request.path.startswith("/api/"):
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
 
 
 def start_background():

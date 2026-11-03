@@ -147,7 +147,8 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
     async function apiCall(endpoint, method = 'GET', body = null) {
       const headers = { 'Content-Type': 'application/json' };
       if (TOKEN) headers['Authorization'] = 'Bearer ' + TOKEN;
-      const res = await fetch(endpoint, {
+      const url = method === 'GET' ? (endpoint.includes('?') ? (endpoint + '&_=' + Date.now()) : (endpoint + '?_=' + Date.now())) : endpoint;
+      const res = await fetch(url, {
         method,
         headers,
         body: body ? JSON.stringify(body) : null
