@@ -6,9 +6,9 @@
   window.StaffTabs = window.StaffTabs || {};
 
   let ALL_TRANSACTIONS = [];
-  let OPENING_ALL = 82969.73;
-  let OPENING_BANK = 72920.16;
+  let OPENING_BANK = 82969.73;
   let OPENING_RESERVE = 10049.57;
+  let OPENING_ALL = 93019.30;
   let SERVER_BALANCE = null;
 
   window.StaffTabs.ledger = async function() {
@@ -26,12 +26,13 @@
       if (!data) return;
 
       SERVER_BALANCE = data.balance || {};
-      const openTotal = Number(data.opening_balance || SERVER_BALANCE.opening || 82969.73);
-      const openRes = Number(data.opening_reserve || SERVER_BALANCE.opening_reserve || 10049.57);
+      const openBank = Number(data.opening_balance || 82969.73);
+      const openRes = Number(data.opening_reserve || 10049.57);
+      const openTotal = Math.round((openBank + openRes) * 100) / 100;
 
-      OPENING_ALL = openTotal;
-      OPENING_RESERVE = openRes;
-      OPENING_BANK = Math.round((openTotal - openRes) * 100) / 100;
+      OPENING_BANK = openBank;       // 82,969.73 (สมุดบัญชีเงินฝาก ธ.กรุงเทพ)
+      OPENING_RESERVE = openRes;     // 10,049.57 (เงินสดสำรองจ่าย/เงินสดย่อย)
+      OPENING_ALL = openTotal;       // 93,019.30 (รวมทุกบัญชี)
 
       const txs = [];
 
@@ -164,11 +165,11 @@
 
     let openBal = 0;
     if (accFilter === 'bank') {
-      openBal = OPENING_BANK;
+      openBal = OPENING_BANK;       // 82,969.73
     } else if (accFilter === 'cash') {
-      openBal = OPENING_RESERVE;
+      openBal = OPENING_RESERVE;   // 10,049.57
     } else {
-      openBal = OPENING_ALL;
+      openBal = OPENING_ALL;       // 93,019.30
     }
 
     let runningBal = openBal;
@@ -180,12 +181,16 @@
     const rowsHtml = [];
 
     // Opening Balance Row
+    const openDesc = accFilter === 'all' ? 
+      'ยอดยกมาจากปี 2568 (ธนาคาร ฿82,969.73 + เงินสดย่อย ฿10,049.57)' : 
+      (accFilter === 'bank' ? 'ยอดยกมาจากปี 2568 (บัญชีเงินฝาก ธนาคารกรุงเทพ)' : 'ยอดยกมาจากปี 2568 (บัญชีเงินสดสำรองจ่าย)');
+
     rowsHtml.push(`
       <tr style="background: #f8fafc; font-weight: 600;">
         <td class="c">-</td>
         <td class="c">24 ม.ค. 2569</td>
         <td class="c"><span class="badge" style="background:#e2e8f0; color:#334155; font-size:11px; padding:2px 8px; border-radius:10px;">ยอดยกมา</span></td>
-        <td><b>ยอดยกมาจากปี 2568</b> ${accFilter === 'all' ? '(ยอดรวมทั้งสิ้น)' : (accFilter === 'bank' ? '(บัญชีเงินฝาก ธ.กรุงเทพ)' : '(บัญชีเงินสดย่อยสำรองจ่าย)')}</td>
+        <td><b>${openDesc}</b></td>
         <td class="c"><span style="font-size:11px; padding:2px 8px; border-radius:10px; background:#f1f5f9; color:#475569;">ยอดยกมา</span></td>
         <td class="r" style="color: #059669; font-weight: 700;">+฿${StaffAPI.fmt(openBal)}</td>
         <td class="r" style="color: #94a3b8;">-</td>
@@ -302,6 +307,7 @@
     };
 
     setEl('ledger-stat-opening', '฿' + StaffAPI.fmt(openBal));
+    setEl('ledger-stat-opening-sub', accFilter === 'all' ? 'ธนาคาร ฿82,969.73 + เงินสด ฿10,049.57' : (accFilter === 'bank' ? 'บัญชีเงินฝาก ธ.กรุงเทพ' : 'บัญชีเงินสดสำรองจ่าย'));
     setEl('ledger-stat-inflow', '+฿' + StaffAPI.fmt(totalInflow));
     setEl('ledger-stat-inflow-sub', `${countInflow.toLocaleString('th-TH')} รายการ`);
     setEl('ledger-stat-outflow', '-฿' + StaffAPI.fmt(totalOutflow));
