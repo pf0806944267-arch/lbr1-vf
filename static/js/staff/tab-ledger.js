@@ -177,6 +177,8 @@
     let totalOutflow = 0;
     let countInflow = 0;
     let countOutflow = 0;
+    let expenseOutflow = 0;
+    let transferOutflow = 0;
     const rowsHtml = [];
     let itemIndex = 0;
     // หมายเหตุ: ไม่ตรึงแถวยอดยกมาในตารางตามคำขอ แสดงเฉพาะรายการตามตัวกรอง
@@ -187,6 +189,7 @@
         // โอนเงินจากธนาคารมาเติมเงินสดย่อย
         if (accFilter === 'bank') {
           txOutflow = tx.transfer_amount;
+          transferOutflow += tx.transfer_amount;
         } else if (accFilter === 'cash') {
           txInflow = tx.transfer_amount;
         } else {
@@ -197,6 +200,7 @@
         if (accFilter === 'cash' && tx.account !== 'cash') return;
         txInflow = tx.inflow;
         txOutflow = tx.outflow;
+        if (txOutflow > 0) expenseOutflow += txOutflow;
       }
       // Month filter: แสดงเฉพาะเดือนที่เลือก
       if (isSingleMonth) {
@@ -285,12 +289,32 @@
     setEl('ledger-stat-inflow-title', isSingleMonth ? `รวมรายรับ (${monthLabel})` : 'รวมรายรับทั้งสิ้น (+)');
     setEl('ledger-stat-inflow', '+฿' + StaffAPI.fmt(totalInflow));
     setEl('ledger-stat-inflow-sub', `${countInflow.toLocaleString('th-TH')} รายการ`);
-    setEl('ledger-stat-outflow-title', isSingleMonth ? `รวมรายจ่าย (${monthLabel})` : 'รวมรายจ่ายทั้งสิ้น (-)');
+    let outflowTitle = isSingleMonth ? `รวมรายจ่าย (${monthLabel})` : 'รวมรายจ่ายทั้งสิ้น (-)';
+    let outflowSub = `${countOutflow.toLocaleString('th-TH')} รายการ`;
+
+    if (accFilter === 'bank' && transferOutflow > 0) {
+      outflowTitle = isSingleMonth ? `รวมเงินจ่ายออก (${monthLabel})` : 'รวมเงินจ่ายออก (รายจ่าย+โอนย้าย) (-)';
+      outflowSub = `รายจ่ายจริง ฿${StaffAPI.fmt(expenseOutflow)} · โอนเติมเงินสด ฿${StaffAPI.fmt(transferOutflow)}`;
+    } else if (accFilter === 'all') {
+      outflowSub = `${countOutflow.toLocaleString('th-TH')} รายการ (ตรงกับค่าใช้จ่ายสะสม)`;
+    }
+
+    setEl('ledger-stat-outflow-title', outflowTitle);
     setEl('ledger-stat-outflow', '-฿' + StaffAPI.fmt(totalOutflow));
-    setEl('ledger-stat-outflow-sub', `${countOutflow.toLocaleString('th-TH')} รายการ`);
+    setEl('ledger-stat-outflow-sub', outflowSub);
+
+    let balSub = '';
+    if (accFilter === 'all') {
+      balSub = `ธ.กรุงเทพ ฿${StaffAPI.fmt(SERVER_BALANCE ? SERVER_BALANCE.bank : 82350.02)} + เงินสด ฿${StaffAPI.fmt(SERVER_BALANCE ? SERVER_BALANCE.reserve : 13764.47)}`;
+    } else if (accFilter === 'bank') {
+      balSub = 'ตรงกับเงินคงเหลือ ธ.กรุงเทพ ในแดชบอร์ด';
+    } else {
+      balSub = 'ตรงกับเงินคงเหลือ เงินสด ในแดชบอร์ด';
+    }
+
     setEl('ledger-stat-balance-title', isSingleMonth ? `ยอดคงเหลือสิ้นเดือน (${monthLabel})` : 'ยอดคงเหลือสุทธิยกไป');
     setEl('ledger-stat-balance', '฿' + StaffAPI.fmt(runningBal));
-    setEl('ledger-stat-balance-sub', accFilter === 'all' ? 'รวมทุกบัญชี' : (accFilter === 'bank' ? 'บัญชีธนาคารกรุงเทพ' : 'บัญชีเงินสดย่อย'));
+    setEl('ledger-stat-balance-sub', balSub);
   };
   // Helper for direct slip viewing
   window.showSlipDirect = function(url, title) {

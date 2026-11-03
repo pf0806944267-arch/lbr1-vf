@@ -59,8 +59,16 @@ def summary():
     # รับชำระค่าสมาชิกเป็นเงินสด
     cash_payments = sum(num(p.get("amount_paid")) for p in paid_by_due.values() if p.get("channel") == "cash")
     reserve_bal = reserve_in - reserve_out + cash_income + cash_payments
-    total = opening + received + other_income - exp_total
-    bank_bal = total - reserve_bal
+
+    # คำนวณยอดเงินฝากธนาคารกรุงเทพที่แท้จริง
+    transfers_to_reserve = sum(num(r["amount"]) for r in ledger if r.get("type") == "in" and r.get("rt_id") != "RT0001")
+    bank_expenses = sum(num(e["amount"]) for e in d.get("expenses", []) if e.get("source") != "reserve")
+    bank_received = received - cash_payments
+    bank_income = other_income - cash_income
+    bank_bal = opening + bank_received + bank_income - bank_expenses - transfers_to_reserve
+
+    # ยอดเงินคงเหลือสุทธิรวมทุกบัญชี (ธนาคาร + เงินสด)
+    total = bank_bal + reserve_bal
 
     periods = [0.0] * 4
     monthly = [0.0] * 12
@@ -165,7 +173,7 @@ def summary():
 
     # Financial Statement rows matching Image 3
     statement = [
-        {"date": "24/1/69", "title": "ยอดเงินคงเหลือ ปี 2568 (ยกมา)", "amount": opening, "type": "opening"},
+        {"date": "24/1/69", "title": "ยอดเงินคงเหลือ ปี 2568 (ยกมา) [ธนาคาร ฿82,969.73 + เงินสด ฿10,049.57]", "amount": round(opening + opening_reserve, 2), "type": "opening"},
         {"date": "-", "title": f"รับเงินจากสมาชิก งวดที่ 1 (ม.ค. - มี.ค. 69) [ชำระแล้ว {period_cards[0]['paid_houses']}/{len(houses)} หลัง]", "amount": periods[0], "type": "income"},
         {"date": "-", "title": f"รับเงินจากสมาชิก งวดที่ 2 (เม.ย. - มิ.ย. 69) [ชำระแล้ว {period_cards[1]['paid_houses']}/{len(houses)} หลัง]", "amount": periods[1], "type": "income"},
         {"date": "-", "title": f"รับเงินจากสมาชิก งวดที่ 3 (ก.ค. - ก.ย. 69) [ชำระแล้ว {period_cards[2]['paid_houses']}/{len(houses)} หลัง]", "amount": periods[2], "type": "income"},
