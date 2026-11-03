@@ -8,7 +8,7 @@ import time
 from flask import Blueprint, jsonify, request
 from werkzeug.security import check_password_hash
 
-from config import FY, INCOME_TYPES, MONTH_TH, ROOT, num
+from config import FY, INCOME_TYPES, MONTH_TH, ROOT, num, DRIVE_FOLDER_ID
 from core.auth import audit, make_token, next_id, require
 from core.sheets_api import sheet_post
 from services.calculations import houses_view
@@ -201,7 +201,7 @@ def api_add_payment():
             try:
                 drive_res = sheet_post(
                     action="upload_slip",
-                    folder_id="12jT6GUua6hwJvl_xe1IJ64J-dSxGwzD3",
+                    folder_id=DRIVE_FOLDER_ID,
                     data=raw_b64,
                     filename=save_name,
                     mimeType=mime_type

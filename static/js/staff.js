@@ -1734,7 +1734,14 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
         `;
         if (btnDrive) {
           btnDrive.style.display = 'inline-flex';
-          btnDrive.href = slipUrl;
+          let driveViewUrl = slipUrl;
+          if (slipUrl.includes('googleusercontent.com/d/')) {
+            const fid = slipUrl.split('/d/')[1].split(/[?#]/)[0];
+            driveViewUrl = 'https://drive.google.com/file/d/' + fid + '/view';
+          } else if (slipUrl.startsWith('/static/slips/')) {
+            driveViewUrl = 'https://drive.google.com/drive/folders/12jT6GUua6hwJvl_xe1IJ64J-dSxGwzD3';
+          }
+          btnDrive.href = driveViewUrl;
         }
       } else {
         body.innerHTML = `

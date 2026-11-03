@@ -7,6 +7,16 @@
  * Node.js บน Render เป็นตัวเดียวที่เรียก API นี้ (ผู้ใช้ทั่วไปไม่เรียกตรง)
  */
 
+/**
+ * ฟังก์ชันสำหรับกด "เรียกใช้ (Run)" 1 ครั้งในหน้า Apps Script Editor
+ * เพื่อให้ Google แสดงหน้าต่างขออนุญาต (Authorize) สิทธิ์เข้าถึง Google Drive
+ */
+function testDriveAuth() {
+  var folderId = '12jT6GUua6hwJvl_xe1IJ64J-dSxGwzD3';
+  var folder = DriveApp.getFolderById(folderId);
+  Logger.log('เชื่อมต่อ Google Drive สำเร็จ! ชื่อโฟลเดอร์: ' + folder.getName());
+}
+
 var TABLES = ['fiscal_years', 'zones', 'fee_rates', 'houses', 'members', 'house_members',
   'dues', 'payments', 'bank_ref', 'expense_categories', 'expenses',
   'reserve_transactions', 'other_income', 'users', 'audit_log', 'site_stats'];

@@ -20,6 +20,7 @@ API_KEY = os.environ.get("API_KEY", "")
 SECRET = os.environ.get("SESSION_SECRET") or (API_KEY + "-session" if API_KEY else "secret-fund-2569")
 FY = int(os.environ.get("FISCAL_YEAR", "2569"))
 REFRESH_SECONDS = int(os.environ.get("REFRESH_SECONDS", "60"))
+DRIVE_FOLDER_ID = os.environ.get("DRIVE_FOLDER_ID", "12jT6GUua6hwJvl_xe1IJ64J-dSxGwzD3")
 TABLES = ["fiscal_years", "zones", "fee_rates", "houses", "members", "house_members", "dues", "payments",
           "expense_categories", "expenses", "reserve_transactions", "other_income", "users", "audit_log"]
 MONTH_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."]
