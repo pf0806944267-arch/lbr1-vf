@@ -14,7 +14,9 @@
 function testDriveAuth() {
   var folderId = '12jT6GUua6hwJvl_xe1IJ64J-dSxGwzD3';
   var folder = DriveApp.getFolderById(folderId);
-  Logger.log('เชื่อมต่อ Google Drive สำเร็จ! ชื่อโฟลเดอร์: ' + folder.getName());
+  var testFile = folder.createFile('test_auth.txt', 'test write permission');
+  testFile.setTrashed(true);
+  Logger.log('เชื่อมต่อและทดสอบสร้างไฟล์ใน Google Drive สำเร็จ! ชื่อโฟลเดอร์: ' + folder.getName());
 }
 
 var TABLES = ['fiscal_years', 'zones', 'fee_rates', 'houses', 'members', 'house_members',
