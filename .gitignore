@@ -9,3 +9,4 @@ docs_and_tests/
 # Slip uploads
 static/slips/*
 !static/slips/.gitkeep
+*.jpg

@@ -26,13 +26,17 @@ def _call(url, data=None, headers=None, method="GET"):
         headers=h,
         method=method
     )
-    with urllib.request.urlopen(req, timeout=15) as resp:
-        content = resp.read()
-        if content:
-            try:
-                return json.loads(content.decode("utf-8"))
-            except Exception:
-                return content.decode("utf-8")
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            content = resp.read()
+            if content:
+                try:
+                    return json.loads(content.decode("utf-8"))
+                except Exception:
+                    return content.decode("utf-8")
+            return None
+    except Exception as e:
+        print(f"Supabase {method} error on {url}: {e}")
         return None
 
 

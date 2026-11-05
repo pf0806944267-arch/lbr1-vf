@@ -20,30 +20,32 @@
       const data = await StaffAPI.call('/api/staff/reports/all');
       if (!data) return;
       SERVER_BALANCE = data.balance || {};
-      const openBank = Number(data.opening_balance || 82969.73);
+      const openTotal = Number(data.opening_balance || 82969.73);
       const openRes = Number(data.opening_reserve || 10049.57);
-      const openTotal = Math.round((openBank + openRes) * 100) / 100;
-      OPENING_BANK = openBank;       // 82,969.73 (สมุดบัญชีเงินฝาก ธ.กรุงเทพ)
+      const openBank = (data.opening_bank !== undefined) ? Number(data.opening_bank) : Math.round((openTotal - openRes) * 100) / 100;
+      OPENING_ALL = openTotal;       // 82,969.73 (รวมทุกบัญชี ยกมาจากปี 2568)
+      OPENING_BANK = openBank;       // 72,920.16 (สมุดบัญชีเงินฝาก ธ.กรุงเทพ)
       OPENING_RESERVE = openRes;     // 10,049.57 (เงินสดสำรองจ่าย/เงินสดย่อย)
-      OPENING_ALL = openTotal;       // 93,019.30 (รวมทุกบัญชี)
       const txs = [];
       // 1. Payments (รายรับค่าส่วนกลาง)
       (data.payments || []).forEach(p => {
         const amt = Number(p.amount || p.amount_paid || 0);
         if (amt <= 0) return;
         const hNo = p.house_no ? `บ้าน ${p.house_no}` : (p.house_id ? `บ้าน ${p.house_id}` : '-');
-        const mNum = parseInt(p.month, 10);
-        const monthName = (!isNaN(mNum) && mNum >= 1 && mNum <= 12) ? 
-          ` (งวดเดือน ${window.MONTHS_TH ? window.MONTHS_TH[mNum - 1] : mNum})` : 
-          (p.month ? ` (เดือน ${p.month})` : '');
+        const pr = p.period || p.quarter || p.month;
+        const periodName = pr ? ` (งวด ${pr})` : '';
         const ownerStr = (p.owner && p.owner !== '-') ? ` · ${p.owner}` : '';
+        const isNoSlip = !p.house_no || p.house_no === 'ไม่มีสลิป';
         const isBank = (p.channel || 'transfer') !== 'cash';
+        const titleStr = isNoSlip ? 
+          `รับชำระค่าส่วนกลาง ⚠️ ไม่มีสลิป (ยังไม่ระบุลูกบ้าน)${ownerStr}` : 
+          `รับชำระค่าส่วนกลาง ${hNo}${periodName}${ownerStr}`;
         txs.push({
           id: p.payment_id,
           doc_no: p.payment_id,
           date: p.paid_date || '2026-01-01',
           time: p.transfer_time || '',
-          title: `รับชำระค่าส่วนกลาง ${hNo}${monthName}${ownerStr}`,
+          title: titleStr,
           category: 'ค่าส่วนกลาง',
           account: isBank ? 'bank' : 'cash',
           account_label: isBank ? 'ธนาคารกรุงเทพ' : 'เงินสด',
@@ -112,7 +114,7 @@
             title: r.note || 'เบิกเงินจากธนาคารมาเติมเงินสดย่อย',
             category: 'โอนระหว่างบัญชี',
             account: 'transfer',
-            account_label: 'โอนย้ายบัญชี',
+            account_label: `โอนย้าย (฿${StaffAPI.fmt(amt)})`,
             type: 'transfer',
             transfer_amount: amt,
             inflow: 0,
@@ -150,6 +152,7 @@
     }
     const isSingleMonth = monthFilter !== 'all';
     const selectedMonth = isSingleMonth ? parseInt(monthFilter, 10) : null;
+    const targetYm = isSingleMonth ? `2026-${String(selectedMonth).padStart(2, '0')}` : null;
     // คำนวณยอดยกมาสะสมก่อนเริ่มเดือนนั้น (กรณีเลือกดูรายเดือน)
     let priorBal = baseOpen;
     if (isSingleMonth) {
@@ -165,9 +168,8 @@
           txIn = tx.inflow;
           txOut = tx.outflow;
         }
-        const parts = (tx.date || '').split('-');
-        const m = parseInt(parts[1], 10);
-        if (!isNaN(m) && m < selectedMonth) {
+        const txYm = (tx.date || '').slice(0, 7);
+        if (txYm && txYm < targetYm) {
           priorBal += (txIn - txOut);
         }
       });
@@ -204,9 +206,8 @@
       }
       // Month filter: แสดงเฉพาะเดือนที่เลือก
       if (isSingleMonth) {
-        const parts = (tx.date || '').split('-');
-        const m = parseInt(parts[1], 10);
-        if (m !== selectedMonth) return;
+        const txYm = (tx.date || '').slice(0, 7);
+        if (txYm !== targetYm) return;
       }
       // Type filter
       if (typeFilter === 'inflow' && txInflow === 0) return;
@@ -233,7 +234,9 @@
       ` : '<span style="color:#cbd5e1;">-</span>';
       const accBadge = tx.account === 'bank' ? 
         '<span style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-size:11.5px; font-weight:500; padding:3px 9px; border-radius:9999px; display:inline-block; white-space:nowrap;">🏦 ธนาคาร</span>' : 
-        (tx.account === 'cash' ? '<span style="background:#fffbeb; color:#b45309; border:1px solid #fde68a; font-size:11.5px; font-weight:500; padding:3px 9px; border-radius:9999px; display:inline-block; white-space:nowrap;">💵 เงินสด</span>' : '<span style="background:#faf5ff; color:#7e22ce; border:1px solid #e9d5ff; font-size:11.5px; font-weight:500; padding:3px 9px; border-radius:9999px; display:inline-block; white-space:nowrap;">🔄 โอนย้าย</span>');
+        (tx.account === 'cash' ? 
+          '<span style="background:#fffbeb; color:#b45309; border:1px solid #fde68a; font-size:11.5px; font-weight:500; padding:3px 9px; border-radius:9999px; display:inline-block; white-space:nowrap;">💵 เงินสด</span>' : 
+          `<span style="background:#faf5ff; color:#7e22ce; border:1px solid #e9d5ff; font-size:11.5px; font-weight:500; padding:3px 9px; border-radius:9999px; display:inline-block; white-space:nowrap;">🔄 โอนย้าย (฿${StaffAPI.fmt(tx.transfer_amount)})</span>`);
       rowsHtml.push(`
         <tr>
           <td style="text-align: center; vertical-align: middle;">
@@ -282,7 +285,7 @@
     const openTitle = isSingleMonth ? `ยอดยกมาต้นเดือน (${monthLabel})` : 'ยอดยกมาจากปี 2568';
     const openSub = isSingleMonth ? 
       `ยอดคงเหลือสะสมก่อนเริ่มเดือน ${monthLabel}` : 
-      (accFilter === 'all' ? 'ธนาคาร ฿82,969.73 + เงินสด ฿10,049.57' : (accFilter === 'bank' ? 'บัญชีเงินฝาก ธ.กรุงเทพ' : 'บัญชีเงินสดสำรองจ่าย'));
+      (accFilter === 'all' ? 'ธนาคาร ฿72,920.16 + เงินสด ฿10,049.57' : (accFilter === 'bank' ? 'บัญชีเงินฝาก ธ.กรุงเทพ (ณ 24 ม.ค. 69)' : 'บัญชีเงินสดสำรองจ่าย'));
     setEl('ledger-stat-opening-title', openTitle);
     setEl('ledger-stat-opening', '฿' + StaffAPI.fmt(priorBal));
     setEl('ledger-stat-opening-sub', openSub);
@@ -293,8 +296,8 @@
     let outflowSub = `${countOutflow.toLocaleString('th-TH')} รายการ`;
 
     if (accFilter === 'bank' && transferOutflow > 0) {
-      outflowTitle = isSingleMonth ? `รวมเงินจ่ายออก (${monthLabel})` : 'รวมเงินจ่ายออก (รายจ่าย+โอนย้าย) (-)';
-      outflowSub = `รายจ่ายจริง ฿${StaffAPI.fmt(expenseOutflow)} · โอนเติมเงินสด ฿${StaffAPI.fmt(transferOutflow)}`;
+      outflowTitle = isSingleMonth ? `รวมเงินจ่ายออก (${monthLabel})` : 'รวมเงินจ่ายออก (รายจ่าย SMS + โอนเติมเงินสด) (-)';
+      outflowSub = `รายจ่าย SMS ฿${StaffAPI.fmt(expenseOutflow)} · โอนเติมเงินสด ฿${StaffAPI.fmt(transferOutflow)}`;
     } else if (accFilter === 'all') {
       outflowSub = `${countOutflow.toLocaleString('th-TH')} รายการ (ตรงกับค่าใช้จ่ายสะสม)`;
     }
@@ -304,12 +307,14 @@
     setEl('ledger-stat-outflow-sub', outflowSub);
 
     let balSub = '';
-    if (accFilter === 'all') {
-      balSub = `ธ.กรุงเทพ ฿${StaffAPI.fmt(SERVER_BALANCE ? SERVER_BALANCE.bank : 82350.02)} + เงินสด ฿${StaffAPI.fmt(SERVER_BALANCE ? SERVER_BALANCE.reserve : 13764.47)}`;
+    if (isSingleMonth && selectedMonth !== 11) {
+      balSub = `ยอดคงเหลือสะสม ณ สิ้นเดือน ${monthLabel}`;
+    } else if (accFilter === 'all') {
+      balSub = `ธ.กรุงเทพ ฿${StaffAPI.fmt(SERVER_BALANCE ? SERVER_BALANCE.bank : 49438.55)} + เงินสด ฿${StaffAPI.fmt(SERVER_BALANCE ? SERVER_BALANCE.reserve : 11816.82)}`;
     } else if (accFilter === 'bank') {
-      balSub = 'ตรงกับเงินคงเหลือ ธ.กรุงเทพ ในแดชบอร์ด';
+      balSub = 'ตรงกับเงินคงเหลือ ธ.กรุงเทพ ในแดชบอร์ด (฿49,438.55)';
     } else {
-      balSub = 'ตรงกับเงินคงเหลือ เงินสด ในแดชบอร์ด';
+      balSub = 'ตรงกับเงินคงเหลือ เงินสด ในแดชบอร์ด (฿11,816.82)';
     }
 
     setEl('ledger-stat-balance-title', isSingleMonth ? `ยอดคงเหลือสิ้นเดือน (${monthLabel})` : 'ยอดคงเหลือสุทธิยกไป');
@@ -356,6 +361,7 @@
     const keyword = ((document.getElementById('ledger-filter-search') || {}).value || '').trim().toLowerCase();
     const isSingleMonth = monthFilter !== 'all';
     const selectedMonth = isSingleMonth ? parseInt(monthFilter, 10) : null;
+    const targetYm = isSingleMonth ? `2026-${String(selectedMonth).padStart(2, '0')}` : null;
     let baseOpen = (accFilter === 'bank') ? OPENING_BANK : ((accFilter === 'cash') ? OPENING_RESERVE : OPENING_ALL);
     let prior = baseOpen;
     if (isSingleMonth) {
@@ -370,8 +376,8 @@
           txIn = tx.inflow;
           txOut = tx.outflow;
         }
-        const m = parseInt((tx.date || '').split('-')[1], 10);
-        if (!isNaN(m) && m < selectedMonth) prior += (txIn - txOut);
+        const txYm = (tx.date || '').slice(0, 7);
+        if (txYm && txYm < targetYm) prior += (txIn - txOut);
       });
     }
     let running = prior;
@@ -391,8 +397,8 @@
         txOut = tx.outflow;
       }
       if (isSingleMonth) {
-        const m = parseInt((tx.date || '').split('-')[1], 10);
-        if (m !== selectedMonth) return;
+        const txYm = (tx.date || '').slice(0, 7);
+        if (txYm !== targetYm) return;
       }
       if (typeFilter === 'inflow' && txIn === 0) return;
       if (typeFilter === 'outflow' && txOut === 0) return;
@@ -412,12 +418,16 @@
     link.download = `Ledger_${accFilter}_month_${monthFilter}_2569.csv`;
     link.click();
   };
-})();
+
   // Print Official Ledger Report (พิมพ์รายงานสมุดบัญชีรายรับ-รายจ่าย)
   window.printLedgerReport = function() {
     const printArea = document.getElementById('printable-report-area');
     if (!printArea) {
       window.print();
+      return;
+    }
+    if (!ALL_TRANSACTIONS || ALL_TRANSACTIONS.length === 0) {
+      alert('กำลังโหลดข้อมูลหรือยังไม่มีรายการสำหรับพิมพ์รายงาน กรุณารอสักครู่แล้วลองใหม่อีกครั้ง');
       return;
     }
     const accFilter = (document.getElementById('ledger-filter-account') || {}).value || 'all';
@@ -427,6 +437,7 @@
     let baseOpen = (accFilter === 'bank') ? OPENING_BANK : ((accFilter === 'cash') ? OPENING_RESERVE : OPENING_ALL);
     const isSingleMonth = monthFilter !== 'all';
     const selectedMonth = isSingleMonth ? parseInt(monthFilter, 10) : null;
+    const targetYm = isSingleMonth ? `2026-${String(selectedMonth).padStart(2, '0')}` : null;
     let priorBal = baseOpen;
     if (isSingleMonth) {
       ALL_TRANSACTIONS.forEach(tx => {
@@ -440,9 +451,8 @@
           txIn = tx.inflow;
           txOut = tx.outflow;
         }
-        const parts = (tx.date || '').split('-');
-        const m = parseInt(parts[1], 10);
-        if (!isNaN(m) && m < selectedMonth) {
+        const txYm = (tx.date || '').slice(0, 7);
+        if (txYm && txYm < targetYm) {
           priorBal += (txIn - txOut);
         }
       });
@@ -467,9 +477,8 @@
         txOutflow = tx.outflow;
       }
       if (isSingleMonth) {
-        const parts = (tx.date || '').split('-');
-        const m = parseInt(parts[1], 10);
-        if (m !== selectedMonth) return;
+        const txYm = (tx.date || '').slice(0, 7);
+        if (txYm !== targetYm) return;
       }
       if (typeFilter === 'inflow' && txInflow === 0) return;
       if (typeFilter === 'outflow' && txOutflow === 0) return;
@@ -565,8 +574,11 @@
       </div>
     `;
     document.body.classList.add('printing-report');
-    window.print();
     setTimeout(() => {
-      document.body.classList.remove('printing-report');
-    }, 1000);
+      window.print();
+      setTimeout(() => {
+        document.body.classList.remove('printing-report');
+      }, 500);
+    }, 150);
   };
+})();

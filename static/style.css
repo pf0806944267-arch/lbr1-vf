@@ -311,7 +311,7 @@ h1, h2, h3, h4, h5, h6 {
 /* Grid System */
 .grid-4 {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 16px;
   margin-bottom: 20px;
 }
@@ -513,7 +513,7 @@ h1, h2, h3, h4, h5, h6 {
 /* Period Progress Cards */
 .period-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 16px;
 }
 
@@ -730,7 +730,7 @@ h1, h2, h3, h4, h5, h6 {
   .month-chips { grid-template-columns: repeat(6, 1fr); }
 }
 @media (max-width: 480px) {
-  .month-chips { grid-template-columns: repeat(4, 1fr); }
+  .month-chips { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
 }
 
 .m-chip {
@@ -1293,7 +1293,7 @@ h1, h2, h3, h4, h5, h6 {
 /* 4-Period Toggle Selector (Image 4) */
 .period-selector-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 10px;
 }
 
@@ -2040,6 +2040,28 @@ body.printing-report #printable-report-area {
   background: #fff !important;
   color: #000 !important;
   box-sizing: border-box !important;
+  z-index: 999999;
+}
+@media print {
+  body.printing-report {
+    background: #fff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  body.printing-report > *:not(#printable-report-area) {
+    display: none !important;
+  }
+  body.printing-report #printable-report-area {
+    display: block !important;
+    position: static !important;
+    visibility: visible !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  body.printing-report #printable-report-area * {
+    visibility: visible !important;
+  }
 }
 
 .report-paper-table {
@@ -2178,7 +2200,7 @@ body.printing-report #printable-report-area {
 /* ==================== Modern Staff Executive Dashboard & Square Icon Grid ==================== */
 .staff-menu-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 18px;
   margin-top: 24px;
 }

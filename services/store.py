@@ -4,7 +4,7 @@ import os
 import threading
 import time
 
-from config import API_KEY, REFRESH_SECONDS, ROOT, SCRIPT_URL, TABLES
+from config import SUPABASE_KEY, SUPABASE_URL, REFRESH_SECONDS, ROOT, TABLES
 from core.sheets_api import sheet_get_many
 
 
@@ -69,7 +69,7 @@ class Store:
 
     def refresh(self):
         try:
-            if not SCRIPT_URL or not API_KEY:
+            if not SUPABASE_URL or not SUPABASE_KEY:
                 return
             new = sheet_get_many(TABLES)
             if new and any(new.values()):

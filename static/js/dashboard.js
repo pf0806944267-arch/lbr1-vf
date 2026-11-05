@@ -60,9 +60,12 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
       document.getElementById('val-received').textContent = '฿' + fmt(bal.received);
       document.getElementById('val-houses').textContent = data.houses_total + ' หลังคาเรือน';
       document.getElementById('val-expenses').textContent = '฿' + fmt(bal.expenses);
-      const openTotal = (bal.opening_total !== undefined) ? bal.opening_total : ((bal.opening || 0) + (bal.opening_reserve || 0));
+      const openTotal = (bal.opening_total !== undefined) ? bal.opening_total : (bal.opening || 82969.73);
       document.getElementById('val-opening').textContent = '฿' + fmt(openTotal);
-      if (document.getElementById('val-open-bank')) document.getElementById('val-open-bank').textContent = '฿' + fmt(bal.opening);
+      if (document.getElementById('val-open-bank')) {
+        const ob = (bal.opening_bank !== undefined) ? bal.opening_bank : ((bal.opening || 82969.73) - (bal.opening_reserve || 10049.57));
+        document.getElementById('val-open-bank').textContent = '฿' + fmt(ob);
+      }
       if (document.getElementById('val-open-reserve')) document.getElementById('val-open-reserve').textContent = '฿' + fmt(bal.opening_reserve);
       if (document.getElementById('val-interest')) document.getElementById('val-interest').textContent = '฿' + fmt(bal.other_income);
       document.getElementById('badge-collected-rate').textContent = 'จัดเก็บแล้ว ' + data.year_collected_pct + '%';
@@ -91,24 +94,65 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
 
     function renderPeriodCards(cards) {
       const container = document.getElementById('period-cards-container');
-      if (!container || !cards) return;
+      if (!container) return;
 
-      container.innerHTML = cards.map(c => `
-        <div class="period-card">
-          <div class="period-top">
-            <span class="period-name">${c.name}</span>
-            <span class="period-pct" style="color: ${c.color}">${c.pct}%</span>
+      let cardList = Array.isArray(cards) ? [...cards] : [];
+      if (!cardList.some(c => c && c.is_no_slip)) {
+        cardList.push({
+          period: 0,
+          is_no_slip: true,
+          name: 'ยังไม่มีสลิป',
+          amount: 0,
+          paid_houses: 0,
+          unpaid_houses: 0,
+          pct: 0,
+          color: '#f59e0b',
+          note: 'โอนไม่ส่งสลิป / รอระบุลูกบ้าน'
+        });
+      }
+
+      container.innerHTML = cardList.map(c => {
+        if (c.is_no_slip) {
+          const count = c.paid_houses || 0;
+          const amt = c.amount || 0;
+          return `
+            <div class="period-card" style="border-top: 3px solid #f59e0b; background: linear-gradient(180deg, #fffbeb 0%, #ffffff 100%);">
+              <div class="period-top">
+                <span class="period-name" style="color: #b45309; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                  <span>⚠️</span> ${c.name}
+                </span>
+                <span class="period-pct" style="color: ${count > 0 ? '#d97706' : '#10b981'}; font-size: 11.5px; font-weight: 600;">
+                  ${count > 0 ? 'รอตรวจสอบ' : 'เรียบร้อย'}
+                </span>
+              </div>
+              <div class="period-amt" style="color: #b45309;">฿${fmt0(amt)}</div>
+              <div class="progress-track" style="background: #fde68a;">
+                <div class="progress-fill" style="width: ${count > 0 ? 100 : 0}%; background: #f59e0b;"></div>
+              </div>
+              <div class="period-foot">
+                <span style="font-weight: 600; color: #475569;">${count} รายการ</span>
+                <span style="color: #92400e; font-size: 11px;">${c.note || 'โอนไม่ส่งสลิป'}</span>
+              </div>
+            </div>
+          `;
+        }
+        return `
+          <div class="period-card">
+            <div class="period-top">
+              <span class="period-name">${c.name}</span>
+              <span class="period-pct" style="color: ${c.color}">${c.pct}%</span>
+            </div>
+            <div class="period-amt">฿${fmt0(c.amount)}</div>
+            <div class="progress-track">
+              <div class="progress-fill" style="width: ${c.pct}%; background: ${c.color};"></div>
+            </div>
+            <div class="period-foot">
+              <span>ชำระแล้ว ${c.paid_houses} หลัง</span>
+              <span>ค้าง ${c.unpaid_houses} หลัง</span>
+            </div>
           </div>
-          <div class="period-amt">฿${fmt0(c.amount)}</div>
-          <div class="progress-track">
-            <div class="progress-fill" style="width: ${c.pct}%; background: ${c.color};"></div>
-          </div>
-          <div class="period-foot">
-            <span>ชำระแล้ว ${c.paid_houses} หลัง</span>
-            <span>ค้าง ${c.unpaid_houses} หลัง</span>
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     function renderZoneChart(zoneChart) {
@@ -229,7 +273,7 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
             <div class="house-badges">
               <span class="badge-tag" style="background: #e0f2fe; color: #0369a1;">อัตรา ${match.rate} บ./เดือน</span>
               <span class="badge-tag ${match.overdue_count === 0 ? 'alert-success' : 'alert-error'}">
-                ${match.overdue_count === 0 ? '✅ ชำระครบตามกำหนด' : '⚠️ ค้างชำระ ' + match.overdue_count + ' เดือน (฿' + fmt(match.overdue_amount) + ')'}
+                ${match.overdue_count === 0 ? '✅ ชำระครบทั้งปี 2569' : '⚠️ ค้างชำระ ' + match.overdue_count + ' งวด (฿' + fmt(match.overdue_amount) + ')'}
               </span>
             </div>
           </div>
@@ -237,10 +281,10 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px;">
             <div style="background: #f8fafc; padding: 12px; border-radius: 8px;">
               <small style="color: #64748b;">ชำระแล้วทั้งปี</small>
-              <div style="font-size: 18px; font-weight: 700; color: #059669;">฿${fmt(match.paid_amount)} (${match.paid_count}/12 เดือน)</div>
+              <div style="font-size: 18px; font-weight: 700; color: #059669;">฿${fmt(match.paid_amount)} (${match.paid_count}/4 งวด)</div>
             </div>
             <div style="background: #f8fafc; padding: 12px; border-radius: 8px;">
-              <small style="color: #64748b;">ยอดค้างถึงปัจจุบัน</small>
+              <small style="color: #64748b;">ยอดค้างชำระทั้งปี 2569</small>
               <div style="font-size: 18px; font-weight: 700; color: ${match.overdue_amount > 0 ? '#dc2626' : '#059669'};">
                 ฿${fmt(match.overdue_amount)}
               </div>

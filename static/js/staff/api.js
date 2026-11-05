@@ -32,6 +32,21 @@
       return Number(n || 0).toLocaleString('th-TH', { maximumFractionDigits: 0 });
     },
 
+    todayStr: function() {
+      const d = new Date();
+      return d.toISOString().slice(0, 10);
+    },
+
+    showAlert: function(container, type, msg) {
+      if (!container) return;
+      const isSuccess = type === 'success';
+      container.innerHTML = `
+        <div class="alert ${isSuccess ? 'alert-success' : 'alert-error'}" style="margin-bottom: 16px; padding: 12px 16px; border-radius: 8px; font-size: 13.5px;">
+          ${msg}
+        </div>
+      `;
+    },
+
     call: async function(endpoint, method = 'GET', body = null) {
       const token = this.getToken();
       const headers = { 'Content-Type': 'application/json' };

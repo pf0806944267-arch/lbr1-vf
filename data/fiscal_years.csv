@@ -1,2 +1,2 @@
-﻿year_be,opening_balance,opening_reserve,is_open
-2569,82969.73,10049.57,Y
+﻿year_be,title,opening_balance,opening_reserve,closing_balance,closing_reserve,start_date,end_date,is_active,is_closed,created_at
+2569,ปีงบประมาณ 2569,82969.73,10049.57,,,,,True,False,2026-11-03T09:58:00.392288+00:00

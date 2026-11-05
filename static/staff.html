@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/style.css?v=20261103_9">
+  <link rel="stylesheet" href="/static/style.css?v=20261105_03">
 </head>
 <body style="background: #f1f5f9;">
 
@@ -295,6 +295,7 @@
               <label class="form-label">เลือกลูกบ้าน / บ้านเลขที่ *</label>
               <select id="sel-pay-house" class="form-control">
                 <option value="">-- ค้นหาหรือเลือกลูกบ้าน (162 หลัง) --</option>
+                <option value="NOSLIP">⚠️ ไม่มีสลิป (เงินโอนเข้าบัญชีแต่ไม่ส่งสลิป / ยังไม่ระบุบ้าน)</option>
               </select>
             </div>
 
@@ -378,29 +379,8 @@
             </button>
           </div>
 
-          <!-- Right Column (Image 4) -->
+          <!-- Right Column -->
           <div style="display: flex; flex-direction: column; gap: 20px;">
-            <!-- Criteria Summary Card -->
-            <div class="content-section" style="margin-bottom: 0;">
-              <div class="section-title" style="font-size: 15px; margin-bottom: 14px;">
-                <span>ℹ️</span> สรุปเกณฑ์การจัดเก็บประจำปี 2569
-              </div>
-              <div style="font-size: 14px; line-height: 2;">
-                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px;">
-                  <span style="color: #64748b;">ซอย 1 ถึง 10:</span>
-                  <b>300 บาท/เดือน (900 บาท/งวด)</b>
-                </div>
-                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding: 6px 0;">
-                  <span style="color: #64748b;">สายหลัก:</span>
-                  <b>100 บาท/เดือน (300 บาท/งวด)</b>
-                </div>
-                <div style="display: flex; justify-content: space-between; padding-top: 6px;">
-                  <span style="color: #64748b;">ผู้รับเงินและลงนามในใบเสร็จ:</span>
-                  <b style="color: #059669;">น.ส.วีระออ สุวรรณสิทธิ์ (เหรัญญิก ผู้รับเงิน)</b>
-                </div>
-              </div>
-            </div>
-
             <!-- Recent Payments Feed (กล่องรายการรับเงินล่าสุดในระบบ) -->
             <div class="content-section" style="margin-bottom: 0; flex: 1;">
               <div class="section-title" style="font-size: 15px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
@@ -409,7 +389,7 @@
                   <span>🔍 ดูทั้งหมด (ปี 2569)</span>
                 </button>
               </div>
-              <div id="recent-payments-feed" style="font-size: 13px; max-height: 340px; overflow-y: auto;">
+              <div id="recent-payments-feed" style="font-size: 13px; max-height: 550px; overflow-y: auto;">
                 <!-- Filled dynamically -->
               </div>
             </div>
@@ -851,6 +831,7 @@
             <option value="2">งวดที่ 2 (เม.ย. - มิ.ย.)</option>
             <option value="3">งวดที่ 3 (ก.ค. - ก.ย.)</option>
             <option value="4">งวดที่ 4 (ต.ค. - ธ.ค.)</option>
+            <option value="noslip">เฉพาะรายการไม่มีสลิป</option>
           </select>
           <select id="filter-pay-month" class="form-control" style="width: auto;" onchange="filterAllPayments()">
             <option value="">ทุกเดือน (ม.ค. - ธ.ค.)</option>
@@ -888,7 +869,7 @@
                   <th style="width: 105px; text-align: center;">วันที่รับชำระ</th>
                   <th style="width: 95px; text-align: center;">บ้านเลขที่</th>
                   <th>สมาชิก / เจ้าของ</th>
-                  <th style="width: 110px; text-align: center;">งวด / เดือน</th>
+                  <th style="width: 125px; text-align: center;">งวด</th>
                   <th style="width: 110px; text-align: center;">ช่องทาง</th>
                   <th style="width: 110px; text-align: right;">จำนวนเงิน</th>
                   <th style="width: 95px; text-align: center;">ผู้บันทึก</th>
@@ -1185,6 +1166,18 @@
               </button>
             </div>
 
+            <!-- Summary Chips -->
+            <div class="grid-2" style="margin-bottom: 16px;">
+              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px;">
+                <div style="font-size: 11.5px; color: #64748b; font-weight: 600;">ยอดถอนสะสมทั้งสิ้น</div>
+                <div id="transfer-stat-total" style="font-size: 18px; font-weight: 700; color: #0284c7; margin-top: 3px;">฿0.00</div>
+              </div>
+              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px;">
+                <div style="font-size: 11.5px; color: #64748b; font-weight: 600;">จำนวนรายการถอน</div>
+                <div id="transfer-stat-count" style="font-size: 18px; font-weight: 700; color: #334155; margin-top: 3px;">0 รายการ</div>
+              </div>
+            </div>
+
             <div id="recent-transfers-feed" style="max-height: 480px; overflow-y: auto;">
               <!-- Loaded dynamically by tab-transfer.js -->
             </div>
@@ -1198,18 +1191,18 @@
   </footer>
   </div>
 
-  <script src="/static/js/staff/api.js?v=20261103_10"></script>
-  <script src="/static/js/staff/router.js?v=20261103_10"></script>
-  <script src="/static/js/staff/tab-menu.js?v=20261103_10"></script>
-  <script src="/static/js/staff/tab-ledger.js?v=20261103_10"></script>
-  <script src="/static/js/staff/tab-pay.js?v=20261103_10"></script>
-  <script src="/static/js/staff/tab-exp.js?v=20261103_10"></script>
-  <script src="/static/js/staff/tab-transfer.js?v=20261103_10"></script>
-  <script src="/static/js/staff/tab-inc.js?v=20261103_10"></script>
-  <script src="/static/js/staff/tab-members.js?v=20261103_10"></script>
-  <script src="/static/js/staff/tab-receipts.js?v=20261103_10"></script>
-  <script src="/static/js/staff/tab-history.js?v=20261103_10"></script>
-  <script src="/static/js/staff.js?v=20261103_10"></script>
+  <script src="/static/js/staff/api.js?v=20261105_03"></script>
+  <script src="/static/js/staff/router.js?v=20261105_03"></script>
+  <script src="/static/js/staff/tab-menu.js?v=20261105_03"></script>
+  <script src="/static/js/staff/tab-ledger.js?v=20261105_05"></script>
+  <script src="/static/js/staff/tab-pay.js?v=20261105_03"></script>
+  <script src="/static/js/staff/tab-exp.js?v=20261105_03"></script>
+  <script src="/static/js/staff/tab-transfer.js?v=20261105_03"></script>
+  <script src="/static/js/staff/tab-inc.js?v=20261105_03"></script>
+  <script src="/static/js/staff/tab-members.js?v=20261105_03"></script>
+  <script src="/static/js/staff/tab-receipts.js?v=20261105_03"></script>
+  <script src="/static/js/staff/tab-history.js?v=20261105_03"></script>
+  <script src="/static/js/staff.js?v=20261105_03"></script>
 
   <!-- Modal แสดงสลิปการโอนเงิน (Image Slip Viewer - Requirement 2) -->
   <div id="slip-modal" class="slip-modal-backdrop" style="display: none;" onclick="closeSlipModal(event)">
@@ -1229,6 +1222,80 @@
           <span>📂</span> เปิดดูไฟล์สลิปต้นฉบับ
         </a>
         <button type="button" class="btn btn-secondary" onclick="closeSlipModal()" style="padding: 6px 16px; border-radius: 8px; font-size: 13px; cursor: pointer;">ปิดหน้าต่าง</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal แก้ไขรายการรับเงิน (Edit Payment Modal) -->
+  <div id="modal-edit-payment" class="slip-modal-backdrop" style="display: none;" onclick="closeEditPaymentModal(event)">
+    <div class="slip-modal-content" style="max-width: 520px;" onclick="event.stopPropagation()">
+      <div class="slip-modal-header" style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);">
+        <div>
+          <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #0f172a;">✏️ แก้ไขรายการรับชำระเงิน</h3>
+          <p id="edit-pay-id-label" style="margin: 2px 0 0 0; font-size: 12px; color: #2563eb; font-weight: 600;"></p>
+        </div>
+        <button type="button" class="btn-icon" onclick="closeEditPaymentModal()" style="border: none; background: #cbd5e1; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 14px;">✕</button>
+      </div>
+      <div style="padding: 20px; max-height: 75vh; overflow-y: auto;">
+        <input type="hidden" id="edit-pay-id">
+        
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" style="font-weight: 600; font-size: 13px; color: #334155;">เลือกลูกบ้าน / บ้านเลขที่ *</label>
+          <select id="edit-pay-house" class="form-control" onchange="onEditHouseChange()">
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+
+        <div class="form-group" id="edit-group-period" style="margin-bottom: 14px;">
+          <label class="form-label" style="font-weight: 600; font-size: 13px; color: #334155;">งวดที่ชำระ *</label>
+          <select id="edit-pay-period" class="form-control" onchange="onEditPeriodChange()">
+            <option value="1">งวดที่ 1 (ม.ค. - มี.ค.)</option>
+            <option value="2">งวดที่ 2 (เม.ย. - มิ.ย.)</option>
+            <option value="3">งวดที่ 3 (ก.ค. - ก.ย.)</option>
+            <option value="4">งวดที่ 4 (ต.ค. - ธ.ค.)</option>
+            <option value="">- ยังไม่ระบุงวด (ไม่มีสลิป) -</option>
+          </select>
+        </div>
+
+        <div class="grid-2" style="margin-bottom: 14px; gap: 12px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-weight: 600; font-size: 13px; color: #334155;">จำนวนเงิน (บาท) *</label>
+            <input type="number" step="0.01" id="edit-pay-amount" class="form-control" style="font-weight: 700; color: #059669; font-size: 16px;">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-weight: 600; font-size: 13px; color: #334155;">ช่องทางการชำระ *</label>
+            <select id="edit-pay-channel" class="form-control">
+              <option value="transfer">โอนเงินเข้าธนาคาร</option>
+              <option value="cash">เงินสด</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom: 14px; gap: 12px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-weight: 600; font-size: 13px; color: #334155;">วันที่ชำระเงิน *</label>
+            <input type="date" id="edit-pay-date" class="form-control">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-weight: 600; font-size: 13px; color: #334155;">เวลาโอน (HH:MM)</label>
+            <input type="text" id="edit-pay-time" class="form-control" placeholder="เช่น 14:30">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" style="font-weight: 600; font-size: 13px; color: #334155;">หมายเหตุ</label>
+          <input type="text" id="edit-pay-note" class="form-control" placeholder="เช่น ยืนยันเจ้าของบ้านแล้ว หรือ โอนผ่านธนาคาร...">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 8px;">
+          <label class="form-label" style="font-weight: 600; font-size: 13px; color: #334155;">สลิปการโอนเงิน</label>
+          <div id="edit-pay-slip-current" style="margin-bottom: 6px; font-size: 12px;"></div>
+          <input type="file" id="edit-pay-slip-file" accept="image/*" class="form-control" style="font-size: 12px;">
+        </div>
+      </div>
+      <div style="padding: 14px 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 10px; background: #f8fafc;">
+        <button type="button" class="btn btn-secondary" onclick="closeEditPaymentModal()" style="padding: 8px 18px; border-radius: 8px; font-size: 13px; cursor: pointer; border: 1px solid #cbd5e1; background: #fff; color: #475569;">ยกเลิก</button>
+        <button type="button" class="btn-primary-green" id="btn-save-edit-payment" onclick="submitEditPayment()" style="padding: 8px 20px; font-size: 13px; border-radius: 8px;">💾 บันทึกการแก้ไข</button>
       </div>
     </div>
   </div>

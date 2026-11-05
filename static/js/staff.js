@@ -215,6 +215,8 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
 
       if (tabName === 'history') loadAuditHistory();
       if (tabName === 'inc') loadRecentIncome();
+      if (tabName === 'transfer' && window.StaffTabs && window.StaffTabs.transfer) window.StaffTabs.transfer();
+      if (tabName === 'ledger' && window.StaffTabs && window.StaffTabs.ledger) window.StaffTabs.ledger();
       if (tabName === 'all-payments') loadAllPaymentsReport();
       if (tabName === 'all-expenses') loadAllExpensesReport();
       if (tabName === 'all-income') loadAllIncomeReport();
@@ -311,12 +313,13 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
     function populateHouseDropdown(houses) {
       const sel = document.getElementById('sel-pay-house');
       sel.innerHTML = '<option value="">-- ค้นหาหรือเลือกลูกบ้าน (162 หลัง) --</option>' +
-        houses.map(h => `<option value="${h.house_id}">${h.house_no} · ${h.zone} · ${h.owner_full} (ค้าง ${h.overdue_count} ด.)</option>`).join('');
+        '<option value="NOSLIP">⚠️ ไม่มีสลิป (เงินโอนเข้าบัญชีแต่ไม่ส่งสลิป / ยังไม่ระบุบ้าน)</option>' +
+        houses.filter(h => h.house_id !== 'NOSLIP').map(h => `<option value="${h.house_id}">${h.house_no} · ${h.zone} · ${h.owner_full} (ค้าง ${h.overdue_count} งวด · ฿${fmt0(h.overdue_amount)})</option>`).join('');
 
       // Also populate PDF Tab Dropdown (Only houses with actual payments)
       const pdfSel = document.getElementById('pdf-sel-house');
       if (pdfSel) {
-        const paidHouses = houses.filter(h => h.paid_amount > 0);
+        const paidHouses = houses.filter(h => h.house_id !== 'NOSLIP' && h.paid_amount > 0);
         pdfSel.innerHTML = '<option value="">-- เลือกลูกบ้านที่มีประวัติชำระเงิน (' + paidHouses.length + ' หลัง) --</option>' +
           paidHouses.map(h => `<option value="${h.house_id}">${h.house_no} - ${h.owner_full} (${h.zone}) [ชำระแล้ว ฿${fmt0(h.paid_amount)}]</option>`).join('');
       }
@@ -369,9 +372,34 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
 
     document.getElementById('sel-pay-house').onchange = () => {
       const hid = document.getElementById('sel-pay-house').value;
-      const h = HOUSES.find(x => x.house_id === hid);
       SELECTED_QUARTERS.clear();
 
+      const periodContainer = document.getElementById('period-selector-container');
+      const amtInput = document.getElementById('input-pay-amount');
+      const btnSubmit = document.getElementById('btn-submit-payment');
+
+      if (hid === 'NOSLIP') {
+        if (periodContainer) periodContainer.style.opacity = '0.35';
+        for (let i = 1; i <= 4; i++) {
+          updateQuarterCardUI(i, false, false);
+        }
+        amtInput.readOnly = false;
+        amtInput.style.background = '#fff';
+        amtInput.value = '';
+        amtInput.placeholder = 'กรอกยอดเงินโอน (เช่น 900, 3600)';
+        amtInput.focus();
+        document.getElementById('sel-pay-channel').value = 'transfer';
+        btnSubmit.innerHTML = '<span>💳</span> บันทึกรายการโอน (ไม่มีสลิป)';
+        return;
+      }
+
+      if (periodContainer) periodContainer.style.opacity = '1';
+      amtInput.readOnly = true;
+      amtInput.style.background = '#f8fafc';
+      amtInput.placeholder = '';
+      btnSubmit.innerHTML = '<span>💳</span> บันทึกรับเงิน & ออกใบเสร็จ E-Receipt ทันที';
+
+      const h = HOUSES.find(x => x.house_id === hid);
       for (let i = 1; i <= 4; i++) {
         updateQuarterCardUI(i, false, false);
       }
@@ -388,6 +416,7 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
 
     function calcPaymentAmount() {
       const hid = document.getElementById('sel-pay-house').value;
+      if (hid === 'NOSLIP') return;
       const h = HOUSES.find(x => x.house_id === hid);
       const ratePerQuarter = h ? (h.rate * 3) : 900;
       const totalAmt = SELECTED_QUARTERS.size * ratePerQuarter;
@@ -398,17 +427,46 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
     document.getElementById('btn-submit-payment').onclick = async () => {
       const hid = document.getElementById('sel-pay-house').value;
       if (!hid) return showAlert('กรุณาเลือกลูกบ้าน / บ้านเลขที่', false);
+
+      if (hid === 'NOSLIP') {
+        const amt = Number(document.getElementById('input-pay-amount').value || 0);
+        if (amt <= 0) return showAlert('กรุณากรอกจำนวนเงินที่โอนเข้ามา', false);
+
+        const body = {
+          house_id: 'NOSLIP',
+          amount: amt,
+          paid_date: document.getElementById('input-pay-date').value,
+          channel: document.getElementById('sel-pay-channel').value,
+          note: document.getElementById('input-pay-note').value || 'โอนเงินเข้าบัญชี (ไม่มีสลิปการโอน)',
+          has_slip: !!CURRENT_SLIP_FILE,
+          slip_file: CURRENT_SLIP_FILE
+        };
+
+        try {
+          document.getElementById('btn-submit-payment').disabled = true;
+          await apiCall('/api/staff/payments', 'POST', body);
+          showAlert('บันทึกรายการโอน (ไม่มีสลิป) เรียบร้อย! สามารถแก้ไขและระบุบ้านเลขที่ได้ภายหลังในหน้ารายการรายรับ');
+          document.getElementById('sel-pay-house').value = '';
+          document.getElementById('input-pay-amount').value = '0.00';
+          document.getElementById('input-pay-note').value = '';
+          window.removeSlipFile();
+          await loadHouses();
+          loadRecentPayments();
+        } catch (err) {
+          showAlert(err.message, false);
+        } finally {
+          document.getElementById('btn-submit-payment').disabled = false;
+        }
+        return;
+      }
+
       if (SELECTED_QUARTERS.size === 0) return showAlert('กรุณาเลือกงวดที่ต้องการชำระ', false);
 
-      const months = [];
-      SELECTED_QUARTERS.forEach(q => {
-        months.push((q - 1) * 3 + 1, (q - 1) * 3 + 2, (q - 1) * 3 + 3);
-      });
-
+      const quarters = Array.from(SELECTED_QUARTERS);
       const channel = document.getElementById('sel-pay-channel').value;
       const body = {
         house_id: hid,
-        months: months,
+        quarters: quarters,
         paid_date: document.getElementById('input-pay-date').value,
         channel: channel,
         note: document.getElementById('input-pay-note').value,
@@ -601,13 +659,22 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
             </button>
           ` : '';
 
+          const isNoSlip = !p.house_no || p.house_no === 'ไม่มีสลิป';
+          const pr = p.period || p.quarter || p.month;
+          const periodBadge = pr ? `<span style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; padding:1px 6px; border-radius:4px; font-size:11px; font-weight:600; margin-left:4px;">งวด ${pr}</span>` : '';
+          const houseDisplay = isNoSlip ? 
+            `<span class="badge" style="background:#fef3c7; color:#92400e; font-size:11.5px; font-weight:600; padding:2px 8px; border-radius:4px;">⚠️ ไม่มีสลิป (ยังไม่ระบุลูกบ้าน)</span>` : 
+            `<b>บ้าน ${p.house_no}</b> ${periodBadge}`;
+
           return `
             <div style="border-bottom: 1px solid #f1f5f9; padding: 8px 0; display:flex; justify-content:space-between; align-items:center; gap: 8px;">
               <div style="flex: 1; min-width: 0;">
-                <div><b>บ้าน ${p.house_no}</b> (งวดเดือน ${MONTHS_TH[p.month - 1]})</div>
-                <div style="color: #64748b; font-size: 11px;">
-                  <span>${p.paid_date}</span> · <span>${p.channel === 'transfer' ? 'โอน' : 'เงินสด'}</span>
+                <div>${houseDisplay}</div>
+                <div style="color: #64748b; font-size: 11px; margin-top: 2px;">
+                  <span>${p.paid_date || '-'}</span> · <span>${p.channel === 'transfer' ? 'โอน' : 'เงินสด'}</span>
+                  ${p.transfer_time ? `<span> · ${p.transfer_time} น.</span>` : ''}
                   <span style="color:#94a3b8; font-family: monospace;"> (${p.payment_id})</span>
+                  ${p.note ? `<span style="color:#64748b; margin-left:4px;">· <i>${p.note}</i></span>` : ''}
                 </div>
               </div>
               <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
@@ -674,9 +741,9 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
         const matchQ = !q || h.house_no.toLowerCase().includes(q) || h.owner_full.toLowerCase().includes(q) || h.zone.toLowerCase().includes(q);
         const matchZ = !zoneFilter || h.zone === zoneFilter;
         let matchS = true;
-        if (statusFilter === 'paid') matchS = (h.paid_count === 12);
-        else if (statusFilter === 'partial') matchS = (h.paid_count > 0 && h.paid_count < 12);
-        else if (statusFilter === 'unpaid') matchS = (h.paid_count === 0);
+        if (statusFilter === 'paid') matchS = (h.overdue_amount === 0);
+        else if (statusFilter === 'partial') matchS = (h.paid_amount > 0 && h.overdue_amount > 0);
+        else if (statusFilter === 'unpaid') matchS = (h.paid_amount === 0);
         return matchQ && matchZ && matchS;
       });
 
@@ -691,7 +758,7 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
             <th class="c">งวด 3</th>
             <th class="c">งวด 4</th>
             <th class="r">ชำระแล้ว</th>
-            <th class="r">ยอดค้าง</th>
+            <th class="r">ยอดค้าง (ทั้งปี)</th>
             <th class="c">สถานะ</th>
             <th class="c">พิมพ์ใบเสร็จ</th>
           </tr>
@@ -701,8 +768,8 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
 
       html += filtered.map(h => {
         let badgeHtml = '';
-        if (h.paid_count === 12) badgeHtml = '<span class="badge-status badge-paid">ชำระครบ</span>';
-        else if (h.paid_count > 0) badgeHtml = '<span class="badge-status badge-partial">ชำระบางส่วน</span>';
+        if (h.overdue_amount === 0) badgeHtml = '<span class="badge-status badge-paid">ชำระครบทั้งปี</span>';
+        else if (h.paid_amount > 0) badgeHtml = '<span class="badge-status badge-partial">ชำระบางส่วน</span>';
         else badgeHtml = '<span class="badge-status badge-unpaid">ยังไม่ชำระ</span>';
 
         const q0 = h.quarters[0];
@@ -980,15 +1047,17 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
             </tr>
           </thead>
           <tbody>
-            ${overdueList.map(h => `
+            ${overdueList.map(h => {
+              const unpaidQ = (h.quarters || []).filter(q => !q.is_full).map(q => 'งวด ' + q.period).join(', ');
+              return `
               <tr>
                 <td>${h.zone}</td>
                 <td><b>${h.house_no}</b></td>
                 <td>${h.owner_full}</td>
-                <td class="c">ค้าง ${h.overdue_count} เดือน</td>
+                <td class="c">${unpaidQ || ('ค้าง ' + h.overdue_count + ' งวด')}</td>
                 <td class="r" style="color: #dc2626; font-weight: 700;">฿${fmt0(h.overdue_amount)}</td>
               </tr>
-            `).join('')}
+            `;}).join('')}
           </tbody>
         </table>
         <div class="signatures-area" style="display: flex; justify-content: space-between; margin-top: 50px;">
@@ -1253,7 +1322,11 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
       const sVal = (document.getElementById('filter-pay-search')?.value || '').trim().toLowerCase();
 
       FILTERED_PAYMENTS = all.filter(p => {
-        if (qVal && String(p.quarter) !== String(qVal)) return false;
+        if (qVal === 'noslip') {
+          if (p.house_id !== 'NOSLIP' && p.house_no !== 'ไม่มีสลิป' && p.quarter) return false;
+        } else if (qVal) {
+          if (String(p.quarter) !== String(qVal)) return false;
+        }
         if (mVal && String(p.month) !== String(mVal)) return false;
         if (cVal && p.channel !== cVal) return false;
         if (sVal) {
@@ -1298,31 +1371,183 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
         const chBadge = p.channel === 'cash'
           ? '<span style="background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">💵 เงินสด</span>'
           : '<span style="background: #eff6ff; color: #1e40af; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">🏦 โอนเงิน</span>';
-        const qText = p.quarter ? `งวดที่ ${p.quarter} (${MONTHS_TH[parseInt(p.month)-1] || p.month})` : (p.month ? `ด.${p.month}` : '-');
+
+        const qLabels = ['', 'งวดที่ 1 (ม.ค. - มี.ค.)', 'งวดที่ 2 (เม.ย. - มิ.ย.)', 'งวดที่ 3 (ก.ค. - ก.ย.)', 'งวดที่ 4 (ต.ค. - ธ.ค.)'];
+        let qText = '-';
+        if (p.quarter && qLabels[parseInt(p.quarter)]) {
+          qText = `<span style="font-weight: 600; color: #1e293b;">${qLabels[parseInt(p.quarter)]}</span>`;
+        } else if (p.house_id === 'NOSLIP' || p.house_no === 'ไม่มีสลิป') {
+          qText = '<span style="background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">⚠️ ไม่มีสลิป / ยังไม่ระบุงวด</span>';
+        }
+
+        const isNoSlip = (p.house_id === 'NOSLIP' || p.house_no === 'ไม่มีสลิป');
+        const houseBadge = isNoSlip
+          ? '<span style="background: #fee2e2; color: #b91c1c; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 11px;">⚠️ ไม่มีสลิป</span>'
+          : `<span style="font-weight: 700; color: #0f172a;">${p.house_no || '-'}</span>`;
+
+        const slipLink = p.slip_url
+          ? `<a href="javascript:void(0)" onclick="openSlipModalDirect('${p.slip_url}', '${p.house_no || ''}', '${p.quarter || ''}')" title="คลิกดูสลิป" style="text-decoration: none; margin-left: 4px; font-size: 13px;">📸</a>`
+          : '';
 
         return `
           <tr>
             <td style="text-align: center; color: #94a3b8;">${idx + 1}</td>
             <td style="text-align: center; font-weight: 600; color: #2563eb;">${p.payment_id}</td>
             <td style="text-align: center; font-size: 12px;">${p.paid_date || '-'}</td>
-            <td style="text-align: center; font-weight: 700;">${p.house_no || '-'}</td>
+            <td style="text-align: center;">${houseBadge}</td>
             <td>${p.owner || '-'}</td>
             <td style="text-align: center; font-size: 12px;">${qText}</td>
-            <td style="text-align: center;">${chBadge}</td>
+            <td style="text-align: center; white-space: nowrap;">${chBadge} ${slipLink}</td>
             <td style="text-align: right; font-weight: 700; color: #059669;">฿${fmt(p.amount)}</td>
             <td style="text-align: center; font-size: 12px; color: #64748b;">${p.recorded_by || '-'}</td>
             <td style="font-size: 12px; color: #64748b;">${p.note || '-'}</td>
-            <td style="text-align: center;">
+            <td style="text-align: center; white-space: nowrap;">
+              <button onclick="openEditPaymentModal('${p.payment_id}')" class="btn-edit-record" style="padding: 3px 8px; font-size: 11px; margin-right: 4px; background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; border-radius: 5px; cursor: pointer; font-weight: 600;" title="แก้ไขรายการรับชำระนี้">
+                ✏️ แก้ไข
+              </button>
               ${isAdmin ? `
-                <button onclick="deletePayment('${p.payment_id}', '${p.house_no}', ${p.amount})" class="btn-del-record" style="padding: 2px 8px; font-size: 11px;" title="ลบรายการรับเงินนี้">
+                <button onclick="deletePayment('${p.payment_id}', '${p.house_no}', ${p.amount})" class="btn-del-record" style="padding: 3px 8px; font-size: 11px; border-radius: 5px;" title="ลบรายการรับเงินนี้">
                   🗑️ ลบ
                 </button>
-              ` : '-'}
+              ` : ''}
             </td>
           </tr>
         `;
       }).join('');
     }
+
+    window.openEditPaymentModal = function(paymentId) {
+      const all = (ALL_REPORTS_CACHE && ALL_REPORTS_CACHE.payments) || [];
+      const p = all.find(x => x.payment_id === paymentId);
+      if (!p) return showAlert('ไม่พบข้อมูลรายการ', false);
+
+      document.getElementById('edit-pay-id').value = p.payment_id;
+      document.getElementById('edit-pay-id-label').textContent = `รหัสรายการ: ${p.payment_id}`;
+
+      const hSel = document.getElementById('edit-pay-house');
+      hSel.innerHTML = '<option value="NOSLIP">⚠️ ไม่มีสลิป (ยังไม่ระบุบ้าน)</option>' +
+        HOUSES.filter(h => h.house_id !== 'NOSLIP').map(h => `<option value="${h.house_id}">${h.house_no} · ${h.zone} · ${h.owner_full}</option>`).join('');
+
+      hSel.value = (p.house_id && p.house_id !== 'NOSLIP') ? p.house_id : (p.house_no === 'ไม่มีสลิป' ? 'NOSLIP' : (HOUSES.find(h => h.house_no === p.house_no)?.house_id || 'NOSLIP'));
+      document.getElementById('edit-pay-period').value = p.quarter ? String(p.quarter) : '';
+      document.getElementById('edit-pay-amount').value = p.amount || '';
+      document.getElementById('edit-pay-channel').value = p.channel || 'transfer';
+      document.getElementById('edit-pay-date').value = p.paid_date || todayStr();
+      document.getElementById('edit-pay-time').value = p.transfer_time || '';
+      document.getElementById('edit-pay-note').value = p.note || '';
+
+      const slipCurrent = document.getElementById('edit-pay-slip-current');
+      if (p.slip_url) {
+        slipCurrent.innerHTML = `<span style="color:#059669; font-weight:600;">✓ มีสลิปแนบอยู่:</span> <a href="${p.slip_url}" target="_blank" style="color:#2563eb; text-decoration:underline;">เปิดดูสลิปเดิม</a>`;
+      } else {
+        slipCurrent.innerHTML = '<span style="color:#64748b;">(ยังไม่มีสลิปแนบ)</span>';
+      }
+      document.getElementById('edit-pay-slip-file').value = '';
+
+      onEditHouseChange();
+      document.getElementById('modal-edit-payment').style.display = 'flex';
+    };
+
+    window.closeEditPaymentModal = function(e) {
+      if (e && e.target !== document.getElementById('modal-edit-payment')) return;
+      document.getElementById('modal-edit-payment').style.display = 'none';
+    };
+
+    window.onEditHouseChange = function() {
+      const hid = document.getElementById('edit-pay-house').value;
+      if (hid === 'NOSLIP') {
+        document.getElementById('edit-pay-period').value = '';
+      } else {
+        const h = HOUSES.find(x => x.house_id === hid);
+        const rate = h ? (h.rate * 3) : 900;
+        if (!document.getElementById('edit-pay-amount').value || Number(document.getElementById('edit-pay-amount').value) === 0) {
+          document.getElementById('edit-pay-amount').value = rate;
+        }
+      }
+    };
+
+    window.onEditPeriodChange = function() {
+      const hid = document.getElementById('edit-pay-house').value;
+      if (hid && hid !== 'NOSLIP') {
+        const h = HOUSES.find(x => x.house_id === hid);
+        const rate = h ? (h.rate * 3) : 900;
+        document.getElementById('edit-pay-amount').value = rate;
+      }
+    };
+
+    window.submitEditPayment = async function() {
+      const pid = document.getElementById('edit-pay-id').value;
+      const hid = document.getElementById('edit-pay-house').value;
+      const period = document.getElementById('edit-pay-period').value;
+      const amt = Number(document.getElementById('edit-pay-amount').value || 0);
+      const dte = document.getElementById('edit-pay-date').value;
+
+      if (!hid) return showAlert('กรุณาเลือกลูกบ้าน / บ้านเลขที่', false);
+      if (amt <= 0) return showAlert('กรุณากรอกจำนวนเงินที่ถูกต้อง', false);
+      if (!dte) return showAlert('กรุณาเลือกวันที่ชำระเงิน', false);
+
+      const fileInput = document.getElementById('edit-pay-slip-file');
+      let slipFilePayload = null;
+      if (fileInput.files && fileInput.files[0]) {
+        const f = fileInput.files[0];
+        const b64 = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.readAsDataURL(f);
+        });
+        slipFilePayload = {
+          data: b64,
+          filename: f.name,
+          mimeType: f.type
+        };
+      }
+
+      const body = {
+        house_id: hid,
+        period: period ? parseInt(period) : null,
+        amount: amt,
+        amount_paid: amt,
+        paid_date: dte,
+        channel: document.getElementById('edit-pay-channel').value,
+        transfer_time: document.getElementById('edit-pay-time').value.trim(),
+        note: document.getElementById('edit-pay-note').value.trim(),
+        slip_file: slipFilePayload
+      };
+
+      const btn = document.getElementById('btn-save-edit-payment');
+      try {
+        btn.disabled = true;
+        await apiCall(`/api/staff/payments/${pid}/update`, 'POST', body);
+        showAlert(`บันทึกการแก้ไขรายการ ${pid} สำเร็จ!`);
+        document.getElementById('modal-edit-payment').style.display = 'none';
+        ALL_REPORTS_CACHE = null;
+        await loadHouses();
+        loadRecentPayments();
+        loadAllPaymentsReport();
+      } catch (err) {
+        showAlert(err.message || 'เกิดข้อผิดพลาดในการบันทึก', false);
+      } finally {
+        btn.disabled = false;
+      }
+    };
+
+    window.openSlipModalDirect = function(url, houseNo, quarter) {
+      const modal = document.getElementById('slip-modal');
+      const body = document.getElementById('slip-modal-body');
+      const title = document.getElementById('slip-modal-title');
+      const sub = document.getElementById('slip-modal-subtitle');
+      const driveBtn = document.getElementById('slip-btn-drive');
+
+      title.textContent = '📸 สลิปการโอนเงิน';
+      sub.textContent = `บ้านเลขที่ ${houseNo || '-'} ${quarter ? ('· งวดที่ ' + quarter) : ''}`;
+      body.innerHTML = `<img src="${url}" style="max-width: 100%; max-height: 70vh; object-fit: contain; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" alt="สลิป">`;
+
+      if (driveBtn) {
+        driveBtn.href = url;
+        driveBtn.style.display = 'inline-flex';
+      }
+      modal.style.display = 'flex';
+    };
 
     // --- 2. รายการรายจ่าย ปี 2569 ---
     async function loadAllExpensesReport() {
