@@ -2,9 +2,63 @@ from config import FY, INCOME_TYPES, MONTH_TH, PERIOD_NAMES, mask_name, now_th, 
 from services.store import store
 
 
-def current_month():
+def get_active_fy(d=None):
+    if d is None:
+        d = store.data
+    fys = d.get("fiscal_years", [])
+    for fy in fys:
+        act = fy.get("is_active")
+        if act is True or str(act).lower() in ("true", "t", "1", "y"):
+            try:
+                return int(fy.get("year_be"))
+            except Exception:
+                pass
+    if fys:
+        try:
+            return max(int(x.get("year_be", FY)) for x in fys)
+        except Exception:
+            pass
+    return FY
+
+
+def get_fiscal_years_list(d=None):
+    if d is None:
+        d = store.data
+    fys = d.get("fiscal_years", [])
+    out = []
+    for f in sorted(fys, key=lambda x: int(x.get("year_be", 0)), reverse=True):
+        y = int(f.get("year_be", 0))
+        if not y:
+            continue
+        act = f.get("is_active")
+        is_act = (act is True) or str(act).lower() in ("true", "t", "1", "y")
+        is_cls = (f.get("is_closed") is True) or str(f.get("is_closed")).lower() in ("true", "t", "1", "y")
+        out.append({
+            "year_be": y,
+            "title": f.get("title") or f"ปีงบประมาณ {y}",
+            "opening_balance": num(f.get("opening_balance")),
+            "opening_bank": num(f.get("opening_bank", round(num(f.get("opening_balance")) - num(f.get("opening_reserve")), 2))),
+            "opening_reserve": num(f.get("opening_reserve")),
+            "is_active": is_act,
+            "is_closed": is_cls
+        })
+    if not out:
+        out = [{
+            "year_be": FY,
+            "title": f"ปีงบประมาณ {FY}",
+            "opening_balance": 82969.73,
+            "opening_bank": 72920.16,
+            "opening_reserve": 10049.57,
+            "is_active": True,
+            "is_closed": False
+        }]
+    return out
+
+
+def current_month(target_fy=None):
+    fy = int(target_fy or get_active_fy())
     n = now_th()
-    ce_fy = FY - 543
+    ce_fy = fy - 543
     if n.year > ce_fy:
         return 12
     if n.year < ce_fy:
@@ -12,14 +66,15 @@ def current_month():
     return n.month
 
 
-def build_model():
+def build_model(target_fy=None):
+    fy = int(target_fy or get_active_fy())
     d = store.data
     zones = {z["zone_id"]: z for z in d.get("zones", [])}
     houses = {h["house_id"]: h for h in d.get("houses", [])}
-    dues = [x for x in d.get("dues", []) if str(x.get("year_be")) == str(FY)]
+    dues = [x for x in d.get("dues", []) if str(x.get("year_be")) == str(fy)]
     paid_by_due = {}
     for p in d.get("payments", []):
-        if p.get("due_id"):
+        if p.get("due_id") and str(p.get("year_be", fy)) == str(fy):
             paid_by_due[p["due_id"]] = p
     owners = {}
     members = {m["member_id"]: m["full_name"] for m in d.get("members", [])}
@@ -28,33 +83,37 @@ def build_model():
     return zones, houses, dues, paid_by_due, owners
 
 
-def summary():
+def summary(target_fy=None):
     d = store.data
-    zones, houses, dues, paid_by_due, owners = build_model()
+    fy = int(target_fy or get_active_fy())
+    zones, houses, dues, paid_by_due, owners = build_model(fy)
     actual_houses = {hid: h for hid, h in houses.items() if hid != "NOSLIP"}
 
-    fy = next((x for x in d.get("fiscal_years", []) if str(x.get("year_be")) == str(FY)), {})
-    opening = num(fy.get("opening_balance", 82969.73))
-    opening_reserve = num(fy.get("opening_reserve", 10049.57))
+    fy_row = next((x for x in d.get("fiscal_years", []) if str(x.get("year_be")) == str(fy)), {})
+    opening = num(fy_row.get("opening_balance", 82969.73))
+    opening_reserve = num(fy_row.get("opening_reserve", 10049.57))
+    opening_bank = num(fy_row.get("opening_bank", round(opening - opening_reserve, 2)))
 
     # Calculate member payments received
     paid_amount = {dd["due_id"]: num(paid_by_due[dd["due_id"]]["amount_paid"]) for dd in dues if dd["due_id"] in paid_by_due}
-    standalone_payments = sum(num(p.get("amount_paid")) for p in d.get("payments", []) if not p.get("due_id"))
+    standalone_payments = sum(num(p.get("amount_paid")) for p in d.get("payments", []) if not p.get("due_id") and str(p.get("year_be", fy)) == str(fy))
     received = sum(paid_amount.values()) + standalone_payments
 
-    other_income = sum(num(x["amount"]) for x in d.get("other_income", []))
+    year_incomes = [x for x in d.get("other_income", []) if str(x.get("year_be", fy)) == str(fy)]
+    other_income = sum(num(x["amount"]) for x in year_incomes)
     income_by_type = {t: 0.0 for t in INCOME_TYPES}
     cash_income = 0.0
-    for x in d.get("other_income", []):
+    for x in year_incomes:
         t = x.get("type") if x.get("type") in INCOME_TYPES else "other"
         income_by_type[t] += num(x["amount"])
         if x.get("channel") == "cash":
             cash_income += num(x["amount"])
 
-    exp_total = sum(num(e["amount"]) for e in d.get("expenses", []))
+    year_expenses = [e for e in d.get("expenses", []) if str(e.get("year_be", fy)) == str(fy)]
+    exp_total = sum(num(e["amount"]) for e in year_expenses)
 
     # --- เงินสำรอง (เงินสดในมือ) ---
-    ledger = d.get("reserve_transactions", [])
+    ledger = [r for r in d.get("reserve_transactions", []) if str(r.get("year_be", fy)) == str(fy)]
     reserve_in = sum(num(r["amount"]) for r in ledger if r.get("type") == "in")
     reserve_out = sum(num(r["amount"]) for r in ledger if r.get("type") == "out")
     reserve_bal = round(reserve_in - reserve_out, 2)
@@ -69,7 +128,7 @@ def summary():
                     "collected": 0.0, "due_to_date": 0.0, "total_due_year": 0.0} for zid, z in zones.items() if zid != "Z00"}
 
     house_periods = {}
-    cm = current_month()
+    cm = current_month(fy)
 
     for dd in dues:
         hid = dd["house_id"]
@@ -170,7 +229,7 @@ def summary():
         "ค่าบริการธนาคาร SMS": 0.0,
         "อื่นๆ": 0.0
     }
-    for e in d.get("expenses", []):
+    for e in year_expenses:
         desc = str(e.get("description", ""))
         a = num(e.get("amount", 0))
         if any(k in desc for k in ["รปภ", "รักษาความปลอดภัย", "ยาม", "พิเชษฐ์"]):
@@ -185,36 +244,40 @@ def summary():
             cat_buckets["อื่นๆ"] += a
 
     budget_breakdown = [{"name": k, "amount": round(v, 2)} for k, v in cat_buckets.items() if v > 0]
-    recent = sorted(d.get("expenses", []), key=lambda e: (e.get("expense_date", ""), e.get("expense_id", "")), reverse=True)[:10]
+    recent = sorted(year_expenses, key=lambda e: (e.get("expense_date", ""), e.get("expense_id", "")), reverse=True)[:10]
     full_due = sum(num(x["amount_due"]) for x in dues if x["house_id"] != "NOSLIP")
 
+    prev_fy = fy - 1
+    fy_short = str(fy)[-2:]
     # Financial Statement rows
     statement = [
-        {"date": "24/1/69", "title": "ยอดเงินคงเหลือ ปี 2568 (ยกมา)", "amount": round(opening, 2), "type": "opening"},
-        {"date": "-", "title": f"รับเงินจากสมาชิก งวดที่ 1 (ม.ค. - มี.ค. 69) [ชำระแล้ว {period_cards[0]['paid_houses']}/{len(actual_houses)} หลัง]", "amount": periods[0], "type": "income"},
-        {"date": "-", "title": f"รับเงินจากสมาชิก งวดที่ 2 (เม.ย. - มิ.ย. 69) [ชำระแล้ว {period_cards[1]['paid_houses']}/{len(actual_houses)} หลัง]", "amount": periods[1], "type": "income"},
-        {"date": "-", "title": f"รับเงินจากสมาชิก งวดที่ 3 (ก.ค. - ก.ย. 69) [ชำระแล้ว {period_cards[2]['paid_houses']}/{len(actual_houses)} หลัง]", "amount": periods[2], "type": "income"},
-        {"date": "-", "title": f"รับเงินจากสมาชิก งวดที่ 4 (ต.ค. - ธ.ค. 69) [ชำระแล้ว {period_cards[3]['paid_houses']}/{len(actual_houses)} หลัง]", "amount": periods[3], "type": "income"},
+        {"date": f"1/1/{fy_short}", "title": f"ยอดเงินคงเหลือ ปี {prev_fy} (ยกมา)", "amount": round(opening, 2), "type": "opening"},
+        {"date": "-", "title": f"รับเงินจากสมาชิก งวดที่ 1 (ม.ค. - มี.ค. {fy_short}) [ชำระแล้ว {period_cards[0]['paid_houses']}/{len(actual_houses)} หลัง]", "amount": periods[0], "type": "income"},
+        {"date": "-", "title": f"รับเงินจากสมาชิก งวดที่ 2 (เม.ย. - มิ.ย. {fy_short}) [ชำระแล้ว {period_cards[1]['paid_houses']}/{len(actual_houses)} หลัง]", "amount": periods[1], "type": "income"},
+        {"date": "-", "title": f"รับเงินจากสมาชิก งวดที่ 3 (ก.ค. - ก.ย. {fy_short}) [ชำระแล้ว {period_cards[2]['paid_houses']}/{len(actual_houses)} หลัง]", "amount": periods[2], "type": "income"},
+        {"date": "-", "title": f"รับเงินจากสมาชิก งวดที่ 4 (ต.ค. - ธ.ค. {fy_short}) [ชำระแล้ว {period_cards[3]['paid_houses']}/{len(actual_houses)} หลัง]", "amount": periods[3], "type": "income"},
         {"date": "-", "title": f"รวมรับเงินจากสมาชิกทั้งหมด ({len(actual_houses)} หลังคาเรือน)", "amount": received, "type": "total_received", "highlight": "blue"},
         *[{"date": "-", "title": f"รายได้อื่น: {INCOME_TYPES.get(t, t)}", "amount": a, "type": "income"}
           for t, a in income_by_type.items() if a],
         {"date": "-", "title": "รวมรายได้อื่น (เงินสนับสนุน/ดอกเบี้ย)", "amount": other_income, "type": "total_received", "highlight": "blue"},
-        {"date": "-", "title": "รวมค่าใช้จ่ายตั้งแต่ ม.ค. 2569 - ปัจจุบัน", "amount": exp_total, "type": "total_expense", "highlight": "red"},
+        {"date": "-", "title": f"รวมค่าใช้จ่ายตั้งแต่ ม.ค. {fy} - ปัจจุบัน", "amount": exp_total, "type": "total_expense", "highlight": "red"},
         {"date": "-", "title": "เงินสำรองคงเหลือ (เงินสดในมือ)", "amount": reserve_bal, "type": "reserve"},
         {"date": "-", "title": "เงินคงเหลือในสมุดบัญชีธนาคาร (ธนาคารกรุงเทพ)", "amount": bank_bal, "type": "bank"},
         {"date": "ณ ปัจจุบัน", "title": "รวมเงินคงเหลือสุทธิทั้งสิ้น (Real-time)", "amount": total, "type": "final_balance", "highlight": "green"}
     ]
 
     return {
-        "fiscal_year": FY,
+        "fiscal_year": fy,
+        "fiscal_years": get_fiscal_years_list(d),
+        "active_year": get_active_fy(d),
         "as_of": now_th().strftime("%Y-%m-%d %H:%M:%S"),
-        "as_of_thai": f"{now_th().day} {MONTH_TH[now_th().month - 1]} {FY} เวลา {now_th().strftime('%H:%M:%S')} น.",
+        "as_of_thai": f"{now_th().day} {MONTH_TH[now_th().month - 1]} {fy} เวลา {now_th().strftime('%H:%M:%S')} น.",
         "current_month": cm,
         "balance": {
             "opening": opening,
             "opening_reserve": opening_reserve,
-            "opening_bank": round(opening - opening_reserve, 2),
-            "opening_total": round(opening, 2),
+            "opening_bank": opening_bank,
+            "opening_total": opening,
             "received": received,
             "other_income": other_income,
             "other_income_by_type": {t: round(a, 2) for t, a in income_by_type.items()},
@@ -237,8 +300,9 @@ def summary():
     }
 
 
-def houses_view(full=False):
-    zones, houses, dues, paid_by_due, owners = build_model()
+def houses_view(full=False, target_fy=None):
+    fy = int(target_fy or get_active_fy())
+    zones, houses, dues, paid_by_due, owners = build_model(fy)
     actual_houses = {hid: h for hid, h in houses.items() if hid != "NOSLIP"}
 
     dues_by_house = {}
@@ -258,7 +322,7 @@ def houses_view(full=False):
 
         for pr in range(1, 5):
             dd = dues_by_house.get(hid, {}).get(pr)
-            did = dd["due_id"] if dd else f"D{FY}-{hid}-P{pr}"
+            did = dd["due_id"] if dd else f"D{fy}-{hid}-P{pr}"
             payment = paid_by_due.get(did)
 
             p_amt = num(payment.get("amount_paid")) if payment else 0.0

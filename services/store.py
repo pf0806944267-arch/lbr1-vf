@@ -25,6 +25,21 @@ def load_local_cache():
     return data
 
 
+def save_table_to_csv(table, rows):
+    p = os.path.join(ROOT, "data", table + ".csv")
+    if not rows:
+        return
+    try:
+        h = list(rows[0].keys())
+        with open(p, "w", encoding="utf-8-sig", newline="") as f:
+            w = csv.writer(f)
+            w.writerow(h)
+            for r in rows:
+                w.writerow([r.get(col, "") for col in h])
+    except Exception as err:
+        print(f"save cache error {table}: {err}")
+
+
 def append_to_csv(table, row):
     p = os.path.join(ROOT, "data", table + ".csv")
     try:

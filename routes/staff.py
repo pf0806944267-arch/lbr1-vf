@@ -10,9 +10,9 @@ from werkzeug.security import check_password_hash
 
 from config import FY, INCOME_TYPES, MONTH_TH, ROOT, num, DRIVE_FOLDER_ID
 from core.auth import audit, make_token, next_id, require
-from core.sheets_api import sheet_post
-from services.calculations import houses_view, summary
-from services.store import append_to_csv, store
+from core.sheets_api import sheet_post, sheet_insert_many
+from services.calculations import houses_view, summary, get_active_fy, get_fiscal_years_list
+from services.store import append_to_csv, store, save_table_to_csv
 
 staff_bp = Blueprint("staff", __name__)
 
@@ -31,7 +31,8 @@ def api_login():
 @staff_bp.get("/api/staff/houses")
 @require()
 def api_staff_houses():
-    return jsonify(houses_view(full=True))
+    year = request.args.get("year", type=int)
+    return jsonify(houses_view(full=True, target_fy=year))
 
 
 @staff_bp.get("/api/staff/categories")
@@ -78,6 +79,7 @@ def api_staff_recent():
 @staff_bp.get("/api/staff/reports/all")
 @require()
 def api_staff_reports_all():
+    target_fy = request.args.get("year", type=int) or get_active_fy()
     d = store.data
     dues = {x["due_id"]: x for x in d.get("dues", [])}
     houses = {h["house_id"]: h for h in d.get("houses", [])}
@@ -91,7 +93,8 @@ def api_staff_reports_all():
     pays = []
     for p in sorted(d.get("payments", []), key=lambda x: (x.get("paid_date", ""), x.get("payment_id", "")), reverse=True):
         du = dues.get(p.get("due_id"), {})
-        if du and du.get("year_be") and str(du.get("year_be")) != str(FY):
+        p_year = du.get("year_be") if du else (p.get("year_be") or p.get("fiscal_year"))
+        if p_year and str(p_year) != str(target_fy):
             continue
         h_id = du.get("house_id", "") if du else (p.get("house_id") or "NOSLIP")
         h = houses.get(h_id, {})
@@ -121,6 +124,8 @@ def api_staff_reports_all():
 
     exps = []
     for e in sorted(d.get("expenses", []), key=lambda x: (x.get("expense_date", ""), x.get("expense_id", "")), reverse=True):
+        if str(e.get("year_be", target_fy)) != str(target_fy):
+            continue
         exps.append({
             "expense_id": e.get("expense_id"),
             "doc_no": e.get("doc_no", ""),
@@ -137,6 +142,8 @@ def api_staff_reports_all():
 
     incs = []
     for i in sorted(d.get("other_income", []), key=lambda x: (x.get("date", ""), x.get("income_id", "")), reverse=True):
+        if str(i.get("year_be", target_fy)) != str(target_fy):
+            continue
         incs.append({
             "income_id": i.get("income_id"),
             "date": i.get("date", ""),
@@ -147,11 +154,15 @@ def api_staff_reports_all():
             "note": i.get("note", "")
         })
 
-    summary_data = summary()
+    reserve_list = [r for r in d.get("reserve_transactions", []) if str(r.get("year_be", target_fy)) == str(target_fy)]
+
+    summary_data = summary(target_fy=target_fy)
     bal = summary_data.get("balance", {})
 
     return jsonify(
-        fiscal_year=FY,
+        fiscal_year=target_fy,
+        fiscal_years=get_fiscal_years_list(d),
+        active_year=get_active_fy(d),
         balance=bal,
         opening_balance=bal.get("opening", 82969.73),
         opening_bank=round(bal.get("opening", 82969.73) - bal.get("opening_reserve", 10049.57), 2),
@@ -159,7 +170,7 @@ def api_staff_reports_all():
         payments=pays,
         expenses=exps,
         incomes=incs,
-        reserve=d.get("reserve_transactions", []),
+        reserve=reserve_list,
         categories=d.get("expense_categories", [])
     )
 
@@ -219,6 +230,7 @@ def api_add_payment():
             print("Drive slip upload error:", e)
 
     has_slip_flag = "Y" if (slip_url or b.get("has_slip") == "Y" or b.get("has_slip") is True) else "N"
+    target_year = int(b.get("year_be") or b.get("fiscal_year") or get_active_fy(d))
 
     with store.write_lock:
         added = []
@@ -232,7 +244,7 @@ def api_add_payment():
             row = {
                 "payment_id": next_id("P", d.get("payments", []), "payment_id", 5),
                 "due_id": "",
-                "year_be": FY,
+                "year_be": target_year,
                 "amount_paid": amount,
                 "paid_date": b["paid_date"],
                 "channel": b["channel"],
@@ -262,10 +274,10 @@ def api_add_payment():
                 return jsonify(error="กรุณาเลือกงวดที่ต้องการชำระเงิน"), 400
 
             paid_dues = {p["due_id"] for p in d.get("payments", []) if p.get("due_id")}
-            dues = {x["due_id"]: x for x in d.get("dues", []) if str(x.get("year_be")) == str(FY)}
+            dues = {x["due_id"]: x for x in d.get("dues", []) if str(x.get("year_be")) == str(target_year)}
 
             for q in quarters:
-                due_id = f"D{FY}-{house_id}-P{q}"
+                due_id = f"D{target_year}-{house_id}-P{q}"
                 du = dues.get(due_id)
                 if not du:
                     # fallback to month-based due if legacy
@@ -276,12 +288,12 @@ def api_add_payment():
                     return jsonify(error=f"งวดที่ {q} มีประวัติชำระเงินแล้ว"), 409
 
             for q in quarters:
-                due_id = f"D{FY}-{house_id}-P{q}"
+                due_id = f"D{target_year}-{house_id}-P{q}"
                 du = dues.get(due_id)
                 row = {
                     "payment_id": next_id("P", d.get("payments", []), "payment_id", 5),
                     "due_id": du["due_id"],
-                    "year_be": FY,
+                    "year_be": target_year,
                     "amount_paid": du["amount_due"],
                     "paid_date": b["paid_date"],
                     "channel": b["channel"],
@@ -430,12 +442,14 @@ def api_add_expense():
     if amount <= 0 or not b.get("description") or not re.match(r"\d{4}-\d{2}-\d{2}$", b.get("expense_date", "")):
         return jsonify(error="กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง"), 400
 
+    target_year = int(b.get("year_be") or b.get("fiscal_year") or get_active_fy(d))
+
     with store.write_lock:
-        nums = [int(m.group(1)) for e in d.get("expenses", []) if (m := re.match(r"\s*(\d+)/", str(e.get("doc_no", ""))))]
-        doc_no = f"{max(nums, default=0) + 1}/{FY % 100}"
+        nums = [int(m.group(1)) for e in d.get("expenses", []) if str(e.get("year_be", "")) == str(target_year) and (m := re.match(r"\s*(\d+)/", str(e.get("doc_no", ""))))]
+        doc_no = f"{max(nums, default=0) + 1}/{target_year % 100}"
         row = {
             "expense_id": next_id("E", d.get("expenses", []), "expense_id", 4),
-            "year_be": FY,
+            "year_be": target_year,
             "doc_no": doc_no,
             "expense_date": b["expense_date"],
             "description": b["description"],
@@ -472,10 +486,12 @@ def api_add_income():
     if b.get("channel") not in ("cash", "transfer"):
         return jsonify(error="กรุณาเลือกช่องทางรับเงิน (เงินสด / โอนเข้าธนาคาร)"), 400
 
+    target_year = int(b.get("year_be") or b.get("fiscal_year") or get_active_fy(d))
+
     with store.write_lock:
         row = {
             "income_id": next_id("I", d.get("other_income", []), "income_id", 3),
-            "year_be": FY,
+            "year_be": target_year,
             "date": b["date"],
             "type": itype,
             "amount": amount,
@@ -505,9 +521,12 @@ def api_add_transfer():
     if amount <= 0 or not re.match(r"\d{4}-\d{2}-\d{2}$", b.get("date", "")):
         return jsonify(error="กรุณากรอกวันที่และจำนวนเงินให้ถูกต้อง"), 400
 
+    target_year = int(b.get("year_be") or b.get("fiscal_year") or get_active_fy(d))
+
     with store.write_lock:
         row = {
             "rt_id": next_id("RT", d.get("reserve_transactions", []), "rt_id", 4),
+            "year_be": target_year,
             "date": b["date"],
             "type": "in",
             "amount": amount,
@@ -526,3 +545,200 @@ def api_add_transfer():
 
     threading.Thread(target=store.refresh, daemon=True).start()
     return jsonify(ok=True, transfer=row)
+
+
+@staff_bp.get("/api/staff/years")
+@require()
+def api_staff_get_years():
+    d = store.data
+    years = get_fiscal_years_list(d)
+    active_year = get_active_fy(d)
+    return jsonify(ok=True, years=years, active_year=active_year)
+
+
+@staff_bp.get("/api/staff/years/rollover-preview")
+@require()
+def api_staff_rollover_preview():
+    d = store.data
+    active_fy = get_active_fy(d)
+    from_year = request.args.get("from_year", type=int) or active_fy
+    
+    # Calculate closing numbers from previous year
+    sum_data = summary(target_fy=from_year)
+    bal = sum_data.get("balance", {})
+    closing_tot = bal.get("total", bal.get("closing", 0.0))
+    closing_bank = bal.get("bank", 0.0)
+    closing_res = bal.get("reserve", 0.0)
+
+    houses = [h for h in d.get("houses", []) if h.get("house_id") != "NOSLIP" and h.get("house_no") != "ไม่มีสลิป"]
+    suggested_year = from_year + 1
+
+    return jsonify(
+        ok=True,
+        from_year=from_year,
+        suggested_year=suggested_year,
+        opening_balance=closing_tot,
+        opening_bank=closing_bank,
+        opening_reserve=closing_res,
+        houses_count=len(houses),
+        expected_dues=len(houses) * 4
+    )
+
+
+@staff_bp.post("/api/staff/years")
+@require()
+def api_staff_create_year():
+    b = request.get_json(force=True)
+    d = store.data
+    try:
+        new_year = int(b.get("year_be"))
+    except Exception:
+        return jsonify(error="กรุณาระบุปีงบประมาณ พ.ศ. ให้ถูกต้อง เช่น 2570"), 400
+
+    existing_years = {int(y["year_be"]) for y in d.get("fiscal_years", []) if str(y.get("year_be", "")).isdigit()}
+    if new_year in existing_years:
+        return jsonify(error=f"ปีงบประมาณ พ.ศ. {new_year} มีอยู่ในระบบแล้ว"), 400
+
+    from_year = int(b.get("from_year") or (new_year - 1))
+    title = b.get("title") or f"ปีงบประมาณ {new_year}"
+    opening_balance = num(b.get("opening_balance"), 0.0)
+    opening_reserve = num(b.get("opening_reserve"), 0.0)
+    set_active = bool(b.get("set_active", False))
+
+    from datetime import datetime, timezone
+
+    with store.write_lock:
+        # 1. Update existing fiscal_years active flags if set_active is True
+        fys = d.get("fiscal_years", [])
+        if set_active:
+            for y in fys:
+                y["is_active"] = "False"
+                sheet_post(action="update", table="fiscal_years", idCol="year_be", id=y.get("year_be"), patch={"is_active": False})
+
+        # 2. Insert new fiscal_year
+        fy_row = {
+            "year_be": new_year,
+            "title": title,
+            "opening_balance": opening_balance,
+            "opening_reserve": opening_reserve,
+            "closing_balance": "",
+            "closing_reserve": "",
+            "start_date": f"{new_year - 543}-01-01",
+            "end_date": f"{new_year - 543}-12-31",
+            "is_active": "True" if set_active else "False",
+            "is_closed": "False",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        sheet_post(action="append", table="fiscal_years", row=fy_row)
+        fys.append(fy_row)
+        save_table_to_csv("fiscal_years", fys)
+
+        # 3. Create fee_rates for new_year (copy from from_year or defaults)
+        prev_rates = [r for r in d.get("fee_rates", []) if str(r.get("year_be")) == str(from_year)]
+        if not prev_rates:
+            prev_rates = [r for r in d.get("fee_rates", []) if str(r.get("year_be")) == "2569"]
+        
+        rate_by_zone = {}
+        new_rates = []
+        for r in prev_rates:
+            zid = r.get("zone_id")
+            m_amt = num(r.get("monthly_amount"), 300.0)
+            rate_by_zone[zid] = m_amt
+            new_r = {
+                "rate_id": f"RZ{zid[-2:]}_{new_year}",
+                "zone_id": zid,
+                "year_be": new_year,
+                "monthly_amount": m_amt
+            }
+            new_rates.append(new_r)
+        
+        if new_rates:
+            sheet_insert_many("fee_rates", new_rates)
+            d.setdefault("fee_rates", []).extend(new_rates)
+            save_table_to_csv("fee_rates", d["fee_rates"])
+
+        # 4. Generate dues for all houses (4 periods per year)
+        houses = [h for h in d.get("houses", []) if h.get("house_id") != "NOSLIP" and h.get("house_no") != "ไม่มีสลิป"]
+        new_dues = []
+        for h in houses:
+            hid = h.get("house_id")
+            zid = h.get("zone_id", "Z01")
+            m_rate = rate_by_zone.get(zid, 100.0 if zid == "Z11" else 300.0)
+            q_rate = round(m_rate * 3, 2)
+            for p in range(1, 5):
+                due_id = f"D{new_year}-{hid}-P{p}"
+                new_dues.append({
+                    "due_id": due_id,
+                    "house_id": hid,
+                    "year_be": new_year,
+                    "month": p,
+                    "period": p,
+                    "amount_due": q_rate
+                })
+
+        if new_dues:
+            sheet_insert_many("dues", new_dues)
+            d.setdefault("dues", []).extend(new_dues)
+            save_table_to_csv("dues", d["dues"])
+
+        # 5. Create initial opening reserve transaction if reserve > 0
+        if opening_reserve > 0:
+            rt_row = {
+                "rt_id": next_id("RT", d.get("reserve_transactions", []), "rt_id", 4),
+                "year_be": new_year,
+                "date": f"{new_year - 543}-01-01",
+                "type": "in",
+                "amount": opening_reserve,
+                "expense_id": "",
+                "note": f"ยอดยกมาจากปี {from_year}"
+            }
+            sheet_post(action="append", table="reserve_transactions", row=rt_row)
+            d.setdefault("reserve_transactions", []).append(rt_row)
+            append_to_csv("reserve_transactions", rt_row)
+
+        audit(request.user, "create", "fiscal_years", str(new_year), new=json.dumps(fy_row, ensure_ascii=False))
+
+        with store.cond:
+            store.version += 1
+            store.digest = json.dumps(d, sort_keys=True, ensure_ascii=False)
+            store.cond.notify_all()
+
+    threading.Thread(target=store.refresh, daemon=True).start()
+    return jsonify(ok=True, message=f"สร้างปีงบประมาณ {new_year} เรียบร้อยแล้ว (สร้างงวดชำระ {len(new_dues)} รายการ)", fiscal_year=fy_row)
+
+
+@staff_bp.post("/api/staff/years/set-active")
+@require()
+def api_staff_set_active_year():
+    b = request.get_json(force=True)
+    d = store.data
+    try:
+        target_year = int(b.get("year_be"))
+    except Exception:
+        return jsonify(error="กรุณาระบุปีงบประมาณที่ถูกต้อง"), 400
+
+    fys = d.get("fiscal_years", [])
+    found = False
+    with store.write_lock:
+        for y in fys:
+            is_match = (str(y.get("year_be")) == str(target_year))
+            if is_match:
+                found = True
+            val_str = "True" if is_match else "False"
+            val_bool = is_match
+            y["is_active"] = val_str
+            sheet_post(action="update", table="fiscal_years", idCol="year_be", id=y.get("year_be"), patch={"is_active": val_bool})
+
+        if not found:
+            return jsonify(error=f"ไม่พบปีงบประมาณ {target_year}"), 404
+
+        save_table_to_csv("fiscal_years", fys)
+        audit(request.user, "update", "fiscal_years", str(target_year), note=f"Set active fiscal year to {target_year}")
+
+        with store.cond:
+            store.version += 1
+            store.digest = json.dumps(d, sort_keys=True, ensure_ascii=False)
+            store.cond.notify_all()
+
+    threading.Thread(target=store.refresh, daemon=True).start()
+    return jsonify(ok=True, active_year=target_year)

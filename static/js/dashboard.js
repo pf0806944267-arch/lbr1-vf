@@ -19,6 +19,11 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
     let HOUSES_DATA = [];
     let chartZonesInstance = null;
     let chartExpensesInstance = null;
+    window.CURRENT_PUBLIC_YEAR = null;
+
+    window.onPublicYearChange = function(yr) {
+      loadData(parseInt(yr));
+    };
 
     // Tab Navigation
     document.querySelectorAll('.nav-tab-btn').forEach(btn => {
@@ -32,14 +37,16 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
       });
     });
 
-    async function loadData() {
+    async function loadData(targetYear = null) {
       try {
+        const yParam = targetYear ? `&year=${targetYear}` : '';
         const [dashRes, housesRes] = await Promise.all([
-          fetch('/api/dashboard?_=' + Date.now()).then(r => r.json()),
-          fetch('/api/houses?_=' + Date.now()).then(r => r.json())
+          fetch('/api/dashboard?_=' + Date.now() + yParam).then(r => r.json()),
+          fetch('/api/houses?_=' + Date.now() + yParam).then(r => r.json())
         ]);
         DASH_DATA = dashRes;
         HOUSES_DATA = housesRes;
+        window.CURRENT_PUBLIC_YEAR = dashRes.fiscal_year;
 
         renderDashboard(dashRes);
         renderHousesTable(housesRes);
@@ -50,7 +57,38 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
     }
 
     function renderDashboard(data) {
-      document.getElementById('nav-year').textContent = 'ปี ' + data.fiscal_year;
+      const yrSel = document.getElementById('nav-year-select');
+      if (yrSel) {
+        const list = (data.fiscal_years && data.fiscal_years.length > 0)
+          ? data.fiscal_years
+          : [{ year_be: data.fiscal_year, title: `ปี ${data.fiscal_year}` }];
+        yrSel.innerHTML = list.map(y => {
+          const yr = typeof y === 'object' ? y.year_be : y;
+          const title = typeof y === 'object' ? (y.title || `ปี ${yr}`) : `ปี ${yr}`;
+          return `<option value="${yr}" ${yr == data.fiscal_year ? 'selected' : ''}>${title}</option>`;
+        }).join('');
+      } else if (document.getElementById('nav-year')) {
+        document.getElementById('nav-year').textContent = 'ปี ' + data.fiscal_year;
+      }
+
+      // Update dynamic labels with current fiscal year
+      const fy = data.fiscal_year;
+      const prevFy = fy - 1;
+      const elExp = document.getElementById('lbl-expenses-year');
+      if (elExp) elExp.textContent = `ค่าใช้จ่ายสะสมปี ${fy}`;
+
+      const elOp = document.getElementById('lbl-opening-year');
+      if (elOp) elOp.textContent = `ยอดยกมาจากปี ${prevFy} (รวม)`;
+
+      const elProg = document.getElementById('lbl-period-progress');
+      if (elProg) elProg.textContent = `ความคืบหน้าการจัดเก็บเงินตามงวด (ปี ${fy})`;
+
+      const elStmt = document.getElementById('stmt-heading');
+      if (elStmt) elStmt.textContent = `📑 รายงานสรุปงบการเงินประจำปี ${fy} (ฉบับประชาชน)`;
+
+      const elPaperStmt = document.getElementById('stmt-paper-heading');
+      if (elPaperStmt) elPaperStmt.textContent = `รายงานสรุปการรับ-จ่ายเงินของกองทุนพัฒนาหมู่บ้าน ปี ${fy}`;
+
       const bal = data.balance;
 
       // 4 Main Stats

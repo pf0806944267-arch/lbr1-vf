@@ -50,11 +50,19 @@
               ระบบงานเจ้าหน้าที่
               <span style="font-size: 11px; background: #2563eb; color: #fff; padding: 2px 8px; border-radius: 4px; font-weight: 600;">STAFF ONLY</span>
             </h1>
-            <p style="font-size: 12px; color: #94a3b8;">กองทุนพัฒนาหมู่บ้าน ลพบุรีราเมศวร์ธานี ปี 2569</p>
+            <p style="font-size: 12px; color: #94a3b8;">กองทุนพัฒนาหมู่บ้าน ลพบุรีราเมศวร์ธานี <span id="staff-header-fy-label">ปี 2569</span></p>
           </div>
         </div>
 
         <div style="display: flex; align-items: center; gap: 12px;">
+          <!-- Quick Year Selector -->
+          <div style="background: rgba(255,255,255,0.08); padding: 5px 12px; border-radius: 20px; font-size: 13px; display: flex; align-items: center; gap: 6px; border: 1px solid rgba(255,255,255,0.15);">
+            <span style="color: #94a3b8; font-size: 12px;">📅 ปีงบ:</span>
+            <select id="staff-topbar-year-select" onchange="onStaffYearSelectChange(this.value)" style="background: transparent; color: #38bdf8; font-weight: 700; border: none; outline: none; cursor: pointer; font-size: 13px; font-family: inherit;">
+              <option value="2569" style="background: #1e293b; color: #fff;">ปี 2569</option>
+            </select>
+          </div>
+
           <!-- User info badge -->
           <div style="background: rgba(255,255,255,0.08); padding: 6px 14px; border-radius: 20px; font-size: 13px; display: flex; align-items: center; gap: 8px;">
             <span class="live-dot" style="width: 8px; height: 8px;"></span>
@@ -120,7 +128,10 @@
               <h2 style="font-size: 22px; font-weight: 700; margin: 0; color: #f8fafc;">กองทุนพัฒนาหมู่บ้าน ลพบุรีราเมศวร์ธานี</h2>
               <p style="font-size: 13px; color: #94a3b8; margin: 6px 0 0 0;">เลือกระบบงานที่ต้องการจากเมนูด้านล่าง ข้อมูลเชื่อมต่อกับ Supabase และอัปเดตเรียลไทม์ทันที</p>
             </div>
-            <div style="display: flex; gap: 10px;">
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <button onclick="openYearModal()" class="btn" style="background: rgba(59, 130, 246, 0.25); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.5); border-radius: 10px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                <span>⚙️</span> จัดการปีงบประมาณ
+              </button>
               <button onclick="StaffTabs.menu()" class="btn" style="background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 8px 16px; font-size: 13px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 6px;">
                 <span>🔄</span> รีเฟรชสถานะสด
               </button>
@@ -1296,6 +1307,122 @@
       <div style="padding: 14px 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 10px; background: #f8fafc;">
         <button type="button" class="btn btn-secondary" onclick="closeEditPaymentModal()" style="padding: 8px 18px; border-radius: 8px; font-size: 13px; cursor: pointer; border: 1px solid #cbd5e1; background: #fff; color: #475569;">ยกเลิก</button>
         <button type="button" class="btn-primary-green" id="btn-save-edit-payment" onclick="submitEditPayment()" style="padding: 8px 20px; font-size: 13px; border-radius: 8px;">💾 บันทึกการแก้ไข</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: ตั้งค่าและจัดการปีงบประมาณ -->
+  <div id="modal-year-settings" class="modal-overlay hidden" style="position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 16px; backdrop-filter: blur(4px);">
+    <div style="background: #ffffff; border-radius: 16px; max-width: 680px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border: 1px solid #e2e8f0;">
+      <div style="padding: 18px 24px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #0f172a; color: #fff; border-radius: 16px 16px 0 0;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 24px;">⚙️</span>
+          <div>
+            <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: #fff;">จัดการปีงบประมาณกองทุน (Fiscal Year)</h3>
+            <p style="margin: 2px 0 0 0; font-size: 12px; color: #94a3b8;">เลือกดูข้อมูลย้อนหลัง สลับปีปัจจุบัน หรือเปิดปีงบประมาณใหม่พร้อมยกยอดอัตโนมัติ</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeYearModal()" style="background: none; border: none; font-size: 22px; cursor: pointer; color: #94a3b8; line-height: 1;">&times;</button>
+      </div>
+
+      <div style="padding: 20px 24px;">
+        <!-- Alert Box inside modal -->
+        <div id="modal-year-alert" style="display: none; padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; font-size: 13px;"></div>
+
+        <!-- Section 1: รายการปีงบประมาณในระบบ -->
+        <div style="margin-bottom: 24px;">
+          <h4 style="margin: 0 0 10px 0; font-size: 14px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 6px;">
+            <span>📋</span> รายการปีงบประมาณทั้งหมด
+          </h4>
+          <div style="border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+              <thead style="background: #f8fafc; border-bottom: 1px solid #e2e8f0; text-align: left; color: #64748b; font-size: 12px;">
+                <tr>
+                  <th style="padding: 10px 14px;">ปี พ.ศ.</th>
+                  <th style="padding: 10px 14px;">ชื่อปีงบประมาณ</th>
+                  <th style="padding: 10px 14px; text-align: right;">ยอดยกมารวม</th>
+                  <th style="padding: 10px 14px; text-align: center;">สถานะ</th>
+                  <th style="padding: 10px 14px; text-align: center;">การดำเนินการ</th>
+                </tr>
+              </thead>
+              <tbody id="tbl-fiscal-years-body">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Section 2: เปิดปีงบประมาณใหม่ (Rollover) -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px 20px;">
+          <h4 style="margin: 0 0 4px 0; font-size: 15px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 6px;">
+            <span>➕</span> เปิดปีงบประมาณใหม่ (เช่น ปี 2570)
+          </h4>
+          <p style="margin: 0 0 16px 0; font-size: 12px; color: #64748b;">
+            ระบบจะดึงยอดคงเหลือสิ้นปีต้นทางมายกยอดให้อัตโนมัติ พร้อมสร้างตารางเรียกเก็บค่าส่วนกลาง (Dues) 4 งวด ครบทั้ง 162 หลังคาเรือน
+          </p>
+
+          <form id="form-create-year" onsubmit="submitCreateYear(event)">
+            <div class="grid-2" style="gap: 12px; margin-bottom: 12px; display: grid; grid-template-columns: 1fr 1fr;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 12px; font-weight: 600;">ปีต้นทางที่ต้องการยกยอด *</label>
+                <select id="new-fy-from" class="form-control" onchange="onFromYearChange(this.value)" style="font-size: 13px;">
+                  <!-- Options -->
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 12px; font-weight: 600;">ปีงบประมาณใหม่ (พ.ศ.) *</label>
+                <input type="number" id="new-fy-year" class="form-control" placeholder="เช่น 2570" required style="font-size: 13px; font-weight: 700;">
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label class="form-label" style="font-size: 12px; font-weight: 600;">ชื่อเรียกปีงบประมาณ</label>
+              <input type="text" id="new-fy-title" class="form-control" placeholder="เช่น ปีงบประมาณ 2570" style="font-size: 13px;">
+            </div>
+
+            <div class="grid-3" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 11px; font-weight: 600; color: #1e293b;">ยอดยกมารวม (฿) *</label>
+                <input type="number" step="0.01" id="new-fy-opening-total" class="form-control" required style="font-size: 13px; font-weight: 700; color: #0284c7;" oninput="updateOpeningBankCalc()">
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 11px; font-weight: 600; color: #1e293b;">ยกมาเงินสดสำรองจ่าย (฿)</label>
+                <input type="number" step="0.01" id="new-fy-opening-reserve" class="form-control" required style="font-size: 13px; font-weight: 700; color: #d97706;" oninput="updateOpeningBankCalc()">
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 11px; font-weight: 600; color: #1e293b;">ยกมาบัญชีธนาคาร (฿)</label>
+                <input type="text" id="new-fy-opening-bank" class="form-control" readonly style="font-size: 13px; font-weight: 700; color: #2563eb; background: #f1f5f9;">
+              </div>
+            </div>
+
+            <!-- Checkbox Set as Active -->
+            <div style="background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
+              <input type="checkbox" id="new-fy-set-active" checked style="width: 18px; height: 18px; cursor: pointer;">
+              <label for="new-fy-set-active" style="font-size: 13px; font-weight: 600; color: #1e293b; cursor: pointer; margin: 0;">
+                ตั้งเป็นปีงบประมาณปัจจุบันทันที (Active Fiscal Year)
+              </label>
+            </div>
+
+            <!-- Auto Actions Notice -->
+            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; font-size: 12px; color: #1e40af;">
+              <b>⚡ การดำเนินการอัตโนมัติเมื่อกดเปิดปีใหม่:</b>
+              <ul style="margin: 4px 0 0 18px; padding: 0;">
+                <li>คัดลอกอัตราค่าส่วนกลาง (Fee Rates) 11 โซนของหมู่บ้าน</li>
+                <li>สร้างงวดชำระค่าส่วนกลาง 4 งวด ครบทั้ง 162 หลังคาเรือน (รวม 648 รายการ) ในสถานะรอชำระ</li>
+                <li>ลงบันทึกยอดยกมาเงินสดสำรองจ่ายเข้าบัญชีเงินสดย่อยเรียบร้อย</li>
+              </ul>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+              <button type="button" onclick="closeYearModal()" class="btn" style="background: #fff; border: 1px solid #cbd5e1; padding: 8px 16px; border-radius: 8px; font-size: 13px; color: #475569; cursor: pointer;">
+                ยกเลิก
+              </button>
+              <button type="submit" id="btn-submit-create-year" class="btn-primary-green" style="padding: 8px 20px; font-size: 13px; border-radius: 8px; font-weight: 600;">
+                🚀 ยืนยันการเปิดปีงบประมาณใหม่
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </div>

@@ -73,6 +73,21 @@ def sheet_get_many(tables):
     return data
 
 
+def sheet_insert_many(table, rows):
+    """Batch insert rows into a Supabase table with upsert/merge capability"""
+    if not SUPABASE_URL or not SUPABASE_KEY or not rows:
+        return {"ok": False, "count": 0}
+    url = f"{SUPABASE_URL}/rest/v1/{table}"
+    headers = {"Prefer": "resolution=merge-duplicates"}
+    chunk_size = 100
+    total = 0
+    for i in range(0, len(rows), chunk_size):
+        chunk = rows[i:i + chunk_size]
+        _call(url, data=chunk, headers=headers, method="POST")
+        total += len(chunk)
+    return {"ok": True, "count": total}
+
+
 def upload_slip_to_storage(data_b64, filename, mime_type="image/jpeg"):
     """Upload slip directly to Supabase Storage bucket 'slips' and return public URL"""
     if "," in str(data_b64):

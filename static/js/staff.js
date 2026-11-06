@@ -147,7 +147,19 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
     async function apiCall(endpoint, method = 'GET', body = null) {
       const headers = { 'Content-Type': 'application/json' };
       if (TOKEN) headers['Authorization'] = 'Bearer ' + TOKEN;
-      const url = method === 'GET' ? (endpoint.includes('?') ? (endpoint + '&_=' + Date.now()) : (endpoint + '?_=' + Date.now())) : endpoint;
+
+      let finalEndpoint = endpoint;
+      if (window.CURRENT_STAFF_YEAR) {
+        if (method === 'GET' && (endpoint.startsWith('/api/staff/reports/all') || endpoint.startsWith('/api/staff/houses') || endpoint.startsWith('/api/dashboard'))) {
+          if (!endpoint.includes('year=')) {
+            finalEndpoint = endpoint + (endpoint.includes('?') ? '&' : '?') + 'year=' + window.CURRENT_STAFF_YEAR;
+          }
+        } else if (method === 'POST' && body && typeof body === 'object' && !body.year_be && !body.fiscal_year && !endpoint.includes('/api/login') && !endpoint.includes('/api/staff/years')) {
+          body.year_be = window.CURRENT_STAFF_YEAR;
+        }
+      }
+
+      const url = method === 'GET' ? (finalEndpoint.includes('?') ? (finalEndpoint + '&_=' + Date.now()) : (finalEndpoint + '?_=' + Date.now())) : finalEndpoint;
       const res = await fetch(url, {
         method,
         headers,
@@ -247,6 +259,7 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
       document.getElementById('input-exp-date').value = todayStr();
       document.getElementById('input-inc-date').value = todayStr();
 
+      await initFiscalYears();
       await loadHouses();
       loadRecentPayments();
       loadRecentExpenses();
@@ -1299,6 +1312,13 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
       if (!ALL_REPORTS_CACHE || force) {
         try {
           ALL_REPORTS_CACHE = await apiCall('/api/staff/reports/all');
+          if (ALL_REPORTS_CACHE) {
+            if (!window.CURRENT_STAFF_YEAR) {
+              window.CURRENT_STAFF_YEAR = ALL_REPORTS_CACHE.fiscal_year || ALL_REPORTS_CACHE.active_year || 2569;
+            }
+            window.FISCAL_YEARS_LIST = ALL_REPORTS_CACHE.fiscal_years || [];
+            updateYearUI();
+          }
         } catch (e) {
           console.error('Error fetching reports all:', e);
           ALL_REPORTS_CACHE = { payments: [], expenses: [], incomes: [], categories: [] };
@@ -2038,4 +2058,224 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
       }
       const modal = document.getElementById('slip-modal');
       if (modal) modal.style.display = 'none';
+    };
+
+    // ==========================================
+    // FISCAL YEAR MANAGEMENT (เปิดปีใหม่ / สลับปี)
+    // ==========================================
+    window.CURRENT_STAFF_YEAR = null;
+    window.FISCAL_YEARS_LIST = [];
+
+    async function initFiscalYears() {
+      try {
+        const res = await apiCall('/api/staff/years');
+        if (res && res.ok) {
+          window.FISCAL_YEARS_LIST = res.years || [];
+          if (!window.CURRENT_STAFF_YEAR) {
+            window.CURRENT_STAFF_YEAR = res.active_year || (res.years && res.years[0] ? res.years[0].year_be : 2569);
+          }
+          updateYearUI();
+        }
+      } catch (err) {
+        console.error('initFiscalYears error:', err);
+      }
+    }
+
+    function updateYearUI() {
+      const lbl = document.getElementById('staff-header-fy-label');
+      if (lbl && window.CURRENT_STAFF_YEAR) lbl.textContent = `ปี ${window.CURRENT_STAFF_YEAR}`;
+
+      const sel = document.getElementById('staff-topbar-year-select');
+      if (sel) {
+        const list = (window.FISCAL_YEARS_LIST && window.FISCAL_YEARS_LIST.length > 0)
+          ? window.FISCAL_YEARS_LIST
+          : [{ year_be: window.CURRENT_STAFF_YEAR || 2569, title: `ปี ${window.CURRENT_STAFF_YEAR || 2569}` }];
+        
+        sel.innerHTML = list.map(y => {
+          const yr = typeof y === 'object' ? y.year_be : y;
+          const title = typeof y === 'object' ? (y.title || `ปี ${yr}`) : `ปี ${yr}`;
+          const isAct = typeof y === 'object' && (String(y.is_active) === 'True' || y.is_active === true);
+          return `<option value="${yr}" ${yr == window.CURRENT_STAFF_YEAR ? 'selected' : ''} style="background: #1e293b; color: #fff;">${title}${isAct ? ' (ปัจจุบัน)' : ''}</option>`;
+        }).join('');
+      }
+    }
+
+    window.onStaffYearSelectChange = async function(yr) {
+      window.CURRENT_STAFF_YEAR = parseInt(yr);
+      ALL_REPORTS_CACHE = null;
+      updateYearUI();
+      showAlert(`สลับไปยังข้อมูลปีงบประมาณ ${window.CURRENT_STAFF_YEAR} แล้ว`, true);
+      await loadHouses();
+      loadRecentPayments();
+      loadRecentExpenses();
+      if (window.StaffRouter && window.StaffRouter.current) {
+        StaffRouter.render(StaffRouter.current);
+      }
+    };
+
+    window.openYearModal = async function() {
+      const modal = document.getElementById('modal-year-settings');
+      if (!modal) return;
+      modal.style.display = 'flex';
+      modal.classList.remove('hidden');
+
+      const alertEl = document.getElementById('modal-year-alert');
+      if (alertEl) alertEl.style.display = 'none';
+
+      await renderYearTable();
+    };
+
+    window.closeYearModal = function() {
+      const modal = document.getElementById('modal-year-settings');
+      if (modal) {
+        modal.style.display = 'none';
+        modal.classList.add('hidden');
+      }
+    };
+
+    async function renderYearTable() {
+      try {
+        const res = await apiCall('/api/staff/years');
+        if (!res || !res.ok) return;
+
+        window.FISCAL_YEARS_LIST = res.years || [];
+        const tbody = document.getElementById('tbl-fiscal-years-body');
+        if (!tbody) return;
+
+        tbody.innerHTML = (res.years || []).map(y => {
+          const isAct = (String(y.is_active) === 'True' || y.is_active === true);
+          const opTotal = Number(y.opening_balance || 0);
+          return `
+            <tr style="border-bottom: 1px solid #f1f5f9;">
+              <td style="padding: 10px 14px; font-weight: 700; color: #0f172a;">${y.year_be}</td>
+              <td style="padding: 10px 14px; color: #334155;">${y.title || `ปี ${y.year_be}`}</td>
+              <td style="padding: 10px 14px; text-align: right; font-weight: 600; color: #0284c7;">฿${fmt(opTotal)}</td>
+              <td style="padding: 10px 14px; text-align: center;">
+                ${isAct ? '<span style="background: #dcfce7; color: #166534; padding: 3px 8px; border-radius: 4px; font-weight: 700; font-size: 11px;">✓ ปีปัจจุบัน</span>' : '<span style="background: #f1f5f9; color: #64748b; padding: 3px 8px; border-radius: 4px; font-size: 11px;">ปีประวัติ</span>'}
+              </td>
+              <td style="padding: 10px 14px; text-align: center;">
+                ${isAct ? '<span style="color: #10b981; font-size: 12px; font-weight: 600;">กำลังใช้งาน</span>' : `<button type="button" onclick="setActiveYear(${y.year_be})" class="btn" style="padding: 3px 8px; font-size: 11px; background: #2563eb; color: #fff; border: none; border-radius: 4px; cursor: pointer;">ตั้งเป็นปีปัจจุบัน</button>`}
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        // Populate from_year dropdown
+        const fromSel = document.getElementById('new-fy-from');
+        if (fromSel) {
+          fromSel.innerHTML = (res.years || []).map(y => {
+            return `<option value="${y.year_be}" ${y.year_be == (res.active_year || window.CURRENT_STAFF_YEAR) ? 'selected' : ''}>${y.title || `ปี ${y.year_be}`}</option>`;
+          }).join('');
+          const activeYr = res.active_year || window.CURRENT_STAFF_YEAR || (res.years && res.years[0] ? res.years[0].year_be : 2569);
+          await onFromYearChange(activeYr);
+        }
+      } catch (err) {
+        console.error('renderYearTable error:', err);
+      }
+    }
+
+    window.onFromYearChange = async function(fromYr) {
+      if (!fromYr) return;
+      try {
+        const preview = await apiCall(`/api/staff/years/rollover-preview?from_year=${fromYr}`);
+        if (preview && preview.ok) {
+          document.getElementById('new-fy-year').value = preview.suggested_year;
+          document.getElementById('new-fy-title').value = `ปีงบประมาณ ${preview.suggested_year}`;
+          document.getElementById('new-fy-opening-total').value = Number(preview.opening_balance || 0).toFixed(2);
+          document.getElementById('new-fy-opening-reserve').value = Number(preview.opening_reserve || 0).toFixed(2);
+          updateOpeningBankCalc();
+        }
+      } catch (err) {
+        console.error('onFromYearChange error:', err);
+      }
+    };
+
+    window.updateOpeningBankCalc = function() {
+      const tot = parseFloat(document.getElementById('new-fy-opening-total').value || 0);
+      const res = parseFloat(document.getElementById('new-fy-opening-reserve').value || 0);
+      const bank = Math.max(0, tot - res);
+      document.getElementById('new-fy-opening-bank').value = fmt(bank);
+    };
+
+    window.submitCreateYear = async function(e) {
+      e.preventDefault();
+      const yr = parseInt(document.getElementById('new-fy-year').value);
+      const fromYr = parseInt(document.getElementById('new-fy-from').value);
+      const title = document.getElementById('new-fy-title').value.trim();
+      const opTot = parseFloat(document.getElementById('new-fy-opening-total').value || 0);
+      const opRes = parseFloat(document.getElementById('new-fy-opening-reserve').value || 0);
+      const setActive = document.getElementById('new-fy-set-active').checked;
+
+      if (!yr || yr < 2500) {
+        alert('กรุณากรอกปีงบประมาณ พ.ศ. ให้ถูกต้อง เช่น 2570');
+        return;
+      }
+
+      const conf = confirm(`ยืนยันการเปิดปีงบประมาณ พ.ศ. ${yr} ?\n\nระบบจะคัดลอกอัตราค่าบริการ และสร้างงวดชำระค่าส่วนกลาง 4 งวด ครบทั้ง 162 หลังคาเรือน (รวม 648 รายการ) พร้อมตั้งยอดยกมารวม ฿${fmt(opTot)}`);
+      if (!conf) return;
+
+      const btn = document.getElementById('btn-submit-create-year');
+      btn.disabled = true;
+      btn.textContent = '⏳ กำลังสร้างข้อมูลและงวดชำระ 648 รายการ...';
+
+      try {
+        const res = await apiCall('/api/staff/years', 'POST', {
+          year_be: yr,
+          from_year: fromYr,
+          title: title,
+          opening_balance: opTot,
+          opening_reserve: opRes,
+          set_active: setActive
+        });
+
+        showAlert(res.message || `สร้างปีงบประมาณ ${yr} สำเร็จเรียบร้อย!`, true);
+        if (setActive) {
+          window.CURRENT_STAFF_YEAR = yr;
+        }
+        await initFiscalYears();
+        ALL_REPORTS_CACHE = null;
+        await loadHouses();
+        loadRecentPayments();
+        loadRecentExpenses();
+        if (window.StaffRouter && window.StaffRouter.current) {
+          StaffRouter.render(StaffRouter.current);
+        }
+        closeYearModal();
+      } catch (err) {
+        const alertEl = document.getElementById('modal-year-alert');
+        if (alertEl) {
+          alertEl.style.display = 'block';
+          alertEl.style.background = '#fef2f2';
+          alertEl.style.color = '#991b1b';
+          alertEl.style.border = '1px solid #fecaca';
+          alertEl.textContent = '❌ ' + (err.message || 'เกิดข้อผิดพลาดในการสร้างปีงบประมาณ');
+        } else {
+          alert('เกิดข้อผิดพลาด: ' + err.message);
+        }
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🚀 ยืนยันการเปิดปีงบประมาณใหม่';
+      }
+    };
+
+    window.setActiveYear = async function(yr) {
+      const conf = confirm(`ต้องการตั้งปีงบประมาณ พ.ศ. ${yr} เป็นปีปัจจุบัน (Active Fiscal Year) ของระบบใช่หรือไม่?`);
+      if (!conf) return;
+
+      try {
+        await apiCall('/api/staff/years/set-active', 'POST', { year_be: yr });
+        window.CURRENT_STAFF_YEAR = yr;
+        showAlert(`เปลี่ยนปีปัจจุบันของระบบเป็นปี ${yr} สำเร็จเรียบร้อย!`, true);
+        await initFiscalYears();
+        ALL_REPORTS_CACHE = null;
+        await loadHouses();
+        loadRecentPayments();
+        loadRecentExpenses();
+        if (window.StaffRouter && window.StaffRouter.current) {
+          StaffRouter.render(StaffRouter.current);
+        }
+        await renderYearTable();
+      } catch (err) {
+        alert('เกิดข้อผิดพลาด: ' + err.message);
+      }
     };

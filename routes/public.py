@@ -53,12 +53,14 @@ def api_visits():
 
 @public_bp.get("/api/dashboard")
 def api_dashboard():
-    return jsonify(summary())
+    year = request.args.get("year", type=int)
+    return jsonify(summary(target_fy=year))
 
 
 @public_bp.get("/api/houses")
 def api_houses():
-    return jsonify(houses_view(full=False))
+    year = request.args.get("year", type=int)
+    return jsonify(houses_view(full=False, target_fy=year))
 
 
 @public_bp.get("/api/stream")

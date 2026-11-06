@@ -52,9 +52,20 @@
       const headers = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = 'Bearer ' + token;
 
+      let finalEndpoint = endpoint;
+      if (window.CURRENT_STAFF_YEAR) {
+        if (method === 'GET' && (endpoint.startsWith('/api/staff/reports/all') || endpoint.startsWith('/api/staff/houses') || endpoint.startsWith('/api/dashboard'))) {
+          if (!endpoint.includes('year=')) {
+            finalEndpoint = endpoint + (endpoint.includes('?') ? '&' : '?') + 'year=' + window.CURRENT_STAFF_YEAR;
+          }
+        } else if (method === 'POST' && body && typeof body === 'object' && !body.year_be && !body.fiscal_year && !endpoint.includes('/api/login') && !endpoint.includes('/api/staff/years')) {
+          body.year_be = window.CURRENT_STAFF_YEAR;
+        }
+      }
+
       const url = method === 'GET' ? 
-        (endpoint.includes('?') ? `${endpoint}&_=${Date.now()}` : `${endpoint}?_=${Date.now()}`) : 
-        endpoint;
+        (finalEndpoint.includes('?') ? `${finalEndpoint}&_=${Date.now()}` : `${finalEndpoint}?_=${Date.now()}`) : 
+        finalEndpoint;
 
       try {
         const res = await fetch(url, {
