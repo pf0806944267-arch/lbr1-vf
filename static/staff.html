@@ -90,23 +90,23 @@
         <button class="staff-menu-btn" data-tab="exp">
           <span>🔴 2. รายจ่ายกองทุน</span>
         </button>
+        <button class="staff-menu-btn" data-tab="transfer">
+          <span>🔄 3. ถอนเงินสด</span>
+        </button>
         <button class="staff-menu-btn" data-tab="ledger">
-          <span>⚖️ 3. บัญชีรายรับ-รายจ่าย</span>
+          <span>⚖️ 4. บัญชีรายรับ-รายจ่าย</span>
         </button>
         <button class="staff-menu-btn" data-tab="inc">
-          <span>💰 4. รายได้อื่น</span>
+          <span>💰 5. รายได้อื่น</span>
         </button>
         <button class="staff-menu-btn" data-tab="members">
-          <span>👥 5. สมาชิก 162 หลัง</span>
+          <span>👥 6. สมาชิก 162 หลัง</span>
         </button>
         <button class="staff-menu-btn" data-tab="receipts">
-          <span>📄 6. เอกสาร PDF</span>
+          <span>📄 7. เอกสาร PDF</span>
         </button>
         <button class="staff-menu-btn" data-tab="history">
-          <span>⏱️ 7. ประวัติรายการ</span>
-        </button>
-        <button class="staff-menu-btn" data-tab="transfer">
-          <span>🔄 8. ถอนเงินสด</span>
+          <span>⏱️ 8. ประวัติรายการ</span>
         </button>
       </div>
     </div>
@@ -193,12 +193,26 @@
             </div>
           </div>
 
-          <!-- Card 3: บัญชีรายรับ-รายจ่าย -->
+          <!-- Card 3: ถอนเงินสด / โอนย้ายเงิน (Requirement) -->
+          <div class="staff-square-card" onclick="StaffRouter.navigate('transfer')">
+            <div class="staff-card-icon-wrapper" style="background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); color: #4338ca;">
+              🔄
+            </div>
+            <span class="staff-card-badge" style="background: #eef2ff; color: #4338ca;">โมดูล 3</span>
+            <h3 class="staff-card-title">ถอนเงินสด / โอนย้ายเงิน</h3>
+            <p class="staff-card-desc">บันทึกถอนเงินจากบัญชี ธ.กรุงเทพ เพื่อเติมเงินสดสำรองจ่าย (ยอดคงเหลือรวมคงเดิม ไม่นับเป็นรายจ่าย)</p>
+            <div class="staff-card-action">
+              <span>เปิดใช้งาน</span>
+              <span class="staff-card-arrow">→</span>
+            </div>
+          </div>
+
+          <!-- Card 4: บัญชีรายรับ-รายจ่าย -->
           <div class="staff-square-card" onclick="StaffRouter.navigate('ledger')">
             <div class="staff-card-icon-wrapper" style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); color: #047857;">
               ⚖️
             </div>
-            <span class="staff-card-badge" style="background: #ecfdf5; color: #047857;">โมดูล 3</span>
+            <span class="staff-card-badge" style="background: #ecfdf5; color: #047857;">โมดูล 4</span>
             <h3 class="staff-card-title">บัญชีรายรับ-รายจ่าย</h3>
             <p class="staff-card-desc">สมุดบัญชีแยกประเภท มีตัวเลือกบัญชีเงินฝากธนาคาร vs บัญชีเงินสด พร้อมยอดคงเหลือสะสม</p>
             <div class="staff-card-action">
@@ -207,12 +221,12 @@
             </div>
           </div>
 
-          <!-- Card 4: บันทึกรายได้อื่น -->
+          <!-- Card 5: บันทึกรายได้อื่น -->
           <div class="staff-square-card" onclick="StaffRouter.navigate('inc')">
             <div class="staff-card-icon-wrapper" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: #b45309;">
               💰
             </div>
-            <span class="staff-card-badge" style="background: #fffbeb; color: #b45309;">โมดูล 4</span>
+            <span class="staff-card-badge" style="background: #fffbeb; color: #b45309;">โมดูล 5</span>
             <h3 class="staff-card-title">บันทึกรายได้อื่น</h3>
             <p class="staff-card-desc">บันทึกรายรับดอกเบี้ยเงินฝากธนาคาร, เงินบริจาคพัฒนาโครงการ, หรือเงินสนับสนุนกิจกรรม</p>
             <div class="staff-card-action">
@@ -221,12 +235,12 @@
             </div>
           </div>
 
-          <!-- Card 5: ทะเบียนสมาชิก 162 หลัง -->
+          <!-- Card 6: ทะเบียนสมาชิก 162 หลัง -->
           <div class="staff-square-card" onclick="StaffRouter.navigate('members')">
             <div class="staff-card-icon-wrapper" style="background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%); color: #6d28d9;">
               👥
             </div>
-            <span class="staff-card-badge" style="background: #f5f3ff; color: #6d28d9;">โมดูล 5</span>
+            <span class="staff-card-badge" style="background: #f5f3ff; color: #6d28d9;">โมดูล 6</span>
             <h3 class="staff-card-title">ทะเบียนสมาชิก 162 หลัง</h3>
             <p class="staff-card-desc">ตรวจสอบรายชื่อลูกบ้านรายซอย, ประวัติการชำระเงิน 4 งวด, ยอดค้างชำระ และส่งออก Excel</p>
             <div class="staff-card-action">
@@ -235,12 +249,12 @@
             </div>
           </div>
 
-          <!-- Card 6: ออกเอกสารทางการ PDF -->
+          <!-- Card 7: ออกเอกสารทางการ PDF -->
           <div class="staff-square-card" onclick="StaffRouter.navigate('receipts')">
             <div class="staff-card-icon-wrapper" style="background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); color: #0369a1;">
               📄
             </div>
-            <span class="staff-card-badge" style="background: #f0f9ff; color: #0369a1;">โมดูล 6</span>
+            <span class="staff-card-badge" style="background: #f0f9ff; color: #0369a1;">โมดูล 7</span>
             <h3 class="staff-card-title">ออกเอกสารทางการ PDF</h3>
             <p class="staff-card-desc">พิมพ์ใบเสร็จรับเงินทางการพร้อมลายเซ็น, สรุปงบการเงินประจำปี และหนังสือแจ้งยอดค้างชำระ</p>
             <div class="staff-card-action">
@@ -249,28 +263,14 @@
             </div>
           </div>
 
-          <!-- Card 7: ประวัติการทำรายการ -->
+          <!-- Card 8: ประวัติการทำรายการ -->
           <div class="staff-square-card" onclick="StaffRouter.navigate('history')">
             <div class="staff-card-icon-wrapper" style="background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); color: #334155;">
               ⏱️
             </div>
-            <span class="staff-card-badge" style="background: #f8fafc; color: #334155;">โมดูล 7</span>
+            <span class="staff-card-badge" style="background: #f8fafc; color: #334155;">โมดูล 8</span>
             <h3 class="staff-card-title">ประวัติการทำรายการ</h3>
             <p class="staff-card-desc">Audit Trail ตรวจสอบความถูกต้อง บันทึกประวัติการเพิ่ม-ลบ-แก้ไขรายการของเจ้าหน้าที่ทุกคน</p>
-            <div class="staff-card-action">
-              <span>เปิดใช้งาน</span>
-              <span class="staff-card-arrow">→</span>
-            </div>
-          </div>
-
-          <!-- Card 8: ถอนเงินสด / โอนย้ายเงิน (Requirement) -->
-          <div class="staff-square-card" onclick="StaffRouter.navigate('transfer')">
-            <div class="staff-card-icon-wrapper" style="background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); color: #4338ca;">
-              🔄
-            </div>
-            <span class="staff-card-badge" style="background: #eef2ff; color: #4338ca;">โมดูล 8</span>
-            <h3 class="staff-card-title">ถอนเงินสด / โอนย้ายเงิน</h3>
-            <p class="staff-card-desc">บันทึกถอนเงินจากบัญชี ธ.กรุงเทพ เพื่อเติมเงินสดสำรองจ่าย (ยอดคงเหลือรวมคงเดิม ไม่นับเป็นรายจ่าย)</p>
             <div class="staff-card-action">
               <span>เปิดใช้งาน</span>
               <span class="staff-card-arrow">→</span>
@@ -842,7 +842,7 @@
             <option value="2">งวดที่ 2 (เม.ย. - มิ.ย.)</option>
             <option value="3">งวดที่ 3 (ก.ค. - ก.ย.)</option>
             <option value="4">งวดที่ 4 (ต.ค. - ธ.ค.)</option>
-            <option value="noslip">เฉพาะรายการไม่มีสลิป</option>
+            <option value="noslip">เฉพาะรายการไม่ทราบบ้านเลขที่ (รอระบุบ้าน)</option>
           </select>
           <select id="filter-pay-month" class="form-control" style="width: auto;" onchange="filterAllPayments()">
             <option value="">ทุกเดือน (ม.ค. - ธ.ค.)</option>
@@ -983,6 +983,7 @@
                   <th style="width: 110px; text-align: right;">จำนวนเงิน</th>
                   <th style="width: 90px; text-align: center;">สถานะ</th>
                   <th style="width: 90px; text-align: center;">ผู้บันทึก</th>
+                  <th style="width: 120px; text-align: center;">จัดการ</th>
                 </tr>
               </thead>
               <tbody id="tbody-all-expenses">
@@ -1081,6 +1082,7 @@
                   <th>รายละเอียด / ผู้บริจาค / แหล่งที่มา</th>
                   <th style="width: 130px; text-align: center;">ช่องทาง</th>
                   <th style="width: 120px; text-align: right;">จำนวนเงิน</th>
+                  <th style="width: 120px; text-align: center;">จัดการ</th>
                 </tr>
               </thead>
               <tbody id="tbody-all-income">
@@ -1091,7 +1093,93 @@
         </div>
       </div>
 
-      <!-- ==================== TAB 8: บันทึกถอนเงินสด / โอนย้ายเงิน (Requirement) ==================== -->
+      <!-- ==================== TAB: รายการถอนเงินสด / โอนย้ายเงิน ปี 2569 ==================== -->
+      <div id="view-all-transfers" class="staff-view hidden">
+        <div class="report-header-card">
+          <div class="report-title-box">
+            <h2><span>🔄</span> รายการถอนเงินสด / โอนย้ายเงิน ปี 2569</h2>
+            <p>สรุปการถอนเงินจากบัญชี ธ.กรุงเทพ เพื่อเติมเงินสดสำรองจ่าย (เงินสดย่อย) ทั้งหมด</p>
+          </div>
+          <div class="report-action-btns">
+            <button class="btn-print-report" onclick="printReport('transfers')">
+              <span>🖨️</span> พิมพ์รายงาน
+            </button>
+            <button class="btn-excel" onclick="exportReportExcel('transfers')">
+              <span>📥</span> ส่งออก Excel
+            </button>
+            <button type="button" class="btn-view-all" onclick="switchTab('transfer')" style="background:#f1f5f9; color:#475569; border-color:#cbd5e1;">
+              <span>←</span> กลับหน้าบันทึก
+            </button>
+          </div>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="report-stats-grid">
+          <div class="report-stat-card">
+            <div class="lbl">ยอดถอนเงินสดสะสมรวม</div>
+            <div class="val" id="rep-trans-total" style="color: #0284c7;">฿0.00</div>
+            <div class="sub" id="rep-trans-count">0 รายการ</div>
+          </div>
+          <div class="report-stat-card">
+            <div class="lbl">ถอนจากบัญชีต้นทาง</div>
+            <div class="val" id="rep-trans-from" style="color: #2563eb; font-size: 16px;">ธนาคารกรุงเทพ</div>
+            <div class="sub">บัญชีเงินฝากหลักกองทุน</div>
+          </div>
+          <div class="report-stat-card">
+            <div class="lbl">เข้าสู่บัญชีปลายทาง</div>
+            <div class="val" id="rep-trans-to" style="color: #b45309; font-size: 16px;">เงินสดสำรองจ่าย</div>
+            <div class="sub">เงินสดเหรัญญิกสำหรับเบิกจ่าย</div>
+          </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="report-filter-bar">
+          <input type="text" id="filter-trans-search" class="form-control" placeholder="🔍 ค้นหารหัส, หมายเหตุ..." style="max-width: 250px;" oninput="filterAllTransfers()">
+          <select id="filter-trans-month" class="form-control" style="width: auto;" onchange="filterAllTransfers()">
+            <option value="">ทุกเดือน (ม.ค. - ธ.ค.)</option>
+            <option value="1">มกราคม</option>
+            <option value="2">กุมภาพันธ์</option>
+            <option value="3">มีนาคม</option>
+            <option value="4">เมษายน</option>
+            <option value="5">พฤษภาคม</option>
+            <option value="6">มิถุนายน</option>
+            <option value="7">กรกฎาคม</option>
+            <option value="8">สิงหาคม</option>
+            <option value="9">กันยายน</option>
+            <option value="10">ตุลาคม</option>
+            <option value="11">พฤศจิกายน</option>
+            <option value="12">ธันวาคม</option>
+          </select>
+          <button type="button" class="btn-view-all" onclick="resetTransFilter()" style="margin-left: auto;">
+            <span>🔄</span> รีเซ็ตตัวกรอง
+          </button>
+        </div>
+
+        <!-- Table Section -->
+        <div class="content-section" style="padding: 0; overflow: hidden;">
+          <div class="table-responsive">
+            <table class="table-statement" id="table-all-transfers">
+              <thead>
+                <tr>
+                  <th style="width: 50px; text-align: center;">ลำดับ</th>
+                  <th style="width: 100px; text-align: center;">รหัสรายการ</th>
+                  <th style="width: 110px; text-align: center;">วันที่ทำรายการ</th>
+                  <th>รายละเอียด / วัตถุประสงค์</th>
+                  <th style="width: 160px; text-align: center;">ถอนจากบัญชี</th>
+                  <th style="width: 170px; text-align: center;">เข้าสู่บัญชี</th>
+                  <th style="width: 130px; text-align: right;">จำนวนเงิน</th>
+                  <th style="width: 120px; text-align: center;">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-all-transfers">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 3: บันทึกถอนเงินสด / โอนย้ายเงิน (Requirement) ==================== -->
       <div id="view-transfer" class="staff-view hidden">
         <div class="grid-2">
           <!-- Form Card -->
@@ -1172,9 +1260,14 @@
                 <h3 style="font-size: 17px; font-weight: 700; color: #1e293b; margin: 0;">ประวัติการถอนเติมเงินสดสำรอง</h3>
                 <p style="font-size: 12px; color: #64748b; margin: 3px 0 0 0;">รายการถอนเงินจากบัญชีธนาคารมาเติมเงินสดย่อยในปีงบประมาณ</p>
               </div>
-              <button onclick="StaffTabs.transfer()" class="btn btn-sm" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer;">
-                🔄 รีเฟรช
-              </button>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <button type="button" class="btn-view-all" onclick="switchTab('all-transfers')">
+                  <span>🔍 ดูทั้งหมด (ปี 2569)</span>
+                </button>
+                <button onclick="StaffTabs.transfer()" class="btn btn-sm" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer;">
+                  🔄 รีเฟรช
+                </button>
+              </div>
             </div>
 
             <!-- Summary Chips -->
@@ -1307,6 +1400,168 @@
       <div style="padding: 14px 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 10px; background: #f8fafc;">
         <button type="button" class="btn btn-secondary" onclick="closeEditPaymentModal()" style="padding: 8px 18px; border-radius: 8px; font-size: 13px; cursor: pointer; border: 1px solid #cbd5e1; background: #fff; color: #475569;">ยกเลิก</button>
         <button type="button" class="btn-primary-green" id="btn-save-edit-payment" onclick="submitEditPayment()" style="padding: 8px 20px; font-size: 13px; border-radius: 8px;">💾 บันทึกการแก้ไข</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal แก้ไขรายการรายจ่าย (Edit Expense Modal) -->
+  <div id="modal-edit-expense" class="slip-modal-backdrop" style="display: none;" onclick="closeEditExpenseModal(event)">
+    <div class="slip-modal-content" style="max-width: 520px;" onclick="event.stopPropagation()">
+      <div class="slip-modal-header" style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);">
+        <div>
+          <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #0f172a;">✏️ แก้ไขรายการรายจ่าย</h3>
+          <p id="edit-exp-id-label" style="margin: 2px 0 0 0; font-size: 12px; color: #dc2626; font-weight: 600;"></p>
+        </div>
+        <button type="button" class="btn-icon" onclick="closeEditExpenseModal()" style="border: none; background: #cbd5e1; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 14px;">✕</button>
+      </div>
+      <div style="padding: 20px; max-height: 75vh; overflow-y: auto;">
+        <input type="hidden" id="edit-exp-id">
+        
+        <div class="grid-2" style="margin-bottom: 14px; gap: 12px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-weight: 600; font-size: 13px; color: #334155;">เลขที่เอกสาร</label>
+            <input type="text" id="edit-exp-docno" class="form-control" placeholder="เช่น 1/69">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-weight: 600; font-size: 13px; color: #334155;">วันที่เบิกจ่าย *</label>
+            <input type="date" id="edit-exp-date" class="form-control" required>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" style="font-weight: 600; font-size: 13px; color: #334155;">รายละเอียดรายจ่าย *</label>
+          <input type="text" id="edit-exp-desc" class="form-control" required placeholder="เช่น ค่า รปภ. เดือน ม.ค. 69">
+        </div>
+
+        <div class="grid-2" style="margin-bottom: 14px; gap: 12px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-weight: 600; font-size: 13px; color: #334155;">หมวดหมู่ค่าใช้จ่าย *</label>
+            <select id="edit-exp-cat" class="form-control"></select>
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-weight: 600; font-size: 13px; color: #334155;">แหล่งเงินที่จ่าย *</label>
+            <select id="edit-exp-source" class="form-control">
+              <option value="bank">ธนาคารกรุงเทพ</option>
+              <option value="reserve">เงินสำรองจ่าย (เงินสด)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom: 14px; gap: 12px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-weight: 600; font-size: 13px; color: #334155;">จำนวนเงิน (บาท) *</label>
+            <input type="number" step="0.01" id="edit-exp-amount" class="form-control" style="font-weight: 700; color: #dc2626; font-size: 16px;" required>
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-weight: 600; font-size: 13px; color: #334155;">ผู้รับเงิน / หน่วยงาน</label>
+            <input type="text" id="edit-exp-payee" class="form-control" placeholder="เช่น บจก. รักษาความปลอดภัย">
+          </div>
+        </div>
+      </div>
+      <div style="padding: 14px 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 10px; background: #f8fafc;">
+        <button type="button" class="btn btn-secondary" onclick="closeEditExpenseModal()" style="padding: 8px 18px; border-radius: 8px; font-size: 13px; cursor: pointer; border: 1px solid #cbd5e1; background: #fff; color: #475569;">ยกเลิก</button>
+        <button type="button" class="btn-primary-green" id="btn-save-edit-expense" onclick="submitEditExpense()" style="padding: 8px 20px; font-size: 13px; border-radius: 8px;">💾 บันทึกการแก้ไข</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal แก้ไขรายการรายได้อื่น (Edit Income Modal) -->
+  <div id="modal-edit-income" class="slip-modal-backdrop" style="display: none;" onclick="closeEditIncomeModal(event)">
+    <div class="slip-modal-content" style="max-width: 520px;" onclick="event.stopPropagation()">
+      <div class="slip-modal-header" style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);">
+        <div>
+          <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #0f172a;">✏️ แก้ไขรายการรายได้อื่น</h3>
+          <p id="edit-inc-id-label" style="margin: 2px 0 0 0; font-size: 12px; color: #059669; font-weight: 600;"></p>
+        </div>
+        <button type="button" class="btn-icon" onclick="closeEditIncomeModal()" style="border: none; background: #cbd5e1; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 14px;">✕</button>
+      </div>
+      <div style="padding: 20px; max-height: 75vh; overflow-y: auto;">
+        <input type="hidden" id="edit-inc-id">
+        
+        <div class="grid-2" style="margin-bottom: 14px; gap: 12px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-weight: 600; font-size: 13px; color: #334155;">วันที่ได้รับเงิน *</label>
+            <input type="date" id="edit-inc-date" class="form-control" required>
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-weight: 600; font-size: 13px; color: #334155;">ประเภทรายได้ *</label>
+            <select id="edit-inc-type" class="form-control">
+              <option value="interest">ดอกเบี้ยเงินฝากธนาคาร</option>
+              <option value="donation">เงินบริจาคพัฒนาโครงการ</option>
+              <option value="support">เงินสนับสนุนกิจกรรม</option>
+              <option value="other">รายได้ทางอื่นๆ</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom: 14px; gap: 12px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-weight: 600; font-size: 13px; color: #334155;">จำนวนเงิน (บาท) *</label>
+            <input type="number" step="0.01" id="edit-inc-amount" class="form-control" style="font-weight: 700; color: #059669; font-size: 16px;" required>
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-weight: 600; font-size: 13px; color: #334155;">ช่องทางการรับเงิน *</label>
+            <select id="edit-inc-channel" class="form-control">
+              <option value="transfer">โอนเข้าบัญชีธนาคาร</option>
+              <option value="cash">เงินสด</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" style="font-weight: 600; font-size: 13px; color: #334155;">รายละเอียด / หมายเหตุ</label>
+          <input type="text" id="edit-inc-note" class="form-control" placeholder="เช่น ดอกเบี้ยรอบ 6 เดือนแรก">
+        </div>
+      </div>
+      <div style="padding: 14px 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 10px; background: #f8fafc;">
+        <button type="button" class="btn btn-secondary" onclick="closeEditIncomeModal()" style="padding: 8px 18px; border-radius: 8px; font-size: 13px; cursor: pointer; border: 1px solid #cbd5e1; background: #fff; color: #475569;">ยกเลิก</button>
+        <button type="button" class="btn-primary-green" id="btn-save-edit-income" onclick="submitEditIncome()" style="padding: 8px 20px; font-size: 13px; border-radius: 8px;">💾 บันทึกการแก้ไข</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal แก้ไขรายการถอนเงินสด (Edit Transfer Modal) -->
+  <div id="modal-edit-transfer" class="slip-modal-backdrop" style="display: none;" onclick="closeEditTransferModal(event)">
+    <div class="slip-modal-content" style="max-width: 520px;" onclick="event.stopPropagation()">
+      <div class="slip-modal-header" style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);">
+        <div>
+          <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #0f172a;">✏️ แก้ไขรายการถอนเงินสด / โอนย้ายเงิน</h3>
+          <p id="edit-trans-id-label" style="margin: 2px 0 0 0; font-size: 12px; color: #0284c7; font-weight: 600;"></p>
+        </div>
+        <button type="button" class="btn-icon" onclick="closeEditTransferModal()" style="border: none; background: #cbd5e1; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 14px;">✕</button>
+      </div>
+      <div style="padding: 20px; max-height: 75vh; overflow-y: auto;">
+        <input type="hidden" id="edit-trans-id">
+        
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" style="font-weight: 600; font-size: 13px; color: #334155;">วันที่ทำรายการถอนเงิน *</label>
+          <input type="date" id="edit-trans-date" class="form-control" required>
+        </div>
+
+        <div class="grid-2" style="margin-bottom: 14px; gap: 12px;">
+          <div>
+            <label class="form-label" style="font-weight: 600; font-size: 13px; color: #334155;">🏦 ถอนจากบัญชี</label>
+            <input type="text" class="form-control" value="บัญชีเงินฝาก ธ.กรุงเทพ" readonly style="background: #f8fafc; font-weight: 600; color: #1e40af;">
+          </div>
+          <div>
+            <label class="form-label" style="font-weight: 600; font-size: 13px; color: #334155;">💵 เข้าสู่บัญชี</label>
+            <input type="text" class="form-control" value="เงินสดสำรองจ่าย (เงินสดย่อย)" readonly style="background: #f8fafc; font-weight: 600; color: #b45309;">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" style="font-weight: 600; font-size: 13px; color: #334155;">จำนวนเงินที่ถอน (บาท) *</label>
+          <input type="number" step="0.01" id="edit-trans-amount" class="form-control" style="font-weight: 700; color: #0284c7; font-size: 16px;" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" style="font-weight: 600; font-size: 13px; color: #334155;">รายละเอียด / วัตถุประสงค์การถอน</label>
+          <input type="text" id="edit-trans-note" class="form-control" placeholder="เช่น ถอนเงินสดเติมเงินสำรองจ่ายงวดใหม่">
+        </div>
+      </div>
+      <div style="padding: 14px 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 10px; background: #f8fafc;">
+        <button type="button" class="btn btn-secondary" onclick="closeEditTransferModal()" style="padding: 8px 18px; border-radius: 8px; font-size: 13px; cursor: pointer; border: 1px solid #cbd5e1; background: #fff; color: #475569;">ยกเลิก</button>
+        <button type="button" class="btn-primary-green" id="btn-save-edit-transfer" onclick="submitEditTransfer()" style="padding: 8px 20px; font-size: 13px; border-radius: 8px;">💾 บันทึกการแก้ไข</button>
       </div>
     </div>
   </div>

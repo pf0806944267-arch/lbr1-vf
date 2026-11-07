@@ -57,6 +57,7 @@ def api_staff_recent():
         q = du.get("period", "") if du else (p.get("period") or "")
         pays.append({
             "payment_id": p.get("payment_id"),
+            "house_id": h_id,
             "house_no": h_no,
             "month": du.get("month", ""),
             "quarter": q,
@@ -474,6 +475,63 @@ def api_add_expense():
     return jsonify(ok=True, expense=row)
 
 
+@staff_bp.post("/api/staff/expenses/<expense_id>/update")
+@staff_bp.put("/api/staff/expenses/<expense_id>")
+@require()
+def api_update_expense(expense_id):
+    b = request.get_json(force=True)
+    d = store.data
+    expenses = d.get("expenses", [])
+    e = next((x for x in expenses if x.get("expense_id") == expense_id), None)
+    if not e:
+        return jsonify(error="ไม่พบรายการรายจ่าย"), 404
+
+    with store.write_lock:
+        old_data = dict(e)
+        if "description" in b and b["description"]:
+            e["description"] = b["description"]
+        if "amount" in b:
+            e["amount"] = num(b["amount"])
+        if "expense_date" in b and b["expense_date"]:
+            e["expense_date"] = b["expense_date"]
+        if "category_id" in b and b["category_id"]:
+            e["category_id"] = b["category_id"]
+        if "payee" in b:
+            e["payee"] = b["payee"]
+        if "source" in b and b["source"]:
+            e["source"] = b["source"]
+        if "doc_no" in b and b["doc_no"]:
+            e["doc_no"] = b["doc_no"]
+        if "status" in b and b["status"]:
+            e["status"] = b["status"]
+
+        patch = {
+            "doc_no": e.get("doc_no", ""),
+            "expense_date": e.get("expense_date"),
+            "description": e.get("description", ""),
+            "amount": num(e.get("amount")),
+            "category_id": e.get("category_id", ""),
+            "payee": e.get("payee", ""),
+            "source": e.get("source", "bank"),
+            "status": e.get("status", "จ่ายแล้ว")
+        }
+        try:
+            sheet_post(action="update", table="expenses", idCol="expense_id", id=expense_id, patch=patch)
+        except Exception as err:
+            print("Supabase expense update error:", err)
+
+        save_table_to_csv("expenses", expenses)
+        audit(request.user, "update", "expenses", expense_id, old=json.dumps(old_data, ensure_ascii=False), new=json.dumps(e, ensure_ascii=False))
+
+        with store.cond:
+            store.version += 1
+            store.digest = json.dumps(d, sort_keys=True, ensure_ascii=False)
+            store.cond.notify_all()
+
+    threading.Thread(target=store.refresh, daemon=True).start()
+    return jsonify(ok=True, expense=e)
+
+
 @staff_bp.post("/api/staff/income")
 @require()
 def api_add_income():
@@ -512,6 +570,54 @@ def api_add_income():
     return jsonify(ok=True, income=row)
 
 
+@staff_bp.post("/api/staff/income/<income_id>/update")
+@staff_bp.put("/api/staff/income/<income_id>")
+@require()
+def api_update_income(income_id):
+    b = request.get_json(force=True)
+    d = store.data
+    incomes = d.get("other_income", [])
+    i = next((x for x in incomes if x.get("income_id") == income_id), None)
+    if not i:
+        return jsonify(error="ไม่พบรายการรายได้"), 404
+
+    with store.write_lock:
+        old_data = dict(i)
+        if "date" in b and b["date"]:
+            i["date"] = b["date"]
+        if "type" in b and b["type"]:
+            i["type"] = b["type"]
+        if "amount" in b:
+            i["amount"] = num(b["amount"])
+        if "channel" in b and b["channel"]:
+            i["channel"] = b["channel"]
+        if "note" in b:
+            i["note"] = b["note"]
+
+        patch = {
+            "date": i.get("date"),
+            "type": i.get("type", "other"),
+            "amount": num(i.get("amount")),
+            "channel": i.get("channel", "transfer"),
+            "note": i.get("note", "")
+        }
+        try:
+            sheet_post(action="update", table="other_income", idCol="income_id", id=income_id, patch=patch)
+        except Exception as err:
+            print("Supabase income update error:", err)
+
+        save_table_to_csv("other_income", incomes)
+        audit(request.user, "update", "other_income", income_id, old=json.dumps(old_data, ensure_ascii=False), new=json.dumps(i, ensure_ascii=False))
+
+        with store.cond:
+            store.version += 1
+            store.digest = json.dumps(d, sort_keys=True, ensure_ascii=False)
+            store.cond.notify_all()
+
+    threading.Thread(target=store.refresh, daemon=True).start()
+    return jsonify(ok=True, income=i)
+
+
 @staff_bp.post("/api/staff/transfers")
 @require()
 def api_add_transfer():
@@ -545,6 +651,48 @@ def api_add_transfer():
 
     threading.Thread(target=store.refresh, daemon=True).start()
     return jsonify(ok=True, transfer=row)
+
+
+@staff_bp.post("/api/staff/transfers/<rt_id>/update")
+@staff_bp.put("/api/staff/transfers/<rt_id>")
+@require()
+def api_update_transfer(rt_id):
+    b = request.get_json(force=True)
+    d = store.data
+    reserves = d.get("reserve_transactions", [])
+    t = next((x for x in reserves if x.get("rt_id") == rt_id), None)
+    if not t:
+        return jsonify(error="ไม่พบรายการถอนเงินสด"), 404
+
+    with store.write_lock:
+        old_data = dict(t)
+        if "date" in b and b["date"]:
+            t["date"] = b["date"]
+        if "amount" in b:
+            t["amount"] = num(b["amount"])
+        if "note" in b:
+            t["note"] = b["note"]
+
+        patch = {
+            "date": t.get("date"),
+            "amount": num(t.get("amount")),
+            "note": t.get("note", "")
+        }
+        try:
+            sheet_post(action="update", table="reserve_transactions", idCol="rt_id", id=rt_id, patch=patch)
+        except Exception as err:
+            print("Supabase transfer update error:", err)
+
+        save_table_to_csv("reserve_transactions", reserves)
+        audit(request.user, "update", "reserve_transactions", rt_id, old=json.dumps(old_data, ensure_ascii=False), new=json.dumps(t, ensure_ascii=False))
+
+        with store.cond:
+            store.version += 1
+            store.digest = json.dumps(d, sort_keys=True, ensure_ascii=False)
+            store.cond.notify_all()
+
+    threading.Thread(target=store.refresh, daemon=True).start()
+    return jsonify(ok=True, transfer=t)
 
 
 @staff_bp.get("/api/staff/years")

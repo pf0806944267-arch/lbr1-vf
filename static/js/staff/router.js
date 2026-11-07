@@ -3,7 +3,7 @@
  */
 (function() {
   window.StaffRouter = {
-    validTabs: ['menu', 'pay', 'exp', 'ledger', 'inc', 'transfer', 'members', 'receipts', 'history', 'all-payments', 'all-expenses', 'all-income'],
+    validTabs: ['menu', 'pay', 'exp', 'transfer', 'ledger', 'inc', 'members', 'receipts', 'history', 'all-payments', 'all-expenses', 'all-income', 'all-transfers'],
     currentTab: 'menu',
 
     init: function() {
@@ -59,7 +59,8 @@
       const activeNavTab = {
         'all-payments': 'pay',
         'all-expenses': 'exp',
-        'all-income': 'inc'
+        'all-income': 'inc',
+        'all-transfers': 'transfer'
       }[tabName] || tabName;
 
       // Update Sub-nav buttons active class
@@ -88,7 +89,8 @@
       const loaderName = {
         'all-payments': 'allPayments',
         'all-expenses': 'allExpenses',
-        'all-income': 'allIncome'
+        'all-income': 'allIncome',
+        'all-transfers': 'allTransfers'
       }[tabName] || tabName;
 
       if (window.StaffTabs && typeof window.StaffTabs[loaderName] === 'function') {

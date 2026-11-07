@@ -132,6 +132,14 @@
             <div style="font-size: 11px; color: #64748b;">
               🏦 ธ.กรุงเทพ ➔ 💵 เงินสด
             </div>
+            <div style="margin-top: 6px; display: flex; gap: 6px; justify-content: flex-end;">
+              <button onclick="openEditTransferModal('${t.rt_id}')" class="btn-edit-record" style="padding: 2px 7px; font-size: 11px; background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; border-radius: 4px; cursor: pointer; font-weight: 600;" title="แก้ไข">
+                ✏️ แก้ไข
+              </button>
+              <button onclick="deleteTransfer('${t.rt_id}', ${t.amount})" class="btn-del-record" style="padding: 2px 7px; font-size: 11px; border-radius: 4px;" title="ลบ">
+                🗑️ ลบ
+              </button>
+            </div>
           </div>
         </div>
       `).join('');

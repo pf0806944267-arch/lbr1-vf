@@ -214,7 +214,8 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
       const activeMenu = {
         'all-payments': 'pay',
         'all-expenses': 'exp',
-        'all-income': 'inc'
+        'all-income': 'inc',
+        'all-transfers': 'transfer'
       }[tabName] || tabName;
 
       document.querySelectorAll('.staff-menu-btn').forEach(b => {
@@ -232,6 +233,7 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
       if (tabName === 'all-payments') loadAllPaymentsReport();
       if (tabName === 'all-expenses') loadAllExpensesReport();
       if (tabName === 'all-income') loadAllIncomeReport();
+      if (tabName === 'all-transfers') loadAllTransfersReport();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -280,6 +282,7 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
         deletePayment,
         deleteExpense,
         deleteIncome,
+        deleteTransfer,
         fetchDashboard
       };
 
@@ -287,6 +290,7 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
       window.StaffTabs.allPayments = loadAllPaymentsReport;
       window.StaffTabs.allExpenses = loadAllExpensesReport;
       window.StaffTabs.allIncome = loadAllIncomeReport;
+      window.StaffTabs.allTransfers = loadAllTransfersReport;
 
       // Start Router to restore tab from URL hash / sessionStorage
       if (window.StaffRouter) {
@@ -576,7 +580,12 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
       try {
         await apiCall(`/api/admin/other_income/${id}`, 'DELETE');
         showAlert(`ลบรายได้รหัส ${id} สำเร็จ`);
+        ALL_REPORTS_CACHE = null;
         loadRecentIncome();
+        if (typeof CURRENT_TAB !== 'undefined' && CURRENT_TAB === 'all-income' || window.location.hash === '#all-income') {
+          loadAllIncomeReport();
+        }
+        if (window.StaffTabs && window.StaffTabs.ledger) window.StaffTabs.ledger();
         if (typeof loadAuditHistory === 'function') loadAuditHistory();
       } catch (err) {
         showAlert(err.message || 'ไม่สามารถลบรายการได้', false);
@@ -609,7 +618,8 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
             </div>
             <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
               <span style="color: #059669; font-weight: 700;">+฿${fmt(i.amount)}</span>
-              ${isAdmin ? `<button onclick="deleteIncome('${i.income_id}', ${Number(i.amount)})" class="btn-del-record">🗑️ ลบ</button>` : ''}
+              <button onclick="openEditIncomeModal('${i.income_id}')" class="btn-edit-record" style="padding: 3px 8px; font-size: 11px; background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; border-radius: 5px; cursor: pointer; font-weight: 600;" title="แก้ไข">✏️ แก้ไข</button>
+              <button onclick="deleteIncome('${i.income_id}', ${Number(i.amount)})" class="btn-del-record">🗑️ ลบ</button>
             </div>
           </div>`).join('');
       } catch (err) {
@@ -629,9 +639,10 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
         loadRecentPayments();
         const sel = document.getElementById('sel-pay-house');
         if (sel && sel.value) sel.onchange();
-        if (typeof CURRENT_TAB !== 'undefined' && CURRENT_TAB === 'all-payments') {
+        if (typeof CURRENT_TAB !== 'undefined' && CURRENT_TAB === 'all-payments' || window.location.hash === '#all-payments') {
           loadAllPaymentsReport();
         }
+        if (window.StaffTabs && window.StaffTabs.ledger) window.StaffTabs.ledger();
         if (typeof loadAuditHistory === 'function') loadAuditHistory();
       } catch (err) {
         showAlert(err.message || 'ไม่สามารถลบรายการได้', false);
@@ -645,7 +656,31 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
       try {
         await apiCall(`/api/admin/expenses/${expId}`, 'DELETE');
         showAlert(`ลบรายการรายจ่ายรหัส ${expId} สำเร็จ`);
+        ALL_REPORTS_CACHE = null;
         loadRecentExpenses();
+        if (typeof CURRENT_TAB !== 'undefined' && CURRENT_TAB === 'all-expenses' || window.location.hash === '#all-expenses') {
+          loadAllExpensesReport();
+        }
+        if (window.StaffTabs && window.StaffTabs.ledger) window.StaffTabs.ledger();
+        if (typeof loadAuditHistory === 'function') loadAuditHistory();
+      } catch (err) {
+        showAlert(err.message || 'ไม่สามารถลบรายการได้', false);
+      }
+    }
+
+    async function deleteTransfer(rtId, amount) {
+      if (!confirm(`⚠️ ยืนยันการลบรายการถอนเงินสด?\n\nรหัสรายการ: ${rtId}\nจำนวนเงิน: ฿${fmt(amount)}\n\n(เมื่อลบแล้ว ยอดเงินในบัญชีธนาคารและเงินสดสำรองจ่ายจะถูกปรับปรุงย้อนกลับทันที)`)) {
+        return;
+      }
+      try {
+        await apiCall(`/api/admin/reserve_transactions/${rtId}`, 'DELETE');
+        showAlert(`ลบรายการถอนเงินสดรหัส ${rtId} สำเร็จ`);
+        ALL_REPORTS_CACHE = null;
+        if (window.StaffTabs && window.StaffTabs.transfer) window.StaffTabs.transfer();
+        if (typeof CURRENT_TAB !== 'undefined' && CURRENT_TAB === 'all-transfers' || window.location.hash === '#all-transfers') {
+          loadAllTransfersReport();
+        }
+        if (window.StaffTabs && window.StaffTabs.ledger) window.StaffTabs.ledger();
         if (typeof loadAuditHistory === 'function') loadAuditHistory();
       } catch (err) {
         showAlert(err.message || 'ไม่สามารถลบรายการได้', false);
@@ -666,12 +701,6 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
         }
 
         feed.innerHTML = data.payments.slice(0, 15).map(p => {
-          const delBtn = isAdmin ? `
-            <button onclick="deletePayment('${p.payment_id}', '${p.house_no}', ${p.amount})" class="btn-del-record" title="ลบรายการรับเงินนี้ (เฉพาะผู้ดูแลระบบ)">
-              🗑️ ลบ
-            </button>
-          ` : '';
-
           const isNoSlip = !p.house_no || p.house_no === 'ไม่มีสลิป';
           const pr = p.period || p.quarter || p.month;
           const periodBadge = pr ? `<span style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; padding:1px 6px; border-radius:4px; font-size:11px; font-weight:600; margin-left:4px;">งวด ${pr}</span>` : '';
@@ -692,7 +721,8 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
               </div>
               <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
                 <span style="color: #059669; font-weight: 700;">+฿${fmt0(p.amount)}</span>
-                ${delBtn}
+                <button onclick="openEditPaymentModal('${p.payment_id}')" class="btn-edit-record" style="padding: 3px 8px; font-size: 11px; background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; border-radius: 5px; cursor: pointer; font-weight: 600;" title="แก้ไข">✏️ แก้ไข</button>
+                <button onclick="deletePayment('${p.payment_id}', '${p.house_no}', ${p.amount})" class="btn-del-record" title="ลบรายการรับเงินนี้">🗑️ ลบ</button>
               </div>
             </div>
           `;
@@ -716,12 +746,6 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
         }
 
         feed.innerHTML = data.expenses.slice(0, 15).map(e => {
-          const delBtn = isAdmin ? `
-            <button onclick="deleteExpense('${e.expense_id}', '${(e.description || '').replace(/'/g, "\\'")}', ${e.amount})" class="btn-del-record" title="ลบรายการรายจ่ายนี้ (เฉพาะผู้ดูแลระบบ)">
-              🗑️ ลบ
-            </button>
-          ` : '';
-
           return `
             <div style="border-bottom: 1px solid #f1f5f9; padding: 10px 0; display:flex; justify-content:space-between; align-items:center; gap: 8px;">
               <div style="flex: 1; min-width: 0;">
@@ -734,7 +758,8 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
               </div>
               <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
                 <span style="color: #dc2626; font-weight: 700;">-฿${fmt(e.amount)}</span>
-                ${delBtn}
+                <button onclick="openEditExpenseModal('${e.expense_id}')" class="btn-edit-record" style="padding: 3px 8px; font-size: 11px; background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; border-radius: 5px; cursor: pointer; font-weight: 600;" title="แก้ไข">✏️ แก้ไข</button>
+                <button onclick="deleteExpense('${e.expense_id}', '${(e.description || '').replace(/'/g, "\\'")}', ${e.amount})" class="btn-del-record" title="ลบรายการรายจ่ายนี้">🗑️ ลบ</button>
               </div>
             </div>
           `;
@@ -781,22 +806,18 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
 
       html += filtered.map(h => {
         let badgeHtml = '';
-        if (h.overdue_amount === 0) badgeHtml = '<span class="badge-status badge-paid">ชำระครบทั้งปี</span>';
-        else if (h.paid_amount > 0) badgeHtml = '<span class="badge-status badge-partial">ชำระบางส่วน</span>';
-        else badgeHtml = '<span class="badge-status badge-unpaid">ยังไม่ชำระ</span>';
+        if (h.overdue_amount === 0 && h.paid_amount > 0) {
+          badgeHtml = `<span class="badge-status badge-paid" onclick="showSlipModal('${h.house_id}', 0)" title="คลิกเพื่อดูสลิป/หลักฐานการชำระ">ชำระครบ</span>`;
+        } else if (h.paid_amount > 0) {
+          badgeHtml = `<span class="badge-status badge-partial" onclick="showSlipModal('${h.house_id}', 0)" title="คลิกเพื่อดูสลิป/หลักฐานการชำระ">ชำระบางส่วน</span>`;
+        } else {
+          badgeHtml = '<span class="badge-status badge-unpaid">ยังไม่ชำระ</span>';
+        }
 
         const q0 = h.quarters[0];
         const q1 = h.quarters[1];
         const q2 = h.quarters[2];
         const q3 = h.quarters[3];
-
-        if (h.paid_count === 12) {
-          badgeHtml = `<span class="badge-status badge-paid" onclick="showSlipModal('${h.house_id}', 0)" title="คลิกเพื่อดูสลิป/หลักฐานการชำระ">ชำระครบ</span>`;
-        } else if (h.paid_count > 0) {
-          badgeHtml = `<span class="badge-status badge-partial" onclick="showSlipModal('${h.house_id}', 0)" title="คลิกเพื่อดูสลิป/หลักฐานการชำระ">ชำระบางส่วน</span>`;
-        } else {
-          badgeHtml = '<span class="badge-status badge-unpaid">ยังไม่ชำระ</span>';
-        }
 
         return `
           <tr>
@@ -840,7 +861,7 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
         const q2 = h.quarters[1].is_full ? "ชำระครบ" : (h.quarters[1].paid_count + "/3");
         const q3 = h.quarters[2].is_full ? "ชำระครบ" : (h.quarters[2].paid_count + "/3");
         const q4 = h.quarters[3].is_full ? "ชำระครบ" : (h.quarters[3].paid_count + "/3");
-        const st = h.paid_count === 12 ? "ชำระครบ" : (h.paid_count > 0 ? "ชำระบางส่วน" : "ยังไม่ชำระ");
+        const st = (h.overdue_amount === 0 && h.paid_amount > 0) ? "ชำระครบ" : (h.paid_amount > 0 ? "ชำระบางส่วน" : "ยังไม่ชำระ");
         csv += `"${h.zone}","${h.house_no}","${h.owner_full}","${q1}","${q2}","${q3}","${q4}",${h.paid_amount},${h.overdue_amount},"${st}"\n`;
       });
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -1345,7 +1366,8 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
 
       FILTERED_PAYMENTS = all.filter(p => {
         if (qVal === 'noslip') {
-          if (p.house_id !== 'NOSLIP' && p.house_no !== 'ไม่มีสลิป' && p.quarter) return false;
+          const isUnknown = (p.house_id === 'NOSLIP' || p.house_no === 'ไม่มีสลิป' || (!p.due_id && !p.house_id));
+          if (!isUnknown) return false;
         } else if (qVal) {
           if (String(p.quarter) !== String(qVal)) return false;
         }
@@ -1398,13 +1420,13 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
         let qText = '-';
         if (p.quarter && qLabels[parseInt(p.quarter)]) {
           qText = `<span style="font-weight: 600; color: #1e293b;">${qLabels[parseInt(p.quarter)]}</span>`;
-        } else if (p.house_id === 'NOSLIP' || p.house_no === 'ไม่มีสลิป') {
-          qText = '<span style="background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">⚠️ ไม่มีสลิป / ยังไม่ระบุงวด</span>';
+        } else if (p.house_id === 'NOSLIP' || p.house_no === 'ไม่มีสลิป' || (!p.due_id && !p.house_id)) {
+          qText = '<span style="background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">⚠️ ไม่ทราบบ้านเลขที่ / ยังไม่ระบุงวด</span>';
         }
 
-        const isNoSlip = (p.house_id === 'NOSLIP' || p.house_no === 'ไม่มีสลิป');
-        const houseBadge = isNoSlip
-          ? '<span style="background: #fee2e2; color: #b91c1c; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 11px;">⚠️ ไม่มีสลิป</span>'
+        const isUnknown = (p.house_id === 'NOSLIP' || p.house_no === 'ไม่มีสลิป' || (!p.due_id && !p.house_id));
+        const houseBadge = isUnknown
+          ? '<span style="background: #fee2e2; color: #b91c1c; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 11px;">⚠️ ไม่ทราบบ้านเลขที่</span>'
           : `<span style="font-weight: 700; color: #0f172a;">${p.house_no || '-'}</span>`;
 
         const slipLink = p.slip_url
@@ -1427,21 +1449,34 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
               <button onclick="openEditPaymentModal('${p.payment_id}')" class="btn-edit-record" style="padding: 3px 8px; font-size: 11px; margin-right: 4px; background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; border-radius: 5px; cursor: pointer; font-weight: 600;" title="แก้ไขรายการรับชำระนี้">
                 ✏️ แก้ไข
               </button>
-              ${isAdmin ? `
-                <button onclick="deletePayment('${p.payment_id}', '${p.house_no}', ${p.amount})" class="btn-del-record" style="padding: 3px 8px; font-size: 11px; border-radius: 5px;" title="ลบรายการรับเงินนี้">
-                  🗑️ ลบ
-                </button>
-              ` : ''}
+              <button onclick="deletePayment('${p.payment_id}', '${p.house_no}', ${p.amount})" class="btn-del-record" style="padding: 3px 8px; font-size: 11px; border-radius: 5px;" title="ลบรายการรับเงินนี้">
+                🗑️ ลบ
+              </button>
             </td>
           </tr>
         `;
       }).join('');
     }
 
-    window.openEditPaymentModal = function(paymentId) {
-      const all = (ALL_REPORTS_CACHE && ALL_REPORTS_CACHE.payments) || [];
-      const p = all.find(x => x.payment_id === paymentId);
-      if (!p) return showAlert('ไม่พบข้อมูลรายการ', false);
+    window.openEditPaymentModal = async function(paymentId) {
+      if (!ALL_REPORTS_CACHE || !ALL_REPORTS_CACHE.payments || !ALL_REPORTS_CACHE.payments.length) {
+        await fetchReportsData();
+      }
+      let all = (ALL_REPORTS_CACHE && ALL_REPORTS_CACHE.payments) || [];
+      let p = all.find(x => x.payment_id === paymentId);
+
+      // If not found in current cache (e.g. newly added or from different year), force re-fetch
+      if (!p) {
+        await fetchReportsData(true);
+        all = (ALL_REPORTS_CACHE && ALL_REPORTS_CACHE.payments) || [];
+        p = all.find(x => x.payment_id === paymentId);
+      }
+
+      if (!p) return showAlert(`❌ ไม่พบข้อมูลรายการ (${paymentId})`, false);
+
+      if (!HOUSES || !HOUSES.length) {
+        await loadHouses();
+      }
 
       document.getElementById('edit-pay-id').value = p.payment_id;
       document.getElementById('edit-pay-id-label').textContent = `รหัสรายการ: ${p.payment_id}`;
@@ -1630,7 +1665,7 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
       document.getElementById('rep-exp-reserve').textContent = '฿' + fmt(reserve);
 
       if (!FILTERED_EXPENSES.length) {
-        tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: #64748b; padding: 30px;">ไม่พบข้อมูลรายการรายจ่ายตามเงื่อนไขที่เลือก</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; color: #64748b; padding: 30px;">ไม่พบข้อมูลรายการรายจ่ายตามเงื่อนไขที่เลือก</td></tr>';
         return;
       }
 
@@ -1651,6 +1686,14 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
             <td style="text-align: right; font-weight: 700; color: #dc2626;">฿${fmt(e.amount)}</td>
             <td style="text-align: center; font-size: 12px;"><span style="color: #059669; font-weight: 600;">${e.status || 'อนุมัติ'}</span></td>
             <td style="text-align: center; font-size: 12px; color: #64748b;">${e.recorded_by || '-'}</td>
+            <td style="text-align: center; white-space: nowrap;">
+              <button onclick="openEditExpenseModal('${e.expense_id}')" class="btn-edit-record" style="padding: 3px 8px; font-size: 11px; margin-right: 4px; background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; border-radius: 5px; cursor: pointer; font-weight: 600;" title="แก้ไขรายการรายจ่ายนี้">
+                ✏️ แก้ไข
+              </button>
+              <button onclick="deleteExpense('${e.expense_id}', '${(e.description || '').replace(/'/g, "\\'")}', ${e.amount})" class="btn-del-record" style="padding: 3px 8px; font-size: 11px; border-radius: 5px;" title="ลบรายการรายจ่ายนี้">
+                🗑️ ลบ
+              </button>
+            </td>
           </tr>
         `;
       }).join('');
@@ -1710,7 +1753,7 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
       document.getElementById('rep-inc-cash').textContent = '฿' + fmt(cash);
 
       if (!FILTERED_INCOME.length) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #64748b; padding: 30px;">ไม่พบข้อมูลรายการรายได้อื่นตามเงื่อนไขที่เลือก</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #64748b; padding: 30px;">ไม่พบข้อมูลรายการรายได้อื่นตามเงื่อนไขที่เลือก</td></tr>';
         return;
       }
 
@@ -1728,6 +1771,14 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
             <td>${i.note || '-'}</td>
             <td style="text-align: center;">${chBadge}</td>
             <td style="text-align: right; font-weight: 700; color: #059669;">฿${fmt(i.amount)}</td>
+            <td style="text-align: center; white-space: nowrap;">
+              <button onclick="openEditIncomeModal('${i.income_id}')" class="btn-edit-record" style="padding: 3px 8px; font-size: 11px; margin-right: 4px; background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; border-radius: 5px; cursor: pointer; font-weight: 600;" title="แก้ไขรายการรายได้นี้">
+                ✏️ แก้ไข
+              </button>
+              <button onclick="deleteIncome('${i.income_id}', ${i.amount})" class="btn-del-record" style="padding: 3px 8px; font-size: 11px; border-radius: 5px;" title="ลบรายการรายได้นี้">
+                🗑️ ลบ
+              </button>
+            </td>
           </tr>
         `;
       }).join('');
@@ -1866,6 +1917,43 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
             </tbody>
           </table>
         `;
+      } else if (type === 'transfers') {
+        title = 'รายงานรายการถอนเงินสดเติมเงินสำรองจ่าย';
+        const total = FILTERED_TRANSFERS.reduce((sum, t) => sum + Number(t.amount || 0), 0);
+        summaryText = `รวมรายการถอนเงินสดทั้งสิ้น <b>${FILTERED_TRANSFERS.length.toLocaleString('th-TH')}</b> รายการ รวมเป็นเงินทั้งสิ้น <b>฿${fmt(total)}</b> (${thaiBaht(total)})`;
+
+        tableHtml = `
+          <table class="report-paper-table">
+            <thead>
+              <tr>
+                <th style="width: 40px;">ลำดับ</th>
+                <th style="width: 80px;">รหัส</th>
+                <th style="width: 90px;">วันที่ถอน</th>
+                <th>รายละเอียด / วัตถุประสงค์</th>
+                <th style="width: 140px;">จากบัญชีต้นทาง</th>
+                <th style="width: 140px;">เข้าบัญชีปลายทาง</th>
+                <th style="width: 110px; text-align: right;">จำนวนเงิน</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${FILTERED_TRANSFERS.map((t, idx) => `
+                <tr>
+                  <td style="text-align: center;">${idx + 1}</td>
+                  <td style="text-align: center; font-weight: 600;">${t.rt_id}</td>
+                  <td style="text-align: center;">${t.date || '-'}</td>
+                  <td>${t.note || 'ถอนเงินจากธนาคารมาเติมเงินสดสำรองจ่าย'}</td>
+                  <td style="text-align: center;">ธนาคารกรุงเทพ</td>
+                  <td style="text-align: center;">เงินสดสำรองจ่าย</td>
+                  <td style="text-align: right; font-weight: 600;">฿${fmt(t.amount)}</td>
+                </tr>
+              `).join('')}
+              <tr class="total-row">
+                <td colspan="6" style="text-align: right; font-weight: 700;">รวมยอดเงินถอนสะสมทั้งสิ้น (${FILTERED_TRANSFERS.length} รายการ):</td>
+                <td style="text-align: right; font-weight: 700; color: #0284c7;">฿${fmt(total)}</td>
+              </tr>
+            </tbody>
+          </table>
+        `;
       }
 
       printArea.innerHTML = `
@@ -1933,6 +2021,12 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
           const ch = i.channel === 'cash' ? 'เงินสด' : 'บัญชีธนาคาร';
           csv += `"${idx + 1}","${i.income_id}","${i.date || ''}","${i.type_label}","${i.note || ''}","${ch}",${i.amount}\n`;
         });
+      } else if (type === 'transfers') {
+        filename = 'รายการถอนเงินสด_ปี2569.csv';
+        csv += 'ลำดับ,รหัสรายการ,วันที่ทำรายการ,รายละเอียด/วัตถุประสงค์,จากบัญชี,เข้าสู่บัญชี,จำนวนเงิน\n';
+        FILTERED_TRANSFERS.forEach((t, idx) => {
+          csv += `"${idx + 1}","${t.rt_id}","${t.date || ''}","${t.note || 'ถอนเงินจากธนาคารมาเติมเงินสดสำรองจ่าย'}","ธนาคารกรุงเทพ","เงินสดสำรองจ่าย",${t.amount}\n`;
+        });
       }
 
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -1945,6 +2039,297 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }
+
+    // --- 6. รายการถอนเงินสด / โอนย้ายเงิน (All Transfers Report) ---
+    let FILTERED_TRANSFERS = [];
+
+    async function loadAllTransfersReport() {
+      const data = await fetchReportsData();
+      const rawTransfers = (data.reserve || []).filter(r => r.type === 'in' && r.rt_id !== 'RT0001');
+      rawTransfers.sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.rt_id || '').localeCompare(a.rt_id || ''));
+      FILTERED_TRANSFERS = rawTransfers;
+      filterAllTransfers();
+    }
+
+    function filterAllTransfers() {
+      const data = ALL_REPORTS_CACHE || {};
+      const all = (data.reserve || []).filter(r => r.type === 'in' && r.rt_id !== 'RT0001');
+      all.sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.rt_id || '').localeCompare(a.rt_id || ''));
+
+      const mVal = document.getElementById('filter-trans-month')?.value || '';
+      const sVal = (document.getElementById('filter-trans-search')?.value || '').trim().toLowerCase();
+
+      FILTERED_TRANSFERS = all.filter(t => {
+        if (mVal) {
+          const transM = t.date ? String(parseInt(t.date.split('-')[1], 10)) : '';
+          if (transM !== String(mVal)) return false;
+        }
+        if (sVal) {
+          const text = `${t.rt_id} ${t.note || ''} ${t.date || ''}`.toLowerCase();
+          if (!text.includes(sVal)) return false;
+        }
+        return true;
+      });
+
+      renderAllTransfersTable();
+    }
+
+    function resetTransFilter() {
+      if (document.getElementById('filter-trans-search')) document.getElementById('filter-trans-search').value = '';
+      if (document.getElementById('filter-trans-month')) document.getElementById('filter-trans-month').value = '';
+      filterAllTransfers();
+    }
+
+    function renderAllTransfersTable() {
+      const tbody = document.getElementById('tbody-all-transfers');
+      if (!tbody) return;
+
+      const total = FILTERED_TRANSFERS.reduce((sum, t) => sum + Number(t.amount || 0), 0);
+      const count = FILTERED_TRANSFERS.length;
+
+      const statTotal = document.getElementById('rep-trans-total');
+      const statCount = document.getElementById('rep-trans-count');
+      if (statTotal) statTotal.textContent = '฿' + fmt(total);
+      if (statCount) statCount.textContent = count.toLocaleString('th-TH') + ' รายการ';
+
+      if (!FILTERED_TRANSFERS.length) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #64748b; padding: 30px;">ไม่พบข้อมูลรายการถอนเงินสดตามเงื่อนไขที่เลือก</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = FILTERED_TRANSFERS.map((t, idx) => `
+        <tr>
+          <td style="text-align: center; color: #94a3b8;">${idx + 1}</td>
+          <td style="text-align: center; font-weight: 600; color: #0284c7;">${t.rt_id}</td>
+          <td style="text-align: center; font-size: 12px;">${t.date || '-'}</td>
+          <td><span style="font-weight: 600; color: #1e293b;">${t.note || 'ถอนเงินจากธนาคารมาเติมเงินสดสำรองจ่าย'}</span></td>
+          <td style="text-align: center;"><span style="background: #eff6ff; color: #1e40af; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">🏦 ธ.กรุงเทพ</span></td>
+          <td style="text-align: center;"><span style="background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">💵 เงินสดสำรองจ่าย</span></td>
+          <td style="text-align: right; font-weight: 700; color: #0284c7;">฿${fmt(t.amount)}</td>
+          <td style="text-align: center; white-space: nowrap;">
+            <button onclick="openEditTransferModal('${t.rt_id}')" class="btn-edit-record" style="padding: 3px 8px; font-size: 11px; margin-right: 4px; background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; border-radius: 5px; cursor: pointer; font-weight: 600;" title="แก้ไขรายการถอนเงินนี้">
+              ✏️ แก้ไข
+            </button>
+            <button onclick="deleteTransfer('${t.rt_id}', ${t.amount})" class="btn-del-record" style="padding: 3px 8px; font-size: 11px; border-radius: 5px;" title="ลบรายการถอนเงินนี้">
+              🗑️ ลบ
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // --- Edit Expense Modal Handlers ---
+    window.openEditExpenseModal = async function(expenseId) {
+      if (!ALL_REPORTS_CACHE || !ALL_REPORTS_CACHE.expenses) {
+        await fetchReportsData();
+      }
+      const all = (ALL_REPORTS_CACHE && ALL_REPORTS_CACHE.expenses) || [];
+      const e = all.find(x => x.expense_id === expenseId);
+      if (!e) return showAlert('ไม่พบข้อมูลรายการรายจ่าย', false);
+
+      document.getElementById('edit-exp-id').value = e.expense_id;
+      document.getElementById('edit-exp-id-label').textContent = `รหัสรายการ: ${e.expense_id}`;
+      document.getElementById('edit-exp-docno').value = e.doc_no || '';
+      document.getElementById('edit-exp-date').value = e.expense_date || '';
+      document.getElementById('edit-exp-desc').value = e.description || '';
+
+      const catSel = document.getElementById('edit-exp-cat');
+      if (catSel && ALL_REPORTS_CACHE.categories) {
+        catSel.innerHTML = ALL_REPORTS_CACHE.categories.map(c => `<option value="${c.category_id}">${c.name}</option>`).join('');
+        catSel.value = e.category_id || (ALL_REPORTS_CACHE.categories[0] ? ALL_REPORTS_CACHE.categories[0].category_id : '');
+      }
+
+      document.getElementById('edit-exp-source').value = e.source || 'bank';
+      document.getElementById('edit-exp-amount').value = e.amount || '';
+      document.getElementById('edit-exp-payee').value = e.payee || '';
+
+      document.getElementById('modal-edit-expense').style.display = 'flex';
+    };
+
+    window.closeEditExpenseModal = function(e) {
+      if (e && e.target !== document.getElementById('modal-edit-expense')) return;
+      document.getElementById('modal-edit-expense').style.display = 'none';
+    };
+
+    window.submitEditExpense = async function() {
+      const eid = document.getElementById('edit-exp-id').value;
+      const docNo = document.getElementById('edit-exp-docno').value.trim();
+      const dte = document.getElementById('edit-exp-date').value;
+      const desc = document.getElementById('edit-exp-desc').value.trim();
+      const cat = document.getElementById('edit-exp-cat').value;
+      const src = document.getElementById('edit-exp-source').value;
+      const amt = Number(document.getElementById('edit-exp-amount').value || 0);
+      const payee = document.getElementById('edit-exp-payee').value.trim();
+
+      if (!dte) return showAlert('กรุณาเลือกวันที่เบิกจ่าย', false);
+      if (!desc) return showAlert('กรุณาระบุรายละเอียดรายจ่าย', false);
+      if (amt <= 0) return showAlert('กรุณากรอกจำนวนเงินที่ถูกต้อง', false);
+
+      const body = {
+        doc_no: docNo,
+        expense_date: dte,
+        description: desc,
+        category_id: cat,
+        source: src,
+        amount: amt,
+        payee: payee
+      };
+
+      const btn = document.getElementById('btn-save-edit-expense');
+      try {
+        btn.disabled = true;
+        await apiCall(`/api/staff/expenses/${eid}/update`, 'POST', body);
+        showAlert(`บันทึกการแก้ไขรายจ่าย ${eid} สำเร็จ!`);
+        document.getElementById('modal-edit-expense').style.display = 'none';
+        ALL_REPORTS_CACHE = null;
+        loadRecentExpenses();
+        if (typeof CURRENT_TAB !== 'undefined' && CURRENT_TAB === 'all-expenses' || window.location.hash === '#all-expenses') {
+          loadAllExpensesReport();
+        }
+        if (window.StaffTabs && window.StaffTabs.ledger) window.StaffTabs.ledger();
+      } catch (err) {
+        showAlert(err.message || 'เกิดข้อผิดพลาดในการบันทึก', false);
+      } finally {
+        btn.disabled = false;
+      }
+    };
+
+    // --- Edit Income Modal Handlers ---
+    window.openEditIncomeModal = async function(incomeId) {
+      if (!ALL_REPORTS_CACHE || !ALL_REPORTS_CACHE.incomes) {
+        await fetchReportsData();
+      }
+      const all = (ALL_REPORTS_CACHE && ALL_REPORTS_CACHE.incomes) || [];
+      const i = all.find(x => x.income_id === incomeId);
+      if (!i) return showAlert('ไม่พบข้อมูลรายการรายได้', false);
+
+      document.getElementById('edit-inc-id').value = i.income_id;
+      document.getElementById('edit-inc-id-label').textContent = `รหัสรายการ: ${i.income_id}`;
+      document.getElementById('edit-inc-date').value = i.date || '';
+      document.getElementById('edit-inc-type').value = i.type || 'other';
+      document.getElementById('edit-inc-channel').value = i.channel || 'transfer';
+      document.getElementById('edit-inc-amount').value = i.amount || '';
+      document.getElementById('edit-inc-note').value = i.note || '';
+
+      document.getElementById('modal-edit-income').style.display = 'flex';
+    };
+
+    window.closeEditIncomeModal = function(e) {
+      if (e && e.target !== document.getElementById('modal-edit-income')) return;
+      document.getElementById('modal-edit-income').style.display = 'none';
+    };
+
+    window.submitEditIncome = async function() {
+      const iid = document.getElementById('edit-inc-id').value;
+      const dte = document.getElementById('edit-inc-date').value;
+      const itype = document.getElementById('edit-inc-type').value;
+      const ch = document.getElementById('edit-inc-channel').value;
+      const amt = Number(document.getElementById('edit-inc-amount').value || 0);
+      const note = document.getElementById('edit-inc-note').value.trim();
+
+      if (!dte) return showAlert('กรุณาเลือกวันที่ได้รับเงิน', false);
+      if (amt <= 0) return showAlert('กรุณากรอกจำนวนเงินที่ถูกต้อง', false);
+
+      const body = {
+        date: dte,
+        type: itype,
+        channel: ch,
+        amount: amt,
+        note: note
+      };
+
+      const btn = document.getElementById('btn-save-edit-income');
+      try {
+        btn.disabled = true;
+        await apiCall(`/api/staff/income/${iid}/update`, 'POST', body);
+        showAlert(`บันทึกการแก้ไขรายได้ ${iid} สำเร็จ!`);
+        document.getElementById('modal-edit-income').style.display = 'none';
+        ALL_REPORTS_CACHE = null;
+        loadRecentIncome();
+        if (typeof CURRENT_TAB !== 'undefined' && CURRENT_TAB === 'all-income' || window.location.hash === '#all-income') {
+          loadAllIncomeReport();
+        }
+        if (window.StaffTabs && window.StaffTabs.ledger) window.StaffTabs.ledger();
+      } catch (err) {
+        showAlert(err.message || 'เกิดข้อผิดพลาดในการบันทึก', false);
+      } finally {
+        btn.disabled = false;
+      }
+    };
+
+    // --- Edit Transfer Modal Handlers ---
+    window.openEditTransferModal = async function(rtId) {
+      if (!ALL_REPORTS_CACHE || !ALL_REPORTS_CACHE.reserve) {
+        await fetchReportsData();
+      }
+      const all = (ALL_REPORTS_CACHE && ALL_REPORTS_CACHE.reserve) || [];
+      const t = all.find(x => x.rt_id === rtId);
+      if (!t) return showAlert('ไม่พบข้อมูลรายการถอนเงินสด', false);
+
+      document.getElementById('edit-trans-id').value = t.rt_id;
+      document.getElementById('edit-trans-id-label').textContent = `รหัสรายการ: ${t.rt_id}`;
+      document.getElementById('edit-trans-date').value = t.date || '';
+      document.getElementById('edit-trans-amount').value = t.amount || '';
+      document.getElementById('edit-trans-note').value = t.note || '';
+
+      document.getElementById('modal-edit-transfer').style.display = 'flex';
+    };
+
+    window.closeEditTransferModal = function(e) {
+      if (e && e.target !== document.getElementById('modal-edit-transfer')) return;
+      document.getElementById('modal-edit-transfer').style.display = 'none';
+    };
+
+    window.submitEditTransfer = async function() {
+      const rtid = document.getElementById('edit-trans-id').value;
+      const dte = document.getElementById('edit-trans-date').value;
+      const amt = Number(document.getElementById('edit-trans-amount').value || 0);
+      const note = document.getElementById('edit-trans-note').value.trim();
+
+      if (!dte) return showAlert('กรุณาเลือกวันที่ทำรายการถอนเงิน', false);
+      if (amt <= 0) return showAlert('กรุณากรอกจำนวนเงินที่ถูกต้อง', false);
+
+      const body = {
+        date: dte,
+        amount: amt,
+        note: note
+      };
+
+      const btn = document.getElementById('btn-save-edit-transfer');
+      try {
+        btn.disabled = true;
+        await apiCall(`/api/staff/transfers/${rtid}/update`, 'POST', body);
+        showAlert(`บันทึกการแก้ไขรายการถอนเงิน ${rtid} สำเร็จ!`);
+        document.getElementById('modal-edit-transfer').style.display = 'none';
+        ALL_REPORTS_CACHE = null;
+        if (window.StaffTabs && window.StaffTabs.transfer) window.StaffTabs.transfer();
+        if (typeof CURRENT_TAB !== 'undefined' && CURRENT_TAB === 'all-transfers' || window.location.hash === '#all-transfers') {
+          loadAllTransfersReport();
+        }
+        if (window.StaffTabs && window.StaffTabs.ledger) window.StaffTabs.ledger();
+      } catch (err) {
+        showAlert(err.message || 'เกิดข้อผิดพลาดในการบันทึก', false);
+      } finally {
+        btn.disabled = false;
+      }
+    };
+
+    // Global window exports
+    window.loadAllTransfersReport = loadAllTransfersReport;
+    window.filterAllTransfers = filterAllTransfers;
+    window.resetTransFilter = resetTransFilter;
+    window.deleteExpense = deleteExpense;
+    window.deleteIncome = deleteIncome;
+    window.deletePayment = deletePayment;
+    window.deleteTransfer = deleteTransfer;
+    window.printReport = printReport;
+    window.exportReportExcel = exportReportExcel;
+    window.filterAllExpenses = filterAllExpenses;
+    window.resetExpFilter = resetExpFilter;
+    window.filterAllIncome = filterAllIncome;
+    window.resetIncFilter = resetIncFilter;
+    window.filterAllPayments = filterAllPayments;
+    window.resetPayFilter = resetPayFilter;
 
     initStaff();
 

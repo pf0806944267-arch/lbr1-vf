@@ -184,21 +184,23 @@ def summary(target_fy=None):
             "color": p_colors[pr]
         })
 
-    # No-slip card: รายการที่ยังไม่มีสลิป / โอนไม่ส่งสลิป
-    no_slip_payments = [
+    # Unknown house card: รายการที่ไม่ทราบบ้านเลขที่ (โอนเงินเข้าบัญชี แต่ยังไม่ส่งสลิป/ไม่ระบุบ้าน)
+    unknown_house_payments = [
         p for p in d.get("payments", [])
-        if p.get("has_slip") == "N" or p.get("house_id") == "NOSLIP" or not p.get("due_id")
+        if (str(p.get("year_be", fy)) == str(fy) or not p.get("year_be")) and (
+            p.get("house_id") == "NOSLIP" or p.get("house_no") == "ไม่มีสลิป" or (not p.get("due_id") and not p.get("house_id"))
+        )
     ]
-    no_slip_count = len(no_slip_payments)
-    no_slip_amount = sum(num(p.get("amount_paid")) for p in no_slip_payments)
+    unknown_house_count = len(unknown_house_payments)
+    unknown_house_amount = sum(num(p.get("amount_paid")) for p in unknown_house_payments)
     period_cards.append({
         "period": 0,
         "is_no_slip": True,
-        "name": "ยังไม่มีสลิป",
-        "amount": round(no_slip_amount, 2),
-        "paid_houses": no_slip_count,
+        "name": "ไม่ทราบบ้านเลขที่",
+        "amount": round(unknown_house_amount, 2),
+        "paid_houses": unknown_house_count,
         "unpaid_houses": 0,
-        "pct": 100 if no_slip_count > 0 else 0,
+        "pct": 100 if unknown_house_count > 0 else 0,
         "color": "#f59e0b",
         "note": "โอนไม่ส่งสลิป / รอระบุลูกบ้าน"
     })

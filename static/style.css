@@ -330,6 +330,14 @@ h1, h2, h3, h4, h5, h6 {
   margin-bottom: 20px;
 }
 
+/* Ensure staff entry views have matching consistent card widths */
+#view-pay > .grid-2,
+#view-exp > .grid-2,
+#view-inc > .grid-2,
+#view-transfer > .grid-2 {
+  grid-template-columns: minmax(0, 1fr) 340px;
+}
+
 .grid-2-equal {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -340,7 +348,13 @@ h1, h2, h3, h4, h5, h6 {
 @media (max-width: 1024px) {
   .grid-4 { grid-template-columns: repeat(2, 1fr); }
   .grid-3 { grid-template-columns: 1fr; }
-  .grid-2, .grid-2-equal { grid-template-columns: 1fr; }
+  .grid-2, .grid-2-equal,
+  #view-pay > .grid-2,
+  #view-exp > .grid-2,
+  #view-inc > .grid-2,
+  #view-transfer > .grid-2 {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {
@@ -1293,11 +1307,11 @@ h1, h2, h3, h4, h5, h6 {
 /* 4-Period Toggle Selector (Image 4) */
 .period-selector-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .period-selector-grid { grid-template-columns: repeat(2, 1fr); }
 }
 

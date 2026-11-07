@@ -15,9 +15,14 @@ admin_bp = Blueprint("admin", __name__)
 
 
 @admin_bp.delete("/api/admin/<table>/<rid>")
-@require("admin")
+@require()
 def api_admin_delete(table, rid):
-    keys = {"payments": "payment_id", "expenses": "expense_id", "other_income": "income_id"}
+    keys = {
+        "payments": "payment_id",
+        "expenses": "expense_id",
+        "other_income": "income_id",
+        "reserve_transactions": "rt_id",
+    }
     if table not in keys:
         return jsonify(error="ไม่รองรับตารางนี้"), 400
     with store.write_lock:

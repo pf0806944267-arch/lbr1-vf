@@ -139,7 +139,7 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
         cardList.push({
           period: 0,
           is_no_slip: true,
-          name: 'ยังไม่มีสลิป',
+          name: 'ไม่ทราบบ้านเลขที่',
           amount: 0,
           paid_houses: 0,
           unpaid_houses: 0,
