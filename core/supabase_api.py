@@ -62,6 +62,20 @@ def sheet_get(table):
         except Exception as e:
             print(f"Supabase GET error on {table} range {start}-{end}: {e}")
             break
+
+    if table == "audit_log":
+        for r in all_rows:
+            if not r.get("table"):
+                r["table"] = r.get("table_name")
+            if not r.get("timestamp"):
+                r["timestamp"] = str(r.get("created_at") or "")[:19].replace("T", " ")
+            if isinstance(r.get("log_id"), int):
+                r["log_id"] = f"L{r['log_id']:05d}"
+            if isinstance(r.get("new_value"), (dict, list)):
+                r["new_value"] = json.dumps(r["new_value"], ensure_ascii=False)
+            if isinstance(r.get("old_value"), (dict, list)):
+                r["old_value"] = json.dumps(r["old_value"], ensure_ascii=False)
+
     return all_rows
 
 
@@ -133,6 +147,29 @@ def sheet_post(**payload):
     # 2. Append / Insert row
     if action == "append":
         row = payload.get("row", {})
+
+        if table == "audit_log":
+            clean_audit = {
+                "user_id": str(row.get("user_id") or "system"),
+                "action": str(row.get("action") or ""),
+                "table_name": str(row.get("table") or row.get("table_name") or ""),
+                "record_id": str(row.get("record_id") or ""),
+            }
+            for val_key in ("old_value", "new_value"):
+                v = row.get(val_key)
+                if not v:
+                    clean_audit[val_key] = None
+                elif isinstance(v, (dict, list)):
+                    clean_audit[val_key] = v
+                elif isinstance(v, str):
+                    try:
+                        clean_audit[val_key] = json.loads(v)
+                    except Exception:
+                        clean_audit[val_key] = {"raw": v}
+            url = f"{SUPABASE_URL}/rest/v1/audit_log"
+            _call(url, data=[clean_audit], method="POST")
+            return {"ok": True}
+
         # Type cleanup
         clean_row = {}
         for k, v in row.items():

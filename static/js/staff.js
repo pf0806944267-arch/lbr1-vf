@@ -1170,9 +1170,11 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
         if (data.payments) {
           data.payments.forEach(p => {
             if (!seenPayIds.has(p.payment_id)) {
+              const pPeriod = p.quarter || p.period;
+              const periodTxt = pPeriod ? `งวดที่ ${pPeriod}` : (p.month ? `งวดเดือน ${MONTHS_TH[p.month - 1] || p.month}` : '');
               logs.push({
                 id: p.payment_id,
-                title: `บันทึกรับเงิน บ้าน ${p.house_no} (งวดเดือน ${MONTHS_TH[p.month - 1]}) จำนวน ฿${fmt0(p.amount)} บาท`,
+                title: `บันทึกรับเงิน บ้าน ${p.house_no} ${periodTxt ? '(' + periodTxt + ')' : ''} จำนวน ฿${fmt0(p.amount)} บาท`,
                 sub: `PAYMENT_RECORD · รหัส: ${p.payment_id} · ช่องทาง: ${p.channel === 'transfer' ? 'โอนเงิน' : 'เงินสด'} · ผู้บันทึก: ${p.recorded_by || 'เจ้าหน้าที่'}`,
                 time: p.paid_date + " 09:30:00",
                 icon: '💵',

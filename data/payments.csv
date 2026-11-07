@@ -1,4 +1,8 @@
 ﻿payment_id,due_id,year_be,amount_paid,paid_date,channel,transfer_time,has_slip,slip_url,recorded_by,note,created_at
+P00378,D2569-H057-P1,2569,900.0,2026-11-07,transfer,,Y,https://lnaaecwejiepgelvcmzw.supabase.co/storage/v1/object/public/slips/slip_H057_1794018709.jpg,U001,,2026-11-07T02:31:49.013117+00:00
+P00379,D2569-H057-P2,2569,900.0,2026-11-07,transfer,,Y,https://lnaaecwejiepgelvcmzw.supabase.co/storage/v1/object/public/slips/slip_H057_1794018709.jpg,U001,,2026-11-07T02:31:50.094651+00:00
+P00381,D2569-H057-P4,2569,900.0,2026-11-07,transfer,,Y,https://lnaaecwejiepgelvcmzw.supabase.co/storage/v1/object/public/slips/slip_H057_1794018709.jpg,U001,,2026-11-07T02:31:52.161743+00:00
+P00380,D2569-H057-P3,2569,900.0,2026-11-07,transfer,,Y,https://lnaaecwejiepgelvcmzw.supabase.co/storage/v1/object/public/slips/slip_H057_1794018709.jpg,U001,,2026-11-07T02:31:51.216007+00:00
 P00001,D2569-H002-P1,2569,900.0,2026-08-11,transfer,06:33,Y,,import,,2026-11-05T01:28:48.413436+00:00
 P00002,D2569-H002-P2,2569,900.0,2026-01-25,transfer,,Y,,import,,2026-11-05T01:28:48.413436+00:00
 P00003,D2569-H003-P1,2569,900.0,2026-01-25,transfer,08:14,Y,,import,จ่ายทั้ง 4 งวด,2026-11-05T01:28:48.413436+00:00
