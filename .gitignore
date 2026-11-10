@@ -10,3 +10,8 @@ docs_and_tests/
 static/slips/*
 !static/slips/.gitkeep
 *.jpg
+
+# CSV Data (using Supabase exclusively as primary database)
+data/*.csv
+data/*
+!data/.gitkeep

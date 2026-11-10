@@ -410,19 +410,6 @@ def api_update_payment(payment_id):
         except Exception as err:
             print("Supabase update error:", err)
 
-        # Rewrite local CSV
-        import csv
-        p_csv = os.path.join(ROOT, "data", "payments.csv")
-        try:
-            header = list(payments[0].keys())
-            with open(p_csv, "w", encoding="utf-8-sig", newline="") as f:
-                w = csv.writer(f)
-                w.writerow(header)
-                for row in payments:
-                    w.writerow([row.get(h, "") for h in header])
-        except Exception as e:
-            print("CSV write error:", e)
-
         audit(request.user, "update", "payments", payment_id, old=json.dumps(old_data, ensure_ascii=False), new=json.dumps(p, ensure_ascii=False))
 
         with store.cond:

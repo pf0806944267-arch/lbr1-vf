@@ -41,19 +41,6 @@ def api_admin_delete(table, rid):
         rows.remove(old)
         audit(request.user, "delete", table, rid, old=json.dumps(old, ensure_ascii=False))
 
-        # Re-write the table CSV
-        p = os.path.join(ROOT, "data", table + ".csv")
-        try:
-            header = list(rows[0].keys()) if rows else (
-                list(old.keys()))  # ตารางว่างหลังลบ ยังต้องเขียนไฟล์ทับ
-            with open(p, "w", encoding="utf-8-sig", newline="") as f:
-                w = csv.writer(f)
-                w.writerow(header)
-                for r in rows:
-                    w.writerow([r.get(h, "") for h in header])
-        except Exception as e:
-            print(f"rewrite csv error: {e}")
-
         with store.cond:
             store.version += 1
             store.digest = json.dumps(store.data, sort_keys=True, ensure_ascii=False)

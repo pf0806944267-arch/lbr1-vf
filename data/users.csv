@@ -1,4 +1,0 @@
-﻿user_id,username,password_hash,role,full_name,active,created_at
-import,system_import,*,admin,,False,2026-11-03T10:04:28.018034+00:00
-U001,admin,scrypt:32768:8:1$46KEwf3Dm2BrZJSc$d19201d95b211de6b9e9dcf8504a8e4e3784a633bd373b9aefee31a20263e84e825e8f4106d5df28397a3b7b2f82300c216fc6315d54e5637d575f4a8c6f5166,admin,ผู้ดูแลระบบ,True,2026-11-03T09:58:06.298572+00:00
-U002,staff,scrypt:32768:8:1$E6uwl1GkHtXd4xaT$486b77d0dbfd7dbe76328ef090820d3e3683bd1cfdc534be9df32c8b1dec933250c3c4a7d02d4614c87c87a8ab865b8f97d51f27830ca5992e276204f93e4781,staff,เจ้าหน้าที่,True,2026-11-04T18:46:01.660409+00:00
